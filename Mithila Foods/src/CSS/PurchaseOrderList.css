@@ -1,0 +1,150 @@
+/* PURCHASE ORDER LIST – FLOATING CHIP TABLE */
+
+.po-list {
+  margin-top: 0.4rem;
+  padding: 1rem 1.2rem 1.2rem;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(
+    circle at top left,
+    #fef9c3,
+    #ffffff 55%,
+    #ecfeff
+  );
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.po-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.po-list-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.po-list-title {
+  font-size: 0.96rem;
+  font-weight: 600;
+}
+
+.po-list-subtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.po-list-pill {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+/* Table wrapper */
+
+.po-list-table-wrapper {
+  overflow-x: auto;
+}
+
+/* Floating rows table */
+
+.po-list-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+  font-size: 0.84rem;
+}
+
+/* Header */
+
+.po-list-table thead tr {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.85),
+    rgba(56, 189, 248, 0.9)
+  );
+  color: #f9fafb;
+}
+
+.po-list-table thead th {
+  padding: 0.42rem 0.65rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.po-list-table thead th:first-child {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+
+.po-list-table thead th:last-child {
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+}
+
+/* Body rows as chips */
+
+.po-list-table tbody tr {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 10px rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+}
+
+.po-list-table tbody tr:hover {
+  transform: translateY(-1px);
+  background: #eef2ff;
+  box-shadow: 0 8px 18px rgba(148, 163, 184, 0.75);
+}
+
+.po-list-table td {
+  padding: 0.55rem 0.65rem;
+}
+
+.po-list-table tbody td:first-child {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+
+.po-list-table tbody td:last-child {
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+}
+
+/* Cells */
+
+.po-cell-name {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.po-cell-money {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.po-cell-actions {
+  white-space: nowrap;
+}
+
+/* Pagination */
+
+.po-list-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.82rem;
+}
+
+.po-list-page-text {
+  color: var(--color-text-muted);
+}

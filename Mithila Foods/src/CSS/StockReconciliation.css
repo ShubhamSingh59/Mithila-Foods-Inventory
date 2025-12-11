@@ -1,0 +1,244 @@
+/* STOCK RECONCILIATION – MODERN DASHBOARD STYLE */
+
+.stock-recon {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ------------------------------
+   Header
+---------------------------------*/
+
+.stock-recon-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    135deg,
+    rgba(129, 140, 248, 0.13),
+    rgba(251, 191, 36, 0.12)
+  );
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.stock-recon-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stock-recon-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.stock-recon-subtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.stock-recon-pill {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+@media (max-width: 700px) {
+  .stock-recon-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ------------------------------
+   Messages
+---------------------------------*/
+
+.stock-recon-loading {
+  font-size: 0.85rem;
+}
+
+.stock-recon-error,
+.stock-recon-message {
+  margin-top: 0.15rem;
+}
+
+/* ------------------------------
+   Form
+---------------------------------*/
+
+.stock-recon-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Top grid */
+
+.stock-recon-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem 1rem;
+}
+
+@media (max-width: 900px) {
+  .stock-recon-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.stock-recon-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stock-recon-field-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.input-readonly {
+  background: #f9fafb;
+  cursor: default;
+}
+
+/* ------------------------------
+   Items header
+---------------------------------*/
+
+.stock-recon-items-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.stock-recon-items-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ------------------------------
+   Rows
+---------------------------------*/
+
+.stock-recon-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+/* Each row card */
+
+.stock-recon-row-card {
+  border-radius: var(--radius-lg);
+  padding: 0.8rem 0.95rem;
+  background: radial-gradient(
+    circle at top left,
+    #eef2ff,
+    #ffffff 55%,
+    #e0f2fe
+  );
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.stock-recon-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.stock-recon-row-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Grid inside row */
+
+.stock-recon-row-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: 0.6rem 0.8rem;
+  align-items: flex-end;
+}
+
+@media (max-width: 1100px) {
+  .stock-recon-row-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 750px) {
+  .stock-recon-row-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.stock-recon-row-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Row footer (loading / errors) */
+
+.stock-recon-row-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.stock-recon-row-loading {
+  color: var(--color-text-muted);
+}
+
+.stock-recon-row-error {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* ------------------------------
+   Submit row
+---------------------------------*/
+
+.stock-recon-submit-row {
+  margin-top: 0.3rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.stock-recon-item-input {
+  background: linear-gradient(
+    135deg,
+    rgba(219, 234, 254, 0.5),
+    rgba(239, 246, 255, 0.85)
+  );
+}
+

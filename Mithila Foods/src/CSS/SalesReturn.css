@@ -1,0 +1,470 @@
+/* =========================================
+   SALES RETURN – PAGE WRAPPER
+========================================= */
+
+.sales-return {
+  border-radius: 18px;
+  padding: 1.4rem 1.6rem 1.6rem;
+  background:
+    radial-gradient(circle at top left, rgba(244, 114, 182, 0.18), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.18), transparent 60%),
+    #f9fafb;
+  box-shadow: 0 22px 42px rgba(15, 23, 42, 0.16);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* =========================================
+   HEADER
+========================================= */
+
+.sales-return-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.sales-return-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.sales-return-title {
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  margin: 0;
+  color: #0f172a;
+}
+
+.sales-return-subtitle {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #64748b;
+}
+
+.sales-return-header-pill {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: rgba(244, 114, 182, 0.1);
+  border: 1px solid rgba(236, 72, 153, 0.35);
+  color: #be185d;
+  align-self: center;
+}
+
+/* =========================================
+   GENERIC TEXT / ALERTS (reused)
+========================================= */
+
+.text-muted {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.alert {
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
+
+.alert-error {
+  background: rgba(248, 113, 113, 0.09);
+  border: 1px solid rgba(248, 113, 113, 0.7);
+  color: #b91c1c;
+}
+
+.alert-success {
+  background: rgba(34, 197, 94, 0.09);
+  border: 1px solid rgba(34, 197, 94, 0.7);
+  color: #166534;
+}
+
+/* =========================================
+   FORM / INPUTS
+========================================= */
+
+.form-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.sales-return-field-label {
+  font-size: 0.82rem;
+}
+
+.input,
+.select {
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.95);
+  padding: 0.42rem 0.7rem;
+  font-size: 0.86rem;
+  background: rgba(255, 255, 255, 0.96);
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.input:focus,
+.select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4);
+  background: #ffffff;
+}
+
+/* =========================================
+   BUTTONS (same style as EasyShip)
+========================================= */
+
+.btn {
+  border-radius: 999px;
+  border: none;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  transform: translateY(0);
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease,
+    border-color 0.12s ease;
+  white-space: nowrap;
+}
+
+.btn-sm {
+  padding: 0.3rem 0.8rem;
+  font-size: 0.78rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+  transform: none;
+}
+
+/* main CTA */
+.btn-primary {
+  background: linear-gradient(135deg, #ec4899, #6366f1);
+  color: #ffffff;
+  box-shadow: 0 12px 26px rgba(236, 72, 153, 0.55);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 16px 34px rgba(236, 72, 153, 0.65);
+  transform: translateY(-1px);
+}
+
+/* =========================================
+   CREATE RETURN CARD
+========================================= */
+
+.sales-return-card {
+  border-radius: 14px;
+  padding: 0.9rem 1rem 1rem;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(209, 213, 219, 0.9);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+}
+
+.sales-return-card-header {
+  margin-bottom: 0.6rem;
+}
+
+.sales-return-card-title {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* top select row */
+.sales-return-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+}
+
+.sales-return-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+}
+
+.sales-return-invoice-select {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.sales-return-loading-inline {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+/* =========================================
+   INVOICE DETAILS
+========================================= */
+
+.sales-return-invoice-details {
+  margin-top: 0.8rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.7);
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sales-return-section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sales-return-section-subtitle {
+  margin: 0.4rem 0 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Meta info grid */
+.sales-return-invoice-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 1.2rem;
+  font-size: 0.82rem;
+}
+
+.sales-return-meta-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+}
+
+.sales-return-meta-value {
+  display: block;
+  font-weight: 500;
+  color: #111827;
+}
+
+/* Items table wrapper */
+.table-container {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(209, 213, 219, 0.95);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.1);
+}
+
+/* generic table style */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.82rem;
+}
+
+.table thead {
+  background: #f1f5f9;
+}
+
+.table th,
+.table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  text-align: left;
+}
+
+.table tbody tr:nth-child(even) {
+  background: rgba(248, 250, 252, 0.9);
+}
+
+.table tbody tr:hover {
+  background: #eef2ff;
+}
+
+/* =========================================
+   RETURN QUALITY RADIO
+========================================= */
+
+.sales-return-quality {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sales-return-quality-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.sales-return-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(209, 213, 219, 0.9);
+  background: rgba(248, 250, 252, 0.95);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.sales-return-radio input {
+  margin: 0;
+}
+
+.sales-return-radio-sub {
+  display: block;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* submit button row */
+.sales-return-submit-row {
+  margin-top: 0.6rem;
+}
+
+/* =========================================
+   RECENT RETURNS LIST
+========================================= */
+
+.sales-return-list-section {
+  margin-top: 0.5rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.sales-return-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sales-return-list-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* Filter pills */
+.sales-return-filter-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.sales-return-filter-label {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.sales-return-filter-pill {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: rgba(248, 250, 252, 0.95);
+  padding: 0.25rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.sales-return-filter-pill.active {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #f9fafb;
+  border-color: transparent;
+  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.5);
+}
+
+.sales-return-filter-pill:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* list states */
+.sales-return-list-loading,
+.sales-return-list-empty {
+  margin-top: 0.1rem;
+}
+
+/* table alignment */
+.sales-return-name-cell {
+  font-weight: 500;
+  font-size: 0.84rem;
+}
+
+.sales-return-amount-cell {
+  text-align: right;
+}
+
+/* quality pill in table */
+.sales-return-quality-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.sales-return-quality-pill.good {
+  background: rgba(22, 163, 74, 0.12);
+  color: #166534;
+}
+
+.sales-return-quality-pill.damaged {
+  background: rgba(248, 113, 113, 0.12);
+  color: #b91c1c;
+}
+
+.sales-return-quality-pill.unknown {
+  background: rgba(148, 163, 184, 0.12);
+  color: #475569;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 960px) {
+  .sales-return-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sales-return-header-pill {
+    align-self: flex-start;
+  }
+
+  .sales-return-invoice-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-return-list-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

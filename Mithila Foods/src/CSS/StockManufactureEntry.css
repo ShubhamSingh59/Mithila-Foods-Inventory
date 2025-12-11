@@ -1,0 +1,243 @@
+/* STOCK MANUFACTURE ENTRY – MODERN DASHBOARD STYLE */
+
+.stock-mfg {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ------------------------------
+   Header
+---------------------------------*/
+
+.stock-mfg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    135deg,
+    rgba(129, 140, 248, 0.13),
+    rgba(52, 211, 153, 0.12)
+  );
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.stock-mfg-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stock-mfg-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.stock-mfg-subtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.stock-mfg-pill {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+@media (max-width: 700px) {
+  .stock-mfg-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ------------------------------
+   Messages
+---------------------------------*/
+
+.stock-mfg-loading {
+  font-size: 0.85rem;
+}
+
+.stock-mfg-error,
+.stock-mfg-message {
+  margin-top: 0.15rem;
+}
+
+/* ------------------------------
+   Form card
+---------------------------------*/
+
+.stock-mfg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Top grid */
+
+.stock-mfg-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem 1rem;
+}
+
+@media (max-width: 900px) {
+  .stock-mfg-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.stock-mfg-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stock-mfg-field-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+/* Warehouse card */
+
+.stock-mfg-warehouse-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius-md);
+  background: radial-gradient(
+    circle at top left,
+    #ecfeff,
+    #ffffff 55%,
+    #fef9c3
+  );
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 700px) {
+  .stock-mfg-warehouse-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.stock-mfg-warehouse-label {
+  display: block;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.stock-mfg-warehouse-value {
+  display: block;
+  font-weight: 500;
+}
+
+/* Raw materials header */
+
+.stock-mfg-raw-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.2rem;
+}
+
+.stock-mfg-raw-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.stock-mfg-raw-loading,
+.stock-mfg-raw-empty {
+  font-size: 0.85rem;
+}
+
+/* ------------------------------
+   Table
+---------------------------------*/
+
+.stock-mfg-table-wrapper {
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.stock-mfg-table {
+  min-width: 780px;
+  font-size: 0.84rem;
+}
+
+/* Colourful header */
+
+.stock-mfg-table thead {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-soft),
+    var(--color-accent-soft)
+  );
+}
+
+.stock-mfg-table thead th {
+  color: #111827;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.5);
+}
+
+/* Zebra + hover */
+
+.stock-mfg-table tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.stock-mfg-table tbody tr:hover {
+  background: #e5edff;
+}
+
+/* Cells */
+
+.stock-mfg-item-cell {
+  font-weight: 500;
+  font-size: 0.86rem;
+}
+
+.stock-mfg-itemname-cell,
+.stock-mfg-uom-cell,
+.stock-mfg-wh-cell {
+  font-size: 0.82rem;
+}
+
+.stock-mfg-qty-cell {
+  text-align: right;
+}
+
+.stock-mfg-qty-input {
+  max-width: 120px;
+  text-align: right;
+}
+
+/* ------------------------------
+   Submit row
+---------------------------------*/
+
+.stock-mfg-submit-row {
+  margin-top: 0.3rem;
+  display: flex;
+  justify-content: flex-end;
+}

@@ -1,0 +1,266 @@
+/* DAILY STOCK SUMMARY – FUNKY FLOATING ROW CARD */
+
+.daily-stock-summary {
+  margin-top: 0.3rem;
+  padding: 1rem 1.2rem 1.3rem;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(
+    circle at top left,
+    #eef2ff,
+    #ffffff 55%,
+    #e0f2fe
+  );
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+/* Header row */
+
+.daily-stock-summary-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.daily-stock-summary-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.daily-stock-summary-title {
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.daily-stock-summary-subtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+/* Controls */
+
+.daily-stock-summary-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.daily-stock-summary-date-label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.daily-stock-summary-date-input {
+  min-width: 150px;
+}
+
+/* Meta */
+
+.daily-stock-summary-meta-row {
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.daily-stock-summary-meta {
+  color: var(--color-text-muted);
+}
+
+/* States */
+
+.daily-stock-summary-loading {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.daily-stock-summary-error {
+  margin-top: 0.2rem;
+}
+
+.daily-stock-summary-empty {
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
+
+/* Table wrapper */
+
+.daily-stock-summary-table-wrapper {
+  margin-top: 0.2rem;
+  overflow-x: auto;
+}
+
+/* Floating rows table */
+
+.daily-stock-summary-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px; /* space between rows */
+  font-size: 0.8rem;     /* base size for all data rows */
+}
+
+/* Header bar */
+
+.daily-stock-summary-table thead tr {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.85),
+    rgba(129, 140, 248, 0.9)
+  );
+  color: #f9fafb;
+}
+
+.daily-stock-summary-table thead th {
+  padding: 0.42rem 0.65rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+/* round header bar ends */
+.daily-stock-summary-table thead th:first-child {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+
+.daily-stock-summary-table thead th:last-child {
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+}
+
+/* Center-align numeric column headers (3–9) */
+
+.daily-stock-summary-table thead th:nth-child(3),
+.daily-stock-summary-table thead th:nth-child(4),
+.daily-stock-summary-table thead th:nth-child(5),
+.daily-stock-summary-table thead th:nth-child(6),
+.daily-stock-summary-table thead th:nth-child(7),
+.daily-stock-summary-table thead th:nth-child(8),
+.daily-stock-summary-table thead th:nth-child(9) {
+  text-align: center;
+}
+
+/* Body rows as rounded chips */
+
+.daily-stock-summary-table tbody tr {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 3px 7px rgba(148, 163, 184, 0.35);
+  border-radius: 12px; /* slimmer pill */
+  transition: transform 0.1s ease, box-shadow 0.1s ease,
+    background 0.1s ease;
+}
+
+.daily-stock-summary-table tbody tr:hover {
+  transform: translateY(-1px);
+  background: #eef2ff;
+  box-shadow: 0 7px 14px rgba(148, 163, 184, 0.55);
+}
+
+/* small row height for ALL data rows (parent + child) */
+.daily-stock-summary-table tbody td {
+  padding: 0.32rem 0.6rem;
+}
+
+/* rounding first/last cells */
+
+.daily-stock-summary-table tbody td:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.daily-stock-summary-table tbody td:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* Columns */
+
+.daily-stock-summary-warehouse {
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.daily-stock-summary-item {
+  min-width: 210px;
+}
+
+.daily-stock-summary-item-code {
+  font-weight: 500;
+}
+
+.daily-stock-summary-item-name {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+/* Center-align numeric body cells (3–9) */
+
+.daily-stock-summary-table tbody td:nth-child(3),
+.daily-stock-summary-table tbody td:nth-child(4),
+.daily-stock-summary-table tbody td:nth-child(5),
+.daily-stock-summary-table tbody td:nth-child(6),
+.daily-stock-summary-table tbody td:nth-child(7),
+.daily-stock-summary-table tbody td:nth-child(8),
+.daily-stock-summary-table tbody td:nth-child(9) {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========================= */
+/*      GROUP HEADER ROW     */
+/* ========================= */
+
+.daily-stock-summary-group-row {
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.95); /* same base bg as other rows */
+}
+
+.daily-stock-summary-group-header {
+  padding: 0.55rem 0.7rem;  /* only this row is a bit taller */
+  font-weight: 600;
+  font-size: 0.9rem;       /* bigger font just for 📦 Raw Sattu */
+}
+
+.daily-stock-summary-group-icon {
+  margin-right: 0.3rem;
+}
+
+.daily-stock-summary-group-toggle {
+  float: right;
+  font-size: 0.78rem;
+  opacity: 0.7;
+}
+
+/* ========================= */
+/*        PARENT ROWS        */
+/* ========================= */
+
+/* no special bg or font – look same as child rows */
+
+
+/* ========================= */
+/*        CHILD ROWS         */
+/* ========================= */
+
+.daily-stock-summary-row-child .daily-stock-summary-item-code {
+  padding-left: 1.5rem; /* indent for Sattu (1 Kg) etc */
+}
+
+/* marker kept if you ever want a symbol again */
+.daily-stock-summary-item-child-marker {
+  opacity: 0.7;
+}
+
+.daily-stock-summary-item-parent-label {
+  font-size: 0.75rem;
+  color: #666;
+}

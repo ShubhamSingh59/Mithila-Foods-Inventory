@@ -1,0 +1,213 @@
+/* ITEM TABLE – FUNKY FLOATING ROW CARD */
+
+.item-table-container {
+  margin-top: 0.3rem;
+  padding: 1rem 1.2rem 1.3rem;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(
+    circle at top left,
+    #ecfeff,
+    #ffffff 55%,
+    #fef3c7
+  );
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+/* Don’t change font-family here – it will inherit from the app */
+
+.item-table-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.item-table-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.item-table-title {
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.item-table-subtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+/* Meta row */
+
+.item-table-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.item-table-meta {
+  color: var(--color-text-muted);
+}
+
+/* Search bar */
+
+.search-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.search-input {
+  padding-left: 1.3rem;
+  min-width: 220px;
+}
+
+/* Table wrapper */
+
+.table-wrapper {
+  margin-top: 0.2rem;
+  overflow-x: auto;
+}
+
+/* Funky floating rows */
+
+.item-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px; /* space between rows */
+  font-size: 0.84rem;
+}
+
+/* Header row as a soft bar */
+
+.item-table thead tr {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.85),
+    rgba(56, 189, 248, 0.85)
+  );
+  color: #f9fafb;
+}
+
+.item-table thead th {
+  padding: 0.42rem 0.65rem;
+  font-weight: 600;
+  text-align: left;
+  border-bottom: none;
+}
+
+.item-table thead th:first-child {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+
+.item-table thead th:last-child {
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+}
+
+/* Body rows as rounded "chips" */
+
+.item-table tbody tr {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 10px rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
+  transition: transform 0.1s ease, box-shadow 0.1s ease,
+    background 0.1s ease;
+}
+
+.item-table tbody tr:hover {
+  transform: translateY(-1px);
+  background: #eef2ff;
+  box-shadow: 0 8px 18px rgba(148, 163, 184, 0.7);
+}
+
+.item-table td {
+  padding: 0.55rem 0.65rem;
+}
+
+/* make the "pill" effect by rounding first/last cell */
+
+.item-table tbody td:first-child {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+
+.item-table tbody td:last-child {
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+}
+
+/* Columns */
+
+.item-col-code .item-code-main {
+  font-weight: 500;
+}
+
+.item-col-name .item-name-main {
+  color: #111827;
+}
+
+/* Funky badges */
+
+.item-group-pill {
+  display: inline-flex;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #ea580c;
+  font-size: 0.76rem;
+}
+
+.item-uom-pill {
+  display: inline-flex;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.76rem;
+}
+
+/* Money column */
+
+.item-col-rate {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pagination */
+
+.pagination {
+  margin-top: 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+}
+
+.pagination-text {
+  color: var(--color-text-muted);
+}

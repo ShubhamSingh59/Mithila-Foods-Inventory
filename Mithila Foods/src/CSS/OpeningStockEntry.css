@@ -1,0 +1,229 @@
+/* OPENING STOCK – CARD WRAPPER */
+
+.opening-stock {
+  margin-top: 0.4rem;
+  padding: 1rem 1.25rem 1.3rem;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(
+    circle at top left,
+    #eef2ff,
+    #ffffff 55%,
+    #e0f2fe
+  );
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Header */
+
+.opening-stock-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.opening-stock-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.opening-stock-title {
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.opening-stock-subtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.opening-stock-pill {
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.1),
+    rgba(129, 140, 248, 0.18)
+  );
+  color: rgba(15, 23, 42, 0.8);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* States */
+
+.opening-stock-loading {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+/* Form */
+
+.opening-stock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+/* Top grid (company + date) */
+
+.opening-stock-top-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.opening-stock-top-grid .field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Rows header */
+
+.opening-stock-rows-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.opening-stock-rows-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+/* Table */
+
+.opening-stock-table-wrapper {
+  margin-top: 0.15rem;
+  overflow-x: auto;
+}
+
+.opening-stock-table {
+  width: 100%;
+  font-size: 0.84rem;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Table head */
+
+.opening-stock-table thead tr {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.9),
+    rgba(129, 140, 248, 0.94)
+  );
+  color: #f9fafb;
+}
+
+.opening-stock-table thead th {
+  padding: 0.45rem 0.6rem;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.opening-stock-table thead th:first-child {
+  border-top-left-radius: 0.75rem;
+}
+
+.opening-stock-table thead th:last-child {
+  border-top-right-radius: 0.75rem;
+}
+
+/* Table body rows */
+
+.opening-stock-table tbody tr:nth-child(even) {
+  background: rgba(248, 250, 252, 0.85);
+}
+
+.opening-stock-table tbody tr:nth-child(odd) {
+  background: #ffffff;
+}
+
+.opening-stock-table tbody td {
+  padding: 0.45rem 0.6rem;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.opening-stock-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 0.75rem;
+}
+.opening-stock-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 0.75rem;
+}
+
+/* Inputs inside table */
+
+.opening-stock-item-input,
+.opening-stock-warehouse-input {
+  width: 100%;
+}
+
+/* Rate cell with Auto button */
+
+.opening-stock-rate-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.opening-stock-rate-cell .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.opening-stock-rate-btn {
+  white-space: nowrap;
+  padding-inline: 0.55rem;
+}
+
+/* Row-level error */
+
+.opening-stock-row-error {
+  margin-top: 0.18rem;
+  font-size: 0.72rem;
+  color: #b91c1c;
+}
+
+/* Submit row */
+
+.opening-stock-submit-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.4rem;
+}
+
+/* Small text helpers */
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+/* Responsive tweaks */
+
+@media (max-width: 768px) {
+  .opening-stock-top-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .opening-stock-table thead {
+    font-size: 0.8rem;
+  }
+
+  .opening-stock-table tbody td {
+    padding: 0.4rem 0.45rem;
+  }
+}

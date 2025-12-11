@@ -1,0 +1,337 @@
+/* =========================================
+   BOM CREATE – LAYOUT
+========================================= */
+
+.bom-create {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Header row: title + pill */
+.bom-create-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.bom-create-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.bom-create-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+}
+
+.bom-create-subtitle {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #64748b;
+}
+
+.bom-create-pill {
+  align-self: center;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.7);
+  color: #92400e;
+  white-space: nowrap;
+}
+
+/* Messages */
+.bom-create-loading {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+/* =========================================
+   FORM WRAPPER
+========================================= */
+
+.bom-create-form {
+  border-radius: 18px;
+  padding: 1.2rem 1.4rem 1.3rem;
+  background:
+    radial-gradient(circle at top left, rgba(249, 115, 22, 0.15), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.18), transparent 55%),
+    #f9fafb;
+  box-shadow: 0 22px 40px rgba(15, 23, 42, 0.16);
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* =========================================
+   TOP GRID (Finished Item / Qty / Company)
+========================================= */
+
+.bom-create-top-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem 1.1rem;
+}
+
+/* Reuse shared field-group style */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.form-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+/* Inputs & selects aligned with other pages */
+.input,
+.select {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.95);
+  padding: 0.42rem 0.7rem;
+  font-size: 0.86rem;
+  background: rgba(255, 255, 255, 0.96);
+  outline: none;
+  box-sizing: border-box;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease;
+}
+
+.input:focus,
+.select:focus {
+  border-color: #ec4899;
+  box-shadow: 0 0 0 1px rgba(236, 72, 153, 0.4);
+  background: #ffffff;
+}
+
+.input-readonly {
+  background: #f1f5f9;
+  cursor: default;
+}
+
+/* =========================================
+   RAW MATERIALS HEADER
+========================================= */
+
+.bom-create-raw-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.bom-create-raw-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* =========================================
+   RAW MATERIAL ROW CARDS
+========================================= */
+
+.bom-create-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Each raw material row as a funky card */
+.bom-row-card {
+  border-radius: 14px;
+  padding: 0.85rem 0.9rem 0.9rem;
+  background:
+    linear-gradient(135deg, rgba(248, 250, 252, 0.95), rgba(249, 250, 251, 0.96)),
+    radial-gradient(circle at top right, rgba(244, 114, 182, 0.22), transparent 60%);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 10px 24px rgba(148, 163, 184, 0.42);
+}
+
+/* Row header: title + remove button */
+.bom-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.55rem;
+}
+
+.bom-row-title {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* Grid for row fields – keeps alignment but responsive */
+.bom-row-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.65rem 0.9rem;
+}
+
+/* Rate input + Auto-Fetch button in one line */
+.bom-row-rate-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.bom-row-rate-btn {
+  white-space: nowrap;
+}
+
+/* Footer: loading / error */
+.bom-row-footer {
+  margin-top: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.8rem;
+}
+
+.bom-row-error {
+  color: #b91c1c;
+}
+
+/* =========================================
+   BUTTONS – SHARED STYLE
+========================================= */
+
+.btn {
+  border-radius: 999px;
+  border: none;
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  transform: translateY(0);
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease,
+    border-color 0.12s ease;
+  white-space: nowrap;
+}
+
+.btn-sm {
+  padding: 0.3rem 0.8rem;
+  font-size: 0.78rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Primary (Create BOM) */
+.btn-primary {
+  background: linear-gradient(135deg, #ec4899, #f97316);
+  color: #ffffff;
+  box-shadow: 0 12px 26px rgba(234, 88, 12, 0.55);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 16px 34px rgba(234, 88, 12, 0.7);
+  transform: translateY(-1px);
+}
+
+/* Accent (Add Raw Material) */
+.btn-accent {
+  background: linear-gradient(135deg, #22c55e, #a3e635);
+  color: #052e16;
+  box-shadow: 0 10px 22px rgba(34, 197, 94, 0.45);
+}
+
+.btn-accent:hover:not(:disabled) {
+  box-shadow: 0 14px 30px rgba(34, 197, 94, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Outline (Auto-Fetch) */
+.btn-outline {
+  background: rgba(15, 23, 42, 0.02);
+  border: 1px solid rgba(148, 163, 184, 0.95);
+  color: #0f172a;
+  box-shadow: 0 8px 18px rgba(148, 163, 184, 0.4);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: #ec4899;
+  color: #111827;
+  box-shadow: 0 12px 24px rgba(148, 163, 184, 0.55);
+}
+
+/* Ghost (Remove row) */
+.btn-ghost {
+  background: transparent;
+  border-radius: 999px;
+  color: #9f1239;
+  padding-inline: 0.7rem;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.12);
+}
+
+/* =========================================
+   SUBMIT ROW
+========================================= */
+
+.bom-create-submit-row {
+  margin-top: 0.4rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* =========================================
+   UTILITIES
+========================================= */
+
+.text-muted {
+  color: #9ca3af;
+  font-size: 0.8rem;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 960px) {
+  .bom-create-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bom-create-pill {
+    align-self: flex-start;
+  }
+
+  .bom-create-top-grid {
+    grid-template-columns: 1fr;
+  }
+}

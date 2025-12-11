@@ -1,0 +1,441 @@
+/* =========================================
+   EASYSHIP SALES – PAGE WRAPPER
+========================================= */
+
+.sales-easyship {
+  border-radius: 18px;
+  padding: 1.4rem 1.6rem 1.6rem;
+  background:
+    radial-gradient(circle at top left, rgba(45, 212, 191, 0.18), transparent 55%),
+    radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.18), transparent 60%),
+    #f9fafb;
+  box-shadow: 0 22px 42px rgba(15, 23, 42, 0.16);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* =========================================
+   HEADER
+========================================= */
+
+.sales-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.sales-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.sales-title {
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  margin: 0;
+  color: #0f172a;
+}
+
+.sales-subtitle {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #64748b;
+}
+
+.sales-header-pill {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(37, 99, 235, 0.32);
+  color: #1d4ed8;
+  align-self: center;
+}
+
+/* =========================================
+   GENERIC TEXT / ALERTS
+========================================= */
+
+.text-muted {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.sales-loading {
+  margin-top: 0.25rem;
+}
+
+.alert {
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
+
+.alert-error {
+  background: rgba(248, 113, 113, 0.09);
+  border: 1px solid rgba(248, 113, 113, 0.7);
+  color: #b91c1c;
+}
+
+.alert-success {
+  background: rgba(34, 197, 94, 0.09);
+  border: 1px solid rgba(34, 197, 94, 0.7);
+  color: #166534;
+}
+
+/* =========================================
+   FORM LAYOUT
+========================================= */
+
+.sales-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* top 4 fields grid: Company / Date / Customer / Warehouse */
+.sales-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.4rem;
+}
+
+.sales-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.sales-field-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.form-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+/* Inputs / selects shared */
+
+.input,
+.select {
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.95);
+  padding: 0.42rem 0.7rem;
+  font-size: 0.86rem;
+  background: rgba(255, 255, 255, 0.96);
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+}
+
+.input:focus,
+.select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4);
+  background: #ffffff;
+}
+
+/* =========================================
+   BUTTONS
+========================================= */
+
+.btn {
+  border-radius: 999px;
+  border: none;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  transform: translateY(0);
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.12s ease,
+    background 0.12s ease,
+    color 0.12s ease,
+    border-color 0.12s ease;
+  white-space: nowrap;
+}
+
+.btn-sm {
+  padding: 0.3rem 0.8rem;
+  font-size: 0.78rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+  transform: none;
+}
+
+/* main CTA */
+.btn-primary {
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.5);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.6);
+  transform: translateY(-1px);
+}
+
+/* secondary / neutral */
+.btn-secondary {
+  background: #0f172a;
+  color: #e5e7eb;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.55);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.65);
+  transform: translateY(-1px);
+}
+
+/* accent: add item, etc. */
+.btn-accent {
+  background: linear-gradient(135deg, #14b8a6, #22c55e);
+  color: #022c22;
+  box-shadow: 0 12px 24px rgba(34, 197, 94, 0.45);
+}
+
+.btn-accent:hover:not(:disabled) {
+  box-shadow: 0 16px 32px rgba(34, 197, 94, 0.55);
+  transform: translateY(-1px);
+}
+
+/* ghost / subtle actions */
+.btn-ghost {
+  background: transparent;
+  color: #64748b;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(248, 250, 252, 0.95);
+  color: #0f172a;
+  border-color: #6366f1;
+  box-shadow: 0 10px 20px rgba(148, 163, 184, 0.45);
+  transform: translateY(-1px);
+}
+
+/* =========================================
+   ITEMS SECTION
+========================================= */
+
+.sales-items-header {
+  margin-top: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sales-items-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sales-items-rows {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+/* Card for each row */
+.sales-item-row-card {
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(209, 213, 219, 0.9);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.09);
+}
+
+.sales-item-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.sales-item-row-title {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+/* inner grid: Item / Qty / Rate */
+.sales-item-row-grid {
+  display: grid;
+  grid-template-columns: 2.1fr 0.9fr 1.1fr;
+  gap: 0.65rem 0.9rem;
+}
+
+.sales-item-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.24rem;
+}
+
+.sales-row-error {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #b91c1c;
+}
+
+/* submit button row */
+.sales-submit-row {
+  margin-top: 0.6rem;
+}
+
+/* =========================================
+   RECENT SALES SECTION
+========================================= */
+
+.sales-recent-section {
+  margin-top: 0.5rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.7);
+}
+
+.sales-recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.sales-recent-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sales-recent-loading,
+.sales-recent-empty {
+  margin-top: 0.2rem;
+}
+
+/* table wrapper */
+.table-container {
+  margin-top: 0.55rem;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(209, 213, 219, 0.95);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.1);
+}
+
+/* generic table style for this component */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.82rem;
+}
+
+.table thead {
+  background: #f1f5f9;
+}
+
+.table th,
+.table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  text-align: left;
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-right: 0.8rem;
+}
+
+.table tbody tr:nth-child(even) {
+  background: rgba(248, 250, 252, 0.9);
+}
+
+.table tbody tr:hover {
+  background: #eef2ff;
+}
+
+/* specific cells for better alignment */
+.sales-recent-name-cell {
+  font-weight: 500;
+  font-size: 0.84rem;
+}
+
+.sales-recent-amount-cell,
+.sales-recent-qty-cell,
+.sales-recent-actions-cell {
+  text-align: right;
+}
+
+/* status pill */
+.sales-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.sales-status-pill.paid {
+  background: rgba(22, 163, 74, 0.12);
+  color: #166534;
+}
+
+.sales-status-pill.unpaid {
+  background: rgba(248, 113, 113, 0.12);
+  color: #b91c1c;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 960px) {
+  .sales-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-item-row-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sales-header-pill {
+    align-self: flex-start;
+  }
+
+  .sales-recent-name-cell,
+  .sales-recent-customer-cell {
+    word-break: break-all;
+  }
+}
