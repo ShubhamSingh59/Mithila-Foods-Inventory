@@ -2419,8 +2419,8 @@ import {
   getPurchaseOrderPdfUrl,
   getPurchaseOrderWithItems,
   updatePurchaseOrder,
-  getItemSuppliers, // mapping from Item "Supplier Items" child table
-  deleteDoc,        // 👈 NEW: to cancel/delete draft PO
+  getItemSuppliers,      // mapping from Item "Supplier Items" child table
+  cancelPurchaseOrder,   // 👈 NEW: use /api/cancel_doc
 } from "./erpBackendApi";
 import PurchaseOrderList from "./PurchaseOrderList";
 import "../CSS/PurchaseOrder.css";
@@ -2451,7 +2451,6 @@ function PurchaseOrder() {
   const [submitting, setSubmitting] = useState(false);
   const [submittingPo, setSubmittingPo] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
-  const [cancellingPo, setCancellingPo] = useState(false); // 👈 NEW
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -2813,43 +2812,39 @@ function PurchaseOrder() {
     }
   }
 
-  // -------------------- Cancel / delete DRAFT PO --------------------
+  // -------------------- Cancel PO (Draft or Submitted) --------------------
   async function handleCancelDraftPo() {
     setError("");
     setMessage("");
 
     const poName = editingPoName || lastPoName;
     if (!poName) {
-      setError("No draft Purchase Order selected to cancel.");
+      setError("No Purchase Order selected to cancel.");
       return;
     }
 
+    const ok = window.confirm(
+      `Cancel Purchase Order ${poName}? This will mark it as Cancelled in ERPNext.`
+    );
+    if (!ok) return;
+
     try {
-      setCancellingPo(true);
-      // For draft POs (docstatus 0), "cancel" = delete
-      await deleteDoc("Purchase Order", poName);
-
-      setMessage(`Draft Purchase Order cancelled: ${poName}`);
-
-      // reset local state
+      await cancelPurchaseOrder(poName); // uses /api/cancel_doc
+      setMessage(`Purchase Order ${poName} cancelled in ERPNext.`);
       setEditingPoName("");
       setLastPoName("");
 
+      // optional: reset form fields
       setQty("1.00");
       setRate("0.00");
       setNotes("");
-      setWarehouse("Raw Material - MF");
-      setPoDate(todayStr);
-      setReceivedByDate(todayStr);
     } catch (err) {
       console.error(err);
       setError(
         err.response?.data?.error?.message ||
           err.message ||
-          "Failed to cancel draft Purchase Order"
+          "Failed to cancel Purchase Order (ERPNext usually only cancels submitted POs)."
       );
-    } finally {
-      setCancellingPo(false);
     }
   }
 
@@ -3069,14 +3064,10 @@ function PurchaseOrder() {
               <button
                 type="button"
                 onClick={handleCancelDraftPo}
-                disabled={
-                  cancellingPo ||
-                  loadingLists ||
-                  (!editingPoName && !lastPoName)
-                }
-                className="po-btn po-btn-outline"
+                disabled={loadingLists}
+                className="po-btn po-btn-outline po-btn-danger"
               >
-                {cancellingPo ? "Cancelling..." : "Cancel Draft"}
+                Cancel PO
               </button>
             </div>
           </div>

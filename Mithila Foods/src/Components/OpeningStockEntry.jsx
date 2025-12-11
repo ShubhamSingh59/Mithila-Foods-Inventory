@@ -254,7 +254,7 @@ function OpeningStockEntry() {
       purpose: "Opening Stock",
       company,
       posting_date: postingDate,
-      expense_account: DEFAULT_DIFFERENCE_ACCOUNT, // <-- ACCOUNT
+      difference_account: DEFAULT_DIFFERENCE_ACCOUNT, // <-- ACCOUNT
       // (optional but okay)
       is_opening: "Yes",
       items: itemsPayload,
