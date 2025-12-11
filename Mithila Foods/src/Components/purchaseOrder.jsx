@@ -1767,6 +1767,7 @@
 //  getPurchaseOrderPdfUrl,
 //  getPurchaseOrderWithItems,
 //  updatePurchaseOrder,
+//  deletePurchaseOrder,
 //  getItemSuppliers, // mapping from Item "Supplier Items" child table
 //} from "./erpBackendApi";
 //import PurchaseOrderList from "./PurchaseOrderList";
@@ -2191,7 +2192,43 @@
 //      setEmailSending(false);
 //    }
 //  }
+//  async function handleDeleteDraftPo() {
+//    setError("");
+//    setMessage("");
 
+//    const poName = editingPoName || lastPoName;
+//    if (!poName) {
+//      setError("No draft Purchase Order selected to delete.");
+//      return;
+//    }
+
+//    const ok = window.confirm(
+//      `Delete draft Purchase Order ${poName}? This cannot be undone.`
+//    );
+//    if (!ok) return;
+
+//    try {
+//      setDeletingPo(true);
+//      await deletePurchaseOrder(poName);
+//      setMessage(`Draft Purchase Order deleted: ${poName}`);
+
+//      // reset form state after deletion
+//      setEditingPoName("");
+//      setLastPoName("");
+//      setQty("1.00");
+//      setRate("0.00");
+//      setNotes("");
+//    } catch (err) {
+//      console.error(err);
+//      setError(
+//        err.response?.data?.error?.message ||
+//          err.message ||
+//          "Failed to delete draft Purchase Order"
+//      );
+//    } finally {
+//      setDeletingPo(false);
+//    }
+//  }
 //  return (
 //    <div className="po-page">
 //      <div className="po-card po-card-main">
@@ -2371,6 +2408,16 @@
 //              >
 //                {submittingPo ? "Submitting..." : "Submit Purchase Order"}
 //              </button>
+//              {editingPoName && (
+//                <button
+//                  type="button"
+//                  onClick={handleDeleteDraftPo}
+//                  disabled={deletingPo || loadingLists}
+//                  className="po-btn po-btn-danger"
+//                >
+//                  {deletingPo ? "Deleting..." : "Delete Draft PO"}
+//                </button>
+//              )}
 //            </div>
 //          </div>
 //        </form>
@@ -2419,8 +2466,8 @@ import {
   getPurchaseOrderPdfUrl,
   getPurchaseOrderWithItems,
   updatePurchaseOrder,
-  getItemSuppliers,         // mapping from Item "Supplier Items" child table
-  deletePurchaseOrder,      // 👈 NEW
+  getItemSuppliers,     // mapping from Item "Supplier Items" child table
+  deletePurchaseOrder,  // ⬅️ NEW: delete helper
 } from "./erpBackendApi";
 import PurchaseOrderList from "./PurchaseOrderList";
 import "../CSS/PurchaseOrder.css";
@@ -2450,8 +2497,8 @@ function PurchaseOrder() {
   const [loadingLists, setLoadingLists] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submittingPo, setSubmittingPo] = useState(false);
-  const [deletingPo, setDeletingPo] = useState(false);    // 👈 NEW
   const [emailSending, setEmailSending] = useState(false);
+  const [deletingDraft, setDeletingDraft] = useState(false); // ⬅️ NEW
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -2473,7 +2520,7 @@ function PurchaseOrder() {
         setItems(itemsData || []);
         setItemSuppliers(itemSupData || []);
 
-        // ---- INITIAL DEFAULTS (fixed logic) ----
+        // ---- INITIAL DEFAULTS ----
         if (suppliersData && suppliersData.length > 0) {
           const s0 = suppliersData[0];
           const displayName = s0.supplier_name || s0.name;
@@ -2482,7 +2529,7 @@ function PurchaseOrder() {
           let initialItemCode = "";
 
           if (itemsData && itemsData.length > 0) {
-            // find items that this supplier actually supplies
+            // items that this supplier actually supplies
             const rowsForS0 = (itemSupData || []).filter(
               (row) => row.supplier === s0.name
             );
@@ -2598,22 +2645,7 @@ function PurchaseOrder() {
       setSupplierEmail("");
     }
 
-    // Auto-adjust item if current item is not supplied by this supplier
-    const supplierId = s?.name;
-    if (supplierId && items.length) {
-      const allowedItemsSet = supplierToItemNames.get(supplierId);
-      if (allowedItemsSet && allowedItemsSet.size) {
-        const currentItemAllowed = itemCode && allowedItemsSet.has(itemCode);
-        if (!currentItemAllowed) {
-          const firstAllowedItem = items.find((it) =>
-            allowedItemsSet.has(it.name)
-          );
-          if (firstAllowedItem) {
-            setItemCode(firstAllowedItem.name);
-          }
-        }
-      }
-    }
+    // ❌ No auto-change of item. Only the suggestion list is filtered.
   }
 
   // -------------------- Item change --------------------
@@ -2621,24 +2653,7 @@ function PurchaseOrder() {
     const value = e.target.value;
     setItemCode(value);
 
-    if (!value) return;
-
-    // If item has specific suppliers, auto-pick one if current supplier not allowed
-    const allowedSupSet = itemToSupplierNames.get(value);
-    if (allowedSupSet && allowedSupSet.size) {
-      const currentSupplierOk =
-        selectedSupplierId && allowedSupSet.has(selectedSupplierId);
-
-      if (!currentSupplierOk) {
-        const firstAllowedSupId = Array.from(allowedSupSet)[0];
-        const supRow = suppliers.find((s) => s.name === firstAllowedSupId);
-        if (supRow) {
-          const displaySupplier = supRow.supplier_name || supRow.name;
-          setSupplier(displaySupplier);
-          setSupplierEmail(supRow.supplier_email || supRow.email_id || "");
-        }
-      }
-    }
+    // ❌ No auto-change of supplier. Only the suggestion list is filtered.
   }
 
   // -------------------- Load existing draft PO for editing --------------------
@@ -2715,15 +2730,8 @@ function PurchaseOrder() {
       return;
     }
     const supplierId = selectedSupplier.name;
-
-    // Validate: if item is linked to specific suppliers, chosen supplier must be one of them
-    const allowedSupSet = itemToSupplierNames.get(itemCode);
-    if (allowedSupSet && allowedSupSet.size && !allowedSupSet.has(supplierId)) {
-      setError(
-        "This item is linked to different supplier(s) in the Item form. Please select one of those suppliers or update the Item."
-      );
-      return;
-    }
+    // ✅ No hard validation against Item Supplier mapping.
+    // The mapping only filters suggestions; any combination is allowed.
 
     try {
       setSubmitting(true);
@@ -2800,7 +2808,7 @@ function PurchaseOrder() {
       setSubmittingPo(true);
       await submitDoc("Purchase Order", poName);
       setMessage(`Purchase Order submitted: ${poName}`);
-      setEditingPoName(""); // after submit, no longer a draft
+      setEditingPoName(""); // after submit, no more draft
     } catch (err) {
       console.error(err);
       setError(
@@ -2813,42 +2821,34 @@ function PurchaseOrder() {
     }
   }
 
-  // -------------------- DELETE Draft PO (instead of cancel) --------------------
+  // -------------------- Delete draft PO (new) --------------------
   async function handleDeleteDraftPo() {
     setError("");
     setMessage("");
 
-    const poName = editingPoName || lastPoName;
+    const poName = editingPoName; // only drafts are deletable
     if (!poName) {
       setError("No draft Purchase Order selected to delete.");
       return;
     }
 
-    const ok = window.confirm(
-      `Delete draft Purchase Order ${poName}? This cannot be undone.`
-    );
-    if (!ok) return;
-
     try {
-      setDeletingPo(true);
+      setDeletingDraft(true);
       await deletePurchaseOrder(poName);
       setMessage(`Draft Purchase Order deleted: ${poName}`);
 
-      // reset form state after deletion
+      // Clear draft context
       setEditingPoName("");
       setLastPoName("");
-      setQty("1.00");
-      setRate("0.00");
-      setNotes("");
     } catch (err) {
-      console.error(err);
+      console.error("Delete draft PO error:", err);
       setError(
         err.response?.data?.error?.message ||
           err.message ||
           "Failed to delete draft Purchase Order"
       );
     } finally {
-      setDeletingPo(false);
+      setDeletingDraft(false);
     }
   }
 
@@ -2885,7 +2885,6 @@ function PurchaseOrder() {
     }
   }
 
-  // -------------------- JSX --------------------
   return (
     <div className="po-page">
       <div className="po-card po-card-main">
@@ -3066,17 +3065,14 @@ function PurchaseOrder() {
                 {submittingPo ? "Submitting..." : "Submit Purchase Order"}
               </button>
 
-              {/* 👇 NEW: delete button only when we're editing a draft */}
-              {editingPoName && (
-                <button
-                  type="button"
-                  onClick={handleDeleteDraftPo}
-                  disabled={deletingPo || loadingLists}
-                  className="po-btn po-btn-danger"
-                >
-                  {deletingPo ? "Deleting..." : "Delete Draft PO"}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleDeleteDraftPo}
+                disabled={deletingDraft || loadingLists || !editingPoName}
+                className="po-btn po-btn-outline"
+              >
+                {deletingDraft ? "Deleting..." : "Delete Draft PO"}
+              </button>
             </div>
           </div>
         </form>

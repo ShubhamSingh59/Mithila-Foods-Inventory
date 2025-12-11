@@ -1,7 +1,7 @@
 // src/erpBackendApi.js
 import axios from "axios";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
 {/* Below function gives the List of the all docs present in erpNext*/}
 export async function getDoctypeList(doctype, params = {}) {
@@ -887,19 +887,18 @@ export async function createStandaloneSalesReturnInvoice({
 }
 
 
-export async function deleteDoc(doctype, name) {
-  const res = await axios.delete(
-    `${BACKEND_URL}/api/doc/${encodeURIComponent(doctype)}/${encodeURIComponent(
-      name
-    )}`
+// Delete a Purchase Order (usually draft) using frappe.client.delete
+export async function deletePurchaseOrder(name) {
+  const res = await axios.post(
+    `${BACKEND_URL}/api/method/frappe.client.delete`,
+    {
+      doctype: "Purchase Order",
+      name,
+    }
   );
-  return res.data; // { message: ... } or { data: ... } depending on your backend
+  return res.data;
 }
 
-// --- Delete a Purchase Order (draft only) ---
-export async function deletePurchaseOrder(name) {
-  return deleteDoc("Purchase Order", name);
-}
 export async function updateBOM(name, payload) {
   return updateDoc("BOM", name, payload);
 }
