@@ -10,8 +10,8 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
-    https://mithila-foods-inventory-1.onrender.com
+    origin: ["http://localhost:5173",
+    "https://mithila-foods-inventory-1.onrender.com",]
   })
 );
 
