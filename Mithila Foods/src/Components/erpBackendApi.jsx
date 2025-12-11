@@ -887,6 +887,15 @@ export async function createStandaloneSalesReturnInvoice({
 }
 
 
+export async function deleteDoc(doctype, name) {
+  const res = await axios.delete(
+    `${BACKEND_URL}/api/doc/${encodeURIComponent(doctype)}/${encodeURIComponent(
+      name
+    )}`
+  );
+  return res.data; // keep same style as getDoc/createDoc
+}
+
 export async function updateBOM(name, payload) {
   return updateDoc("BOM", name, payload);
 }

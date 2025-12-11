@@ -13,7 +13,7 @@ import {
 import "../CSS/OpeningStockEntry.css";
 
 const DEFAULT_WH = "Raw Material - MF";
-const DEFAULT_DIFFERENCE_ACCOUNT = "Temporary Opening - MF";
+const DEFAULT_DIFFERENCE_ACCOUNT = "Temporary Accounts - MF";
 
 const BASIS_OPTIONS = [
   { value: "valuation", label: "Valuation Rate" },
@@ -254,7 +254,7 @@ function OpeningStockEntry() {
       purpose: "Opening Stock",
       company,
       posting_date: postingDate,
-      difference_account: DEFAULT_DIFFERENCE_ACCOUNT, // <-- ACCOUNT
+      expense_account: DEFAULT_DIFFERENCE_ACCOUNT, // <-- ACCOUNT
       // (optional but okay)
       is_opening: "Yes",
       items: itemsPayload,
