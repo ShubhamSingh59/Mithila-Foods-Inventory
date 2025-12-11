@@ -13,6 +13,7 @@ import {
 import "../CSS/OpeningStockEntry.css";
 
 const DEFAULT_WH = "Raw Material - MF";
+const DEFAULT_DIFFERENCE_ACCOUNT = "Temporary Opening - MF";
 
 const BASIS_OPTIONS = [
   { value: "valuation", label: "Valuation Rate" },
@@ -80,7 +81,7 @@ function OpeningStockEntry() {
         console.error(err);
         setError(
           err.message ||
-            "Failed to load items / price lists / companies / warehouses"
+          "Failed to load items / price lists / companies / warehouses"
         );
       } finally {
         setLoadingInit(false);
@@ -118,12 +119,12 @@ function OpeningStockEntry() {
       prev.map((r) =>
         r.id === rowId
           ? {
-              ...r,
-              item_code: itemCode,
-              item_name: item ? item.item_name : "",
-              uom,
-              rowError: "",
-            }
+            ...r,
+            item_code: itemCode,
+            item_name: item ? item.item_name : "",
+            uom,
+            rowError: "",
+          }
           : r
       )
     );
@@ -253,8 +254,12 @@ function OpeningStockEntry() {
       purpose: "Opening Stock",
       company,
       posting_date: postingDate,
+      difference_account: DEFAULT_DIFFERENCE_ACCOUNT, // <-- ACCOUNT
+      // (optional but okay)
+      is_opening: "Yes",
       items: itemsPayload,
     };
+
 
     try {
       setSaving(true);
@@ -271,8 +276,8 @@ function OpeningStockEntry() {
       console.error(err);
       setError(
         err.response?.data?.error?.message ||
-          err.message ||
-          "Failed to create/submit Stock Reconciliation"
+        err.message ||
+        "Failed to create/submit Stock Reconciliation"
       );
     } finally {
       setSaving(false);
