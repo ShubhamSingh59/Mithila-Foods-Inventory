@@ -893,9 +893,13 @@ export async function deleteDoc(doctype, name) {
       name
     )}`
   );
-  return res.data; // keep same style as getDoc/createDoc
+  return res.data; // { message: ... } or { data: ... } depending on your backend
 }
 
+// --- Delete a Purchase Order (draft only) ---
+export async function deletePurchaseOrder(name) {
+  return deleteDoc("Purchase Order", name);
+}
 export async function updateBOM(name, payload) {
   return updateDoc("BOM", name, payload);
 }

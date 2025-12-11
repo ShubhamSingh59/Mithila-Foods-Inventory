@@ -2419,8 +2419,8 @@ import {
   getPurchaseOrderPdfUrl,
   getPurchaseOrderWithItems,
   updatePurchaseOrder,
-  getItemSuppliers,      // mapping from Item "Supplier Items" child table
-  cancelPurchaseOrder,   // 👈 NEW: use /api/cancel_doc
+  getItemSuppliers,         // mapping from Item "Supplier Items" child table
+  deletePurchaseOrder,      // 👈 NEW
 } from "./erpBackendApi";
 import PurchaseOrderList from "./PurchaseOrderList";
 import "../CSS/PurchaseOrder.css";
@@ -2450,6 +2450,7 @@ function PurchaseOrder() {
   const [loadingLists, setLoadingLists] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submittingPo, setSubmittingPo] = useState(false);
+  const [deletingPo, setDeletingPo] = useState(false);    // 👈 NEW
   const [emailSending, setEmailSending] = useState(false);
 
   const [error, setError] = useState("");
@@ -2492,7 +2493,7 @@ function PurchaseOrder() {
                 allowedSet.has(it.name)
               );
               if (firstAllowedItem) {
-                initialItemCode = firstAllowedItem.name; // ✅ item really from this supplier
+                initialItemCode = firstAllowedItem.name; // item really from this supplier
               }
             }
 
@@ -2799,7 +2800,7 @@ function PurchaseOrder() {
       setSubmittingPo(true);
       await submitDoc("Purchase Order", poName);
       setMessage(`Purchase Order submitted: ${poName}`);
-      setEditingPoName("");
+      setEditingPoName(""); // after submit, no longer a draft
     } catch (err) {
       console.error(err);
       setError(
@@ -2812,29 +2813,30 @@ function PurchaseOrder() {
     }
   }
 
-  // -------------------- Cancel PO (Draft or Submitted) --------------------
-  async function handleCancelDraftPo() {
+  // -------------------- DELETE Draft PO (instead of cancel) --------------------
+  async function handleDeleteDraftPo() {
     setError("");
     setMessage("");
 
     const poName = editingPoName || lastPoName;
     if (!poName) {
-      setError("No Purchase Order selected to cancel.");
+      setError("No draft Purchase Order selected to delete.");
       return;
     }
 
     const ok = window.confirm(
-      `Cancel Purchase Order ${poName}? This will mark it as Cancelled in ERPNext.`
+      `Delete draft Purchase Order ${poName}? This cannot be undone.`
     );
     if (!ok) return;
 
     try {
-      await cancelPurchaseOrder(poName); // uses /api/cancel_doc
-      setMessage(`Purchase Order ${poName} cancelled in ERPNext.`);
+      setDeletingPo(true);
+      await deletePurchaseOrder(poName);
+      setMessage(`Draft Purchase Order deleted: ${poName}`);
+
+      // reset form state after deletion
       setEditingPoName("");
       setLastPoName("");
-
-      // optional: reset form fields
       setQty("1.00");
       setRate("0.00");
       setNotes("");
@@ -2843,8 +2845,10 @@ function PurchaseOrder() {
       setError(
         err.response?.data?.error?.message ||
           err.message ||
-          "Failed to cancel Purchase Order (ERPNext usually only cancels submitted POs)."
+          "Failed to delete draft Purchase Order"
       );
+    } finally {
+      setDeletingPo(false);
     }
   }
 
@@ -2881,6 +2885,7 @@ function PurchaseOrder() {
     }
   }
 
+  // -------------------- JSX --------------------
   return (
     <div className="po-page">
       <div className="po-card po-card-main">
@@ -3061,14 +3066,17 @@ function PurchaseOrder() {
                 {submittingPo ? "Submitting..." : "Submit Purchase Order"}
               </button>
 
-              <button
-                type="button"
-                onClick={handleCancelDraftPo}
-                disabled={loadingLists}
-                className="po-btn po-btn-outline po-btn-danger"
-              >
-                Cancel PO
-              </button>
+              {/* 👇 NEW: delete button only when we're editing a draft */}
+              {editingPoName && (
+                <button
+                  type="button"
+                  onClick={handleDeleteDraftPo}
+                  disabled={deletingPo || loadingLists}
+                  className="po-btn po-btn-danger"
+                >
+                  {deletingPo ? "Deleting..." : "Delete Draft PO"}
+                </button>
+              )}
             </div>
           </div>
         </form>
