@@ -1,7 +1,7 @@
 // src/erpBackendApi.js
 import axios from "axios";
 
-const BACKEND_URL = "http://localhost:4000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 {/* Below function gives the List of the all docs present in erpNext*/}
 export async function getDoctypeList(doctype, params = {}) {
