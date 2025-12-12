@@ -2,6 +2,15 @@
 import axios from "axios";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+const STOCK_AFFECTING_DOCTYPES = new Set([
+  "Stock Reconciliation",
+  "Stock Entry",
+  "Purchase Receipt",
+  "Delivery Note",
+  "Sales Invoice",     
+  "Purchase Invoice",  
+]);
+
 
 {/* Below function gives the List of the all docs present in erpNext*/}
 export async function getDoctypeList(doctype, params = {}) {
@@ -27,11 +36,14 @@ export async function createDoc(doctype, payload) {
 }
 
 export async function submitDoc(doctype, name) {
-  const res = await axios.post(`${BACKEND_URL}/api/submit`, {
-    doctype,
-    name,
-  });
-  return res.data; // { message: { ...submitted doc... } }
+  const res = await axios.post(`${BACKEND_URL}/api/submit`, { doctype, name });
+
+  // ✅ auto refresh everywhere after stock-affecting submit
+  if (STOCK_AFFECTING_DOCTYPES.has(doctype)) {
+    emitStockChanged();
+  }
+
+  return res.data;
 }
 
 export async function getSuppliers() {
@@ -901,4 +913,18 @@ export async function deletePurchaseOrder(name) {
 
 export async function updateBOM(name, payload) {
   return updateDoc("BOM", name, payload);
+}
+
+// --- stock change event bus ---
+const stockListeners = new Set();
+
+export function onStockChanged(fn) {
+  stockListeners.add(fn);
+  return () => stockListeners.delete(fn);
+}
+
+export function emitStockChanged() {
+  stockListeners.forEach((fn) => {
+    try { fn(); } catch (e) { console.error(e); }
+  });
 }

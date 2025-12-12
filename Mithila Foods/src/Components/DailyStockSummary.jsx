@@ -3154,7 +3154,8 @@
 
 
 // src/Components/DailyStockSummary.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useStockAutoRefresh } from "./useStockAutoRefresh";
 import {
   getStockLedgerUpToDate,
   getAllItems,
@@ -3166,6 +3167,7 @@ import "../CSS/DailyStockSummary.css";
 // Must match GOOD_RETURN_WH used in createSalesReturn / stock-return logic
 const GOOD_RETURN_WH = "Finished Goods - MF";
 
+
 function DailyStockSummary() {
   const [date, setDate] = useState(
     new Date().toISOString().slice(0, 10) // today
@@ -3175,6 +3177,20 @@ function DailyStockSummary() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState(""); // 🔍 search text
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      // your existing fetch logic...
+      // const ledger = await getStockLedgerUpToDate(date);
+      // setRows(...)
+    } catch (e) {
+      setError(e.message || "Failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }, [date]); // keep your dependencies
+  useStockAutoRefresh(load);
 
   function makeTs(entry) {
     // "YYYY-MM-DD HH:MM:SS"
@@ -3771,75 +3787,75 @@ function DailyStockSummary() {
   }
 
   function downloadSummaryAsCsv() {
-  // Use what user is currently seeing (after search filter)
-  const dataRows = [];
+    // Use what user is currently seeing (after search filter)
+    const dataRows = [];
 
-  displayRows.forEach((r) => {
-    // Skip group headers
-    if (r.is_group_header) return;
+    displayRows.forEach((r) => {
+      // Skip group headers
+      if (r.is_group_header) return;
 
-    // Skip rows where ALL numeric values are zero
-    if (isAllZeroRow(r)) return;
+      // Skip rows where ALL numeric values are zero
+      if (isAllZeroRow(r)) return;
 
-    dataRows.push({
-      Warehouse: r.warehouse || "",
-      "Item Code": r.item_code || "",
-      "Item Name": r.item_name || "",
-      "Opening Stock": r.opening_stock || 0,
-      "In Qty (on date)": r.in_qty || 0,
-      "Out Qty (on date)": r.out_qty || 0,
-      "Adjustment (Reconciliation)": r.adjustment_qty || 0,
-      "Sold Qty (on date)": r.sold_qty || 0,
-      "Return Qty (Good, on date)": r.good_return_qty || 0,
-      "Current Stock (now)": r.current_stock || 0,
+      dataRows.push({
+        Warehouse: r.warehouse || "",
+        "Item Code": r.item_code || "",
+        "Item Name": r.item_name || "",
+        "Opening Stock": r.opening_stock || 0,
+        "In Qty (on date)": r.in_qty || 0,
+        "Out Qty (on date)": r.out_qty || 0,
+        "Adjustment (Reconciliation)": r.adjustment_qty || 0,
+        "Sold Qty (on date)": r.sold_qty || 0,
+        "Return Qty (Good, on date)": r.good_return_qty || 0,
+        "Current Stock (now)": r.current_stock || 0,
+      });
     });
-  });
 
-  if (dataRows.length === 0) {
-    window.alert("Nothing to download (all rows are zero).");
-    return;
+    if (dataRows.length === 0) {
+      window.alert("Nothing to download (all rows are zero).");
+      return;
+    }
+
+    const headers = Object.keys(dataRows[0]);
+
+    const lines = [];
+
+    // ✅ header row (now properly quoted so commas are safe)
+    lines.push(
+      headers
+        .map((h) => {
+          const str = String(h).replace(/"/g, '""');
+          return `"${str}"`;
+        })
+        .join(",")
+    );
+
+    // data rows
+    dataRows.forEach((row) => {
+      const line = headers
+        .map((h) => {
+          const raw = row[h] ?? "";
+          const str = String(raw).replace(/"/g, '""'); // escape quotes
+          return `"${str}"`;
+        })
+        .join(",");
+      lines.push(line);
+    });
+
+    const csv = lines.join("\n");
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `daily-stock-summary-${date}.csv`; // opens in Excel
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
-
-  const headers = Object.keys(dataRows[0]);
-
-  const lines = [];
-
-  // ✅ header row (now properly quoted so commas are safe)
-  lines.push(
-    headers
-      .map((h) => {
-        const str = String(h).replace(/"/g, '""');
-        return `"${str}"`;
-      })
-      .join(",")
-  );
-
-  // data rows
-  dataRows.forEach((row) => {
-    const line = headers
-      .map((h) => {
-        const raw = row[h] ?? "";
-        const str = String(raw).replace(/"/g, '""'); // escape quotes
-        return `"${str}"`;
-      })
-      .join(",");
-    lines.push(line);
-  });
-
-  const csv = lines.join("\n");
-  const blob = new Blob([csv], {
-    type: "text/csv;charset=utf-8;",
-  });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `daily-stock-summary-${date}.csv`; // opens in Excel
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
 
   return (
     <div className="daily-stock-summary">
@@ -3984,9 +4000,8 @@ function DailyStockSummary() {
 
                 return (
                   <tr
-                    key={`${r.warehouse}||${r.item_code}||${
-                      r.parent_item_code || ""
-                    }`}
+                    key={`${r.warehouse}||${r.item_code}||${r.parent_item_code || ""
+                      }`}
                     className={[
                       isParent ? "daily-stock-summary-row-parent" : "",
                       isChild ? "daily-stock-summary-row-child" : "",
