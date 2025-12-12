@@ -1,0 +1,9 @@
+[build]
+builder = "NIXPACKS"
+
+[env]
+NODE_ENV = "production"
+
+[processes]
+# Choose what to run
+web = "cd erpnext-backend && npm install && npm start"
