@@ -532,7 +532,7 @@
 
 
 // src/App.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 // Screens
 import DailyStockSummary from "./Components/DailyStockSummary";
@@ -548,19 +548,27 @@ import StockReconciliation from "./Components/StockReconciliation";
 import StockTransfer from "./Components/StockTransfer";
 import SupplierList from "./Components/SupplierList";
 import OpeningStockEntry from "./Components/OpeningStockEntry";
+import WorkOrderFlow from "./Components/WorkOrderFlow";
+import WOTracking from "./Components/WOTracking";
+import Analytics from "./Components/Analytics";
 
 import "./App.css";
 
 const VIEWS = {
   DAILY_STOCK: "DAILY_STOCK",
-  ITEMS: "ITEMS",
-  BOM: "BOM",
   PURCHASE: "PURCHASE",
-  SALES: "SALES",
   MFG: "MFG",
   SUPPLIERS: "SUPPLIERS",
   OPENING_STOCK: "OPENING_STOCK",
+  WORK_ORDER_FLOW: "WORK_ORDER_FLOW",
+  WO_TRACKING: "WO_TRACKING",
+  ANALYTICS: "ANALYTICS",
+
+  // ✅ split sales into two screens
+  SALES_EASYSHIP: "SALES_EASYSHIP",
+  SALES_RETURN: "SALES_RETURN",
 };
+
 
 function App() {
   const [activeView, setActiveView] = useState(VIEWS.DAILY_STOCK);
@@ -577,6 +585,19 @@ function App() {
 
   const isMounted = (view) => mountedViews.includes(view);
   const isActive = (view) => activeView === view;
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    // If user clicked email link, we’ll get either view=PURCHASE
+    // OR at least itemCode present
+    const viewParam = params.get("view");
+    const hasPOParams = params.get("itemCode") || params.get("qty") || params.get("warehouse");
+
+    if (viewParam === "PURCHASE" || hasPOParams) {
+      handleViewChange(VIEWS.PURCHASE);
+    }
+  }, []);
+
 
   return (
     <div className="app-shell">
@@ -607,7 +628,7 @@ function App() {
               Daily Stock Summary
             </button>
 
-            <button
+            {/*<button
               type="button"
               className={
                 "app-nav-link" +
@@ -617,10 +638,10 @@ function App() {
             >
               <span className="app-nav-dot app-nav-dot-purple" />
               Item Master
-            </button>
+            </button>*/}
           </div>
 
-          {/* 2. BOM */}
+          {/*2. BOM
           <div className="app-nav-group">
             <div className="app-nav-group-label">Material List</div>
             <button
@@ -633,7 +654,7 @@ function App() {
               <span className="app-nav-dot app-nav-dot-amber" />
               Create Material List
             </button>
-          </div>
+          </div>*/}
 
           {/* 3. Purchase */}
           <div className="app-nav-group">
@@ -652,20 +673,29 @@ function App() {
           </div>
 
           {/* 4. Sales */}
+          {/* 4. Sales */}
           <div className="app-nav-group">
             <div className="app-nav-group-label">Sales</div>
+
             <button
               type="button"
-              className={
-                "app-nav-link" +
-                (activeView === VIEWS.SALES ? " active" : "")
-              }
-              onClick={() => handleViewChange(VIEWS.SALES)}
+              className={"app-nav-link" + (isActive(VIEWS.SALES_EASYSHIP) ? " active" : "")}
+              onClick={() => handleViewChange(VIEWS.SALES_EASYSHIP)}
             >
               <span className="app-nav-dot app-nav-dot-pink" />
-              EasyShip & Returns
+              EasyShip
+            </button>
+
+            <button
+              type="button"
+              className={"app-nav-link" + (isActive(VIEWS.SALES_RETURN) ? " active" : "")}
+              onClick={() => handleViewChange(VIEWS.SALES_RETURN)}
+            >
+              <span className="app-nav-dot app-nav-dot-amber" />
+              Sales Return
             </button>
           </div>
+
 
           {/* 5. Manufacturing & Adjustments */}
           <div className="app-nav-group">
@@ -694,6 +724,25 @@ function App() {
               <span className="app-nav-dot app-nav-dot-amber" />
               Opening Stock
             </button>
+            {/* ✅ NEW: Work Order Flow */}
+            <button
+              type="button"
+              className={"app-nav-link" + (isActive(VIEWS.WORK_ORDER_FLOW) ? " active" : "")}
+              onClick={() => handleViewChange(VIEWS.WORK_ORDER_FLOW)}
+            >
+              <span className="app-nav-dot app-nav-dot-teal" />
+              Work Order Flow
+            </button>
+
+            {/* ✅ NEW: WO Tracking */}
+            <button
+              type="button"
+              className={"app-nav-link" + (isActive(VIEWS.WO_TRACKING) ? " active" : "")}
+              onClick={() => handleViewChange(VIEWS.WO_TRACKING)}
+            >
+              <span className="app-nav-dot app-nav-dot-blue" />
+              WO Tracking
+            </button>
           </div>
 
           {/* 6. Suppliers */}
@@ -711,6 +760,23 @@ function App() {
               Supplier List
             </button>
           </div>
+          {/* 7. Analytics */}
+          <div className="app-nav-group">
+            <div className="app-nav-group-label">Analytics</div>
+
+            <button
+              type="button"
+              className={
+                "app-nav-link" +
+                (activeView === VIEWS.ANALYTICS ? " active" : "")
+              }
+              onClick={() => handleViewChange(VIEWS.ANALYTICS)}
+            >
+              <span className="app-nav-dot app-nav-dot-purple" />
+              Company Analytics
+            </button>
+          </div>
+
         </nav>
 
         <div className="app-sidebar-footer">
@@ -735,7 +801,7 @@ function App() {
           </div>
         )}
 
-        {/* ITEMS */}
+        {/*ITEMS
         {isMounted(VIEWS.ITEMS) && (
           <div
             className="app-main-inner"
@@ -745,10 +811,10 @@ function App() {
           >
             <ItemTable />
           </div>
-        )}
+        )}*/}
 
         {/* BOM */}
-        {isMounted(VIEWS.BOM) && (
+        {/*{isMounted(VIEWS.BOM) && (
           <div
             className="app-main-inner app-main-stack"
             style={{
@@ -762,7 +828,7 @@ function App() {
               <BomList />
             </section>
           </div>
-        )}
+        )}*/}
 
         {/* PURCHASE */}
         {isMounted(VIEWS.PURCHASE) && (
@@ -779,21 +845,30 @@ function App() {
         )}
 
         {/* SALES */}
-        {isMounted(VIEWS.SALES) && (
+        {/* ✅ SALES: EASYSHIP */}
+        {isMounted(VIEWS.SALES_EASYSHIP) && (
           <div
             className="app-main-inner app-main-stack"
-            style={{
-              display: isActive(VIEWS.SALES) ? "block" : "none",
-            }}
+            style={{ display: isActive(VIEWS.SALES_EASYSHIP) ? "block" : "none" }}
           >
             <div className="app-panel">
               <SalesEasyShip />
             </div>
+          </div>
+        )}
+
+        {/* ✅ SALES: RETURN */}
+        {isMounted(VIEWS.SALES_RETURN) && (
+          <div
+            className="app-main-inner app-main-stack"
+            style={{ display: isActive(VIEWS.SALES_RETURN) ? "block" : "none" }}
+          >
             <div className="app-panel app-panel-secondary">
               <SalesReturn />
             </div>
           </div>
         )}
+
 
         {/* MFG */}
         {isMounted(VIEWS.MFG) && (
@@ -811,6 +886,23 @@ function App() {
             </div>
             <div className="app-panel">
               <StockTransfer />
+            </div>
+          </div>
+        )}
+        {/* ✅ NEW: WORK ORDER FLOW */}
+        {isMounted(VIEWS.WORK_ORDER_FLOW) && (
+          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.WORK_ORDER_FLOW) ? "block" : "none" }}>
+            <div className="app-panel">
+              <WorkOrderFlow />
+            </div>
+          </div>
+        )}
+
+        {/* ✅ NEW: WO TRACKING */}
+        {isMounted(VIEWS.WO_TRACKING) && (
+          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.WO_TRACKING) ? "block" : "none" }}>
+            <div className="app-panel">
+              <WOTracking />
             </div>
           </div>
         )}
@@ -842,6 +934,20 @@ function App() {
             </section>
           </div>
         )}
+        {/* ✅ ANALYTICS */}
+        {isMounted(VIEWS.ANALYTICS) && (
+          <div
+            className="app-main-inner app-main-stack"
+            style={{
+              display: isActive(VIEWS.ANALYTICS) ? "block" : "none",
+            }}
+          >
+            <div className="app-panel app-panel-primary">
+              <Analytics />
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );

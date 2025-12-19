@@ -7,12 +7,12 @@ const STOCK_AFFECTING_DOCTYPES = new Set([
   "Stock Entry",
   "Purchase Receipt",
   "Delivery Note",
-  "Sales Invoice",     
-  "Purchase Invoice",  
+  "Sales Invoice",
+  "Purchase Invoice",
 ]);
 
 
-{/* Below function gives the List of the all docs present in erpNext*/}
+{/* Below function gives the List of the all docs present in erpNext*/ }
 export async function getDoctypeList(doctype, params = {}) {
   const res = await axios.get(`${BACKEND_URL}/api/doctype/${doctype}`, {
     params,
@@ -42,6 +42,17 @@ export async function submitDoc(doctype, name) {
   if (STOCK_AFFECTING_DOCTYPES.has(doctype)) {
     emitStockChanged();
   }
+
+    // ✅ MF Status auto-update for Purchase Order
+  if (doctype === "Purchase Order") {
+    try {
+      await setPurchaseOrderMfStatus(name, "PO Confirmed");
+    } catch (e) {
+      console.error("MF status update failed:", e);
+      // do NOT break your existing flow
+    }
+  }
+
 
   return res.data;
 }
@@ -141,8 +152,8 @@ export async function createPurchaseOrder({
   rate,
   notes,
   warehouse,
-  po_date,        
-  schedule_date,  
+  po_date,
+  schedule_date,
 }) {
   const today = new Date().toISOString().slice(0, 10);
 
@@ -155,6 +166,8 @@ export async function createPurchaseOrder({
     transaction_date: txDate,    // 🆕 use selected PO date
     schedule_date: schedDate,    // 🆕 header schedule date
     notes: notes || "",
+    [MF_PO_FIELDS.status]: "PO Draft",
+    [MF_PO_FIELDS.updatedOn]: nowKolkataErpDatetime(),
     items: [
       {
         item_code,
@@ -357,10 +370,11 @@ export async function getStockLedgerUpToDate(date) {
 // (if you don't have it, you can add this)
 export async function getAllItems() {
   return getDoctypeList("Item", {
-    fields: JSON.stringify(["name", "item_name"]),
+    fields: JSON.stringify(["name", "item_name", "item_group"]),
     limit_page_length: 5000,
   });
 }
+
 
 // --- SALES HELPERS ---
 
@@ -377,39 +391,119 @@ export async function getCustomers() {
 export async function getFinishedItemsForSales() {
   // if you already have getFinishedItems() that returns Products, you can reuse that
   return getDoctypeList("Item", {
-    fields: JSON.stringify(["name", "item_name", "stock_uom", "item_group"]),
+    fields: JSON.stringify(["name", "item_name", "stock_uom", "item_group", "custom_asin"]),
     filters: JSON.stringify([["Item", "item_group", "=", "Products"]]),
     limit_page_length: 1000,
   });
 }
 
 // Create Sales Invoice (we’ll use this for EasyShip)
+//export async function createSalesInvoice({
+//  customer,
+//  company,
+//  posting_date,
+//  warehouse,
+//  items,
+//}) {
+//  const payload = {
+//    doctype: "Sales Invoice",
+//    customer,
+//    company,
+//    posting_date,
+//    due_date: posting_date,
+//    update_stock: 1, // so this reduces stock directly
+//    // if you later add a custom field `custom_sales_channel` in ERPNext:
+//    // custom_sales_channel: "EasyShip",
+//    items: items.map((row) => ({
+//      item_code: row.item_code,
+//      qty: Number(row.qty),
+//      rate: row.rate != null ? Number(row.rate) : undefined,
+//      warehouse, // same warehouse for all rows for now
+//    })),
+//  };
+
+//  return createDoc("Sales Invoice", payload);
+//}
+function toYMD(input) {
+  if (input == null) return "";
+
+  if (input instanceof Date && !isNaN(input.getTime())) {
+    return input.toISOString().slice(0, 10);
+  }
+
+  const s = String(input).trim();
+  if (!s) return "";
+
+  // YYYY-MM-DD or YYYY-MM-DDTHH:MM...
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[t\s].*)?$/i);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+
+  // DD-MM-YYYY or DD/MM/YYYY
+  const dmy = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+  if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+
+  // DDMMYYYY
+  if (/^\d{8}$/.test(s)) {
+    const dd = s.slice(0, 2);
+    const mm = s.slice(2, 4);
+    const yyyy = s.slice(4, 8);
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return "";
+}
+
 export async function createSalesInvoice({
   customer,
   company,
   posting_date,
+  due_date,
   warehouse,
   items,
+  po_no,
+  po_date,     // ✅ NEW
+  remarks,
 }) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const posting = toYMD(posting_date) || today;
+
+  // ✅ keep due >= posting always
+  let due = toYMD(due_date) || posting;
+  if (due && posting && due < posting) due = posting;
+
+  // ✅ NEW: normalize po_date too (from sheet purchase-date)
+  const poDate = toYMD(po_date);
+
   const payload = {
     doctype: "Sales Invoice",
     customer,
     company,
-    posting_date,
-    due_date: posting_date,
-    update_stock: 1, // so this reduces stock directly
-    // if you later add a custom field `custom_sales_channel` in ERPNext:
-    // custom_sales_channel: "EasyShip",
-    items: items.map((row) => ({
+    posting_date: posting,
+    due_date: due,
+    po_no: po_no || undefined,
+    po_date: poDate || undefined,  // ✅ send only if valid
+    remarks: remarks || undefined,
+    update_stock: 1,
+    items: (items || []).map((row) => ({
       item_code: row.item_code,
       qty: Number(row.qty),
       rate: row.rate != null ? Number(row.rate) : undefined,
-      warehouse, // same warehouse for all rows for now
+      warehouse,
     })),
   };
 
-  return createDoc("Sales Invoice", payload);
+  const res = await createDoc("Sales Invoice", payload);
+
+  // ✅ normalize id->name if backend returns id
+  if (res?.data && !res.data.name && res.data.id) {
+    return { ...res, data: { ...res.data, name: res.data.id } };
+  }
+
+  return res;
 }
+
+
 
 // Recent submitted invoices (ONLY normal sales, no returns)
 export async function getRecentSalesInvoices(limit = 20) {
@@ -695,22 +789,32 @@ export async function createPaymentEntryForPurchaseInvoice(pi) {
 //}
 // src/Components/erpBackendApi.js
 // ADD THIS FUNCTION if it doesn't exist
-export async function updateDoc(doctype, name, data) {
-  const response = await fetch(`/api/resource/${doctype}/${name}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${localStorage.getItem('authToken')}`
-    },
-    body: JSON.stringify(data)
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Failed to update ${doctype} ${name}`);
-  }
-  
-  return response.json();
+//export async function updateDoc(doctype, name, data) {
+//  const response = await fetch(`/api/resource/${doctype}/${name}`, {
+//    method: "PUT",
+//    headers: {
+//      "Content-Type": "application/json",
+//      "Authorization": `Bearer ${localStorage.getItem('authToken')}`
+//    },
+//    body: JSON.stringify(data)
+//  });
+
+//  if (!response.ok) {
+//    throw new Error(`Failed to update ${doctype} ${name}`);
+//  }
+
+//  return response.json();
+//}
+
+// ✅ Generic doc update (uses your Node backend route /api/doc/:doctype/:name)
+export async function updateDoc(doctype, name, payload) {
+  const res = await axios.put(
+    `${BACKEND_URL}/api/doc/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`,
+    payload
+  );
+  return res.data; // { data: {...} }
 }
+
 
 // Flip Purchase Order status (e.g. "Completed", "Cancelled")
 export async function updatePurchaseOrderStatus(name, status) {
@@ -747,11 +851,11 @@ async function getPurchaseReceiptWithItems(prName) {
         "Authorization": `Bearer ${localStorage.getItem('authToken')}`
       }
     });
-    
+
     if (!response.ok) {
       throw new Error(`Failed to fetch PR ${prName}`);
     }
-    
+
     const data = await response.json();
     return data.data;
   } catch (err) {
@@ -785,9 +889,9 @@ export async function setPurchaseReceiptStatus(docname, status) {
 export async function getCompanies() {
   return getDoctypeList("Company", {
     fields: JSON.stringify([
-      "name",          
-      "company_name",  
-      "abbr",         
+      "name",
+      "company_name",
+      "abbr",
     ]),
     limit_page_length: 1000,
   });
@@ -927,4 +1031,218 @@ export function emitStockChanged() {
   stockListeners.forEach((fn) => {
     try { fn(); } catch (e) { console.error(e); }
   });
+}
+
+// ===== Manufacturing helpers (NO new backend APIs) =====
+
+export async function getRecentWorkOrders(limit = 20) {
+  return getDoctypeList("Work Order", {
+    fields: JSON.stringify([
+      "name",
+      "production_item",
+      "qty",
+      "produced_qty",
+      "status",
+      "docstatus",
+      "bom_no",
+      "company",
+      "modified",
+    ]),
+    order_by: "modified desc",
+    limit_page_length: limit,
+  });
+}
+
+export async function createAndSubmitWorkOrder(payload) {
+  // payload must include doctype:"Work Order"
+  const created = await createDoc("Work Order", payload);
+  const name = created?.data?.name;
+  if (!name) throw new Error("Work Order not created (missing name).");
+  await submitDoc("Work Order", name);
+  return name;
+}
+
+export async function createAndSubmitStockEntry(payload) {
+  const created = await createDoc("Stock Entry", payload);
+  const name = created?.data?.name;
+  if (!name) throw new Error("Stock Entry not created (missing name).");
+  await submitDoc("Stock Entry", name);
+  return name;
+}
+
+// small concurrency limiter to avoid slowdown / too many requests
+export async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let i = 0;
+  const workers = new Array(limit).fill(0).map(async () => {
+    while (i < items.length) {
+      const idx = i++;
+      out[idx] = await fn(items[idx], idx);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+export async function setWorkOrderStatus(workOrderName, status) {
+  // 1) Best: try ERPNext's own status updater (if your ERPNext version has it)
+  try {
+    const res = await axios.post(
+      `${BACKEND_URL}/api/method/erpnext.manufacturing.doctype.work_order.work_order.update_status`,
+      { status, name: workOrderName }
+    );
+    return res.data;
+  } catch (err) {
+    // 2) Fallback: directly set the field (works in many setups)
+    const res2 = await axios.post(
+      `${BACKEND_URL}/api/method/frappe.client.set_value`,
+      {
+        doctype: "Work Order",
+        name: workOrderName,
+        fieldname: "status",
+        value: status,
+      }
+    );
+    return res2.data;
+  }
+}
+
+
+// Analitics 
+
+export async function runReport(report_name, filters = {}) {
+  const res = await axios.post(`${BACKEND_URL}/api/report/run`, {
+    report_name,
+    filters,
+  });
+  return res.data; // { columns, result, ... }
+}
+
+
+
+export async function getActiveFiscalYears() {
+  const res = await axios.get(`${BACKEND_URL}/api/doctype/Fiscal Year`, {
+    params: {
+      fields: JSON.stringify(["name", "year_start_date", "year_end_date", "disabled"]),
+      filters: JSON.stringify([["Fiscal Year", "disabled", "=", 0]]),
+      order_by: "year_start_date desc",
+      limit_page_length: 1000,
+    },
+  });
+  return res.data.data;
+}
+
+export function pickFiscalYearForDate(fys, dateStr) {
+  return (
+    fys.find((fy) => fy.year_start_date <= dateStr && dateStr <= fy.year_end_date) ||
+    fys[0] ||
+    null
+  );
+}
+
+// Profit & Loss (ERPNext needs periodicity)
+export function getProfitAndLoss({ company, from_date, to_date, periodicity = "Monthly" }) {
+  return runReport("Profit and Loss Statement", {
+    company,
+    periodicity,
+    period_start_date: from_date,
+    period_end_date: to_date,
+  });
+}
+
+// Sales Analytics (ERPNext expects company as STRING + range/from/to + value_quantity)
+export function getSalesAnalytics({
+  company,
+  from_date,
+  to_date,
+  range = "Monthly",
+  value_quantity = "Value",
+  tree_type = "Item Group",
+  doc_type = "Sales Invoice",
+}) {
+  return runReport("Sales Analytics", {
+    company,          // ✅ STRING (NOT array)
+    from_date,
+    to_date,
+    range,
+    value_quantity,
+    tree_type,
+    doc_type,
+  });
+}
+
+// Purchase Analytics (same style)
+export function getPurchaseAnalytics({
+  company,
+  from_date,
+  to_date,
+  range = "Monthly",
+  value_quantity = "Value",
+  tree_type = "Item Group",
+  doc_type = "Purchase Invoice",
+}) {
+  return runReport("Purchase Analytics", {
+    company,          // ✅ STRING (NOT array)
+    from_date,
+    to_date,
+    range,
+    value_quantity,
+    tree_type,
+    doc_type,
+  });
+}
+
+export function getStockBalance({ company }) {
+  return runReport("Stock Balance", { company });
+}
+
+export function getAccountsReceivable({ company, report_date }) {
+  return runReport("Accounts Receivable", { company, report_date });
+}
+
+export function getAccountsPayable({ company, report_date }) {
+  return runReport("Accounts Payable", { company, report_date });
+}
+
+// ⚠️ CHANGE these to match ERPNext "Fieldname" exactly
+export const MF_PO_FIELDS = {
+  status: "custom_mf_status",
+  updatedOn: "custom_mf_status_updated_on",
+  stockPercent: "custom_mf_stock_in_percent",
+};
+
+// Matches your Select options
+export const MF_STATUS_OPTIONS = [
+  "PO Draft",
+  "PO Confirmed",
+  "In Transit",
+  "Delivered",
+  "QC Pass",
+  "QC In",
+  "Completed",
+  "Cancelled",
+];
+
+
+
+function nowKolkataErpDatetime() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+
+  const m = Object.fromEntries(parts.map(p => [p.type, p.value]));
+  return `${m.year}-${m.month}-${m.day} ${m.hour}:${m.minute}:${m.second}`;
+}
+
+export async function setPurchaseOrderMfStatus(poName, mfStatus, { stockPercent } = {}) {
+  const patch = {
+    [MF_PO_FIELDS.status]: mfStatus,
+    [MF_PO_FIELDS.updatedOn]: nowKolkataErpDatetime(),
+  };
+  if (stockPercent !== undefined && stockPercent !== null && stockPercent !== "") {
+    patch[MF_PO_FIELDS.stockPercent] = Number(stockPercent);
+  }
+  return updateDoc("Purchase Order", poName, patch);
 }

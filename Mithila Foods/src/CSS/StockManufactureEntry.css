@@ -1,4 +1,5 @@
-/* STOCK MANUFACTURE ENTRY – MODERN DASHBOARD STYLE */
+/*
+STOCK MANUFACTURE ENTRY – MODERN DASHBOARD STYLE
 
 .stock-mfg {
   display: flex;
@@ -6,9 +7,9 @@
   gap: 1rem;
 }
 
-/* ------------------------------
-   Header
----------------------------------*/
+------------------------------
+Header
+---------------------------------
 
 .stock-mfg-header {
   display: flex;
@@ -57,9 +58,9 @@
   }
 }
 
-/* ------------------------------
-   Messages
----------------------------------*/
+------------------------------
+Messages
+---------------------------------
 
 .stock-mfg-loading {
   font-size: 0.85rem;
@@ -70,9 +71,9 @@
   margin-top: 0.15rem;
 }
 
-/* ------------------------------
-   Form card
----------------------------------*/
+------------------------------
+Form card
+---------------------------------
 
 .stock-mfg-form {
   display: flex;
@@ -85,7 +86,7 @@
   box-shadow: var(--shadow-soft);
 }
 
-/* Top grid */
+Top grid
 
 .stock-mfg-form-grid {
   display: grid;
@@ -112,7 +113,7 @@
   color: var(--color-text-muted);
 }
 
-/* Warehouse card */
+Warehouse card
 
 .stock-mfg-warehouse-card {
   display: grid;
@@ -149,7 +150,7 @@
   font-weight: 500;
 }
 
-/* Raw materials header */
+Raw materials header
 
 .stock-mfg-raw-header {
   display: flex;
@@ -169,9 +170,9 @@
   font-size: 0.85rem;
 }
 
-/* ------------------------------
-   Table
----------------------------------*/
+------------------------------
+Table
+---------------------------------
 
 .stock-mfg-table-wrapper {
   border-radius: var(--radius-md);
@@ -185,7 +186,7 @@
   font-size: 0.84rem;
 }
 
-/* Colourful header */
+Colourful header
 
 .stock-mfg-table thead {
   background: linear-gradient(
@@ -200,7 +201,7 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.5);
 }
 
-/* Zebra + hover */
+Zebra + hover
 
 .stock-mfg-table tbody tr:nth-child(even) {
   background: #f9fafb;
@@ -210,7 +211,7 @@
   background: #e5edff;
 }
 
-/* Cells */
+Cells
 
 .stock-mfg-item-cell {
   font-weight: 500;
@@ -232,12 +233,579 @@
   text-align: right;
 }
 
-/* ------------------------------
-   Submit row
----------------------------------*/
+------------------------------
+Submit row
+---------------------------------
 
 .stock-mfg-submit-row {
   margin-top: 0.3rem;
   display: flex;
   justify-content: flex-end;
+}
+
+------------------------------
+Searchable dropdown (combobox)
+---------------------------------
+
+.stock-mfg-combo {
+  position: relative;
+  width: 100%;
+}
+
+.stock-mfg-combo.is-disabled {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.stock-mfg-combo-input {
+  width: 100%;
+  padding-right: 2rem;
+}
+
+.stock-mfg-combo-caret {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.stock-mfg-combo-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 100;
+  background: var(--color-surface);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
+  overflow: auto;
+  max-height: 260px;
+}
+
+.stock-mfg-combo-option {
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.stock-mfg-combo-option:last-child {
+  border-bottom: none;
+}
+
+.stock-mfg-combo-option:hover {
+  background: #eef2ff;
+}
+
+.stock-mfg-combo-option-main {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.stock-mfg-combo-option-sub {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-top: 0.1rem;
+}
+
+.stock-mfg-combo-empty {
+  padding: 0.65rem 0.7rem;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+*/
+/* src/CSS/StockManufactureEntry.css */
+
+/* ==============================
+   Remove outer wrapper "pill"
+   (App.jsx wraps in .app-panel)
+   ============================== */
+.app-panel:has(.stock-mfg) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.app-panel.app-panel-primary:has(.stock-mfg),
+.app-panel.app-panel-secondary:has(.stock-mfg) {
+  background: transparent !important;
+}
+
+/* Full width like SupplierList */
+.app-main-inner:has(.stock-mfg) {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* ==============================
+   Page
+   ============================== */
+.stock-mfg {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 10px 18px;
+  width: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ==============================
+   Header (basic)
+   ============================== */
+.stock-mfg-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.stock-mfg-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stock-mfg-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0;
+}
+
+.stock-mfg-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.stock-mfg-pill {
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .stock-mfg-header {
+    align-items: flex-start;
+  }
+}
+
+/* ==============================
+   Alerts (same as SupplierList)
+   ============================== */
+.alert {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.text-muted {
+  color: #64748b;
+}
+
+/* ==============================
+   Form card (basic)
+   ============================== */
+.stock-mfg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  padding: 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+
+  /* important for dropdown popovers */
+  overflow: visible;
+}
+
+/* Top grid */
+.stock-mfg-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: end;
+
+  overflow: visible;
+}
+
+@media (max-width: 900px) {
+  .stock-mfg-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stock-mfg-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stock-mfg-field-label {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Inputs/selects inside this page */
+.stock-mfg .input,
+.stock-mfg .select {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stock-mfg .input:focus,
+.stock-mfg .select:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* ==============================
+   Warehouse info (basic)
+   ============================== */
+.stock-mfg-warehouse-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+
+  font-size: 0.9rem;
+}
+
+@media (max-width: 700px) {
+  .stock-mfg-warehouse-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stock-mfg-warehouse-label {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+
+.stock-mfg-warehouse-value {
+  display: block;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* ==============================
+   Raw materials header row
+   ============================== */
+.stock-mfg-raw-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stock-mfg-raw-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.stock-mfg-raw-loading,
+.stock-mfg-raw-empty {
+  font-size: 0.9rem;
+}
+
+/* ==============================
+   Buttons (basic like SupplierList)
+   ============================== */
+.stock-mfg .btn {
+  border-radius: 10px;
+}
+
+.stock-mfg .btn.btn-primary,
+.stock-mfg .btn.btn-accent {
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.stock-mfg .btn.btn-primary:hover,
+.stock-mfg .btn.btn-accent:hover {
+  filter: brightness(1.05);
+}
+
+.stock-mfg .btn.btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #0f172a;
+}
+
+.stock-mfg .btn.btn-ghost:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+/* ==============================
+   Table (no funky colors)
+   ============================== */
+.stock-mfg-table-wrapper {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+
+  /* in case table-container sets overflow:auto */
+  overflow: visible;
+}
+
+.stock-mfg-table-wrapper.table-container {
+  overflow: visible !important;
+}
+
+/* Make table fit without forced horizontal scroll */
+.stock-mfg-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.9rem;
+  min-width: 0; /* remove old min-width */
+}
+
+.stock-mfg-table thead {
+  background: #f8fafc;
+}
+
+.stock-mfg-table th,
+.stock-mfg-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: top;
+
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.stock-mfg-table th {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Zebra + hover (basic) */
+.stock-mfg-table tbody tr:nth-child(even) {
+  background: #fcfcfd;
+}
+
+.stock-mfg-table tbody tr:hover {
+  background: #f1f5f9;
+}
+
+.stock-mfg-item-cell {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.stock-mfg-itemname-cell,
+.stock-mfg-uom-cell,
+.stock-mfg-wh-cell {
+  color: #334155;
+  font-size: 0.88rem;
+}
+
+.stock-mfg-qty-cell {
+  text-align: right;
+}
+
+.stock-mfg-qty-input {
+  width: 100%;
+  max-width: 140px;
+  text-align: right;
+}
+
+/* Column widths */
+.stock-mfg-table th:nth-child(1),
+.stock-mfg-table td:nth-child(1) {
+  width: 20%;
+}
+.stock-mfg-table th:nth-child(2),
+.stock-mfg-table td:nth-child(2) {
+  width: 28%;
+}
+.stock-mfg-table th:nth-child(3),
+.stock-mfg-table td:nth-child(3) {
+  width: 10%;
+}
+.stock-mfg-table th:nth-child(4),
+.stock-mfg-table td:nth-child(4) {
+  width: 12%;
+}
+.stock-mfg-table th:nth-child(5),
+.stock-mfg-table td:nth-child(5) {
+  width: 20%;
+}
+.stock-mfg-table th:nth-child(6),
+.stock-mfg-table td:nth-child(6) {
+  width: 10%;
+}
+
+/* ==============================
+   Submit row
+   ============================== */
+.stock-mfg-submit-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* ==============================
+   Dropdown (stdrop) - ensure overlay works
+   (same style as StockTransfer / OpeningStock)
+   ============================== */
+.stock-mfg .stdrop {
+  position: relative;
+}
+
+.stock-mfg .stdrop-control {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.stock-mfg .stdrop-control.is-open {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+.stock-mfg .stdrop-value {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.stock-mfg .stdrop-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #0f172a;
+}
+
+.stock-mfg .stdrop-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stock-mfg .stdrop-placeholder {
+  color: #64748b;
+}
+
+.stock-mfg .stdrop-caret {
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+.stock-mfg .stdrop-popover {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.stock-mfg .stdrop-search {
+  padding: 10px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.stock-mfg .stdrop-list {
+  max-height: 280px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.stock-mfg .stdrop-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.stock-mfg .stdrop-item:hover {
+  background: #f1f5f9;
+}
+
+.stock-mfg .stdrop-item-title {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.stock-mfg .stdrop-item-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.stock-mfg .stdrop-empty {
+  padding: 14px;
+  color: #64748b;
 }

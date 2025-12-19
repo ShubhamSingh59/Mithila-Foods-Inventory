@@ -1,17 +1,17 @@
 // src/StockTransfer.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  getFinishedItems,
+  getDoctypeList,          // ✅ use generic list to fetch ALL items
   getWarehouses,
   getBinForItemWarehouse,
   createDoc,
   submitDoc,
-  getCompanies, // 👈 NEW
+  getCompanies,
 } from "./erpBackendApi";
 import "../CSS/StockTransfer.css";
 
 function StockTransfer() {
-  const [finishedItems, setFinishedItems] = useState([]);
+  const [items, setItems] = useState([]);          // ✅ all items
   const [warehouses, setWarehouses] = useState([]);
   const [companies, setCompanies] = useState([]);
 
@@ -42,7 +42,7 @@ function StockTransfer() {
     };
   }
 
-  // load finished items + warehouses + companies
+  // ✅ load ALL items + warehouses + companies
   useEffect(() => {
     async function load() {
       setLoadingInit(true);
@@ -50,28 +50,31 @@ function StockTransfer() {
 
       try {
         const [itemsData, whData, companiesData] = await Promise.all([
-          getFinishedItems(),
+          getDoctypeList("Item", {
+            fields: JSON.stringify(["name", "item_name", "stock_uom", "disabled"]),
+            filters: JSON.stringify([["Item", "disabled", "=", 0]]),
+            limit_page_length: 5000,
+            order_by: "modified desc",
+          }),
           getWarehouses(),
           getCompanies(),
         ]);
 
-        setFinishedItems(itemsData);
-        setWarehouses(whData);
-        setCompanies(companiesData);
+        setItems(itemsData || []);
+        setWarehouses(whData || []);
+        setCompanies(companiesData || []);
 
-        // if not set yet, try to auto-fill company
+        // auto company
         if (!company) {
-          if (companiesData.length === 1) {
+          if ((companiesData || []).length === 1) {
             setCompany(companiesData[0].name);
-          } else if (whData.length > 0) {
+          } else if ((whData || []).length > 0) {
             setCompany(whData[0].company || "");
           }
         }
       } catch (err) {
         console.error(err);
-        setError(
-          err.message || "Failed to load items / warehouses / companies"
-        );
+        setError(err.message || "Failed to load items / warehouses / companies");
       } finally {
         setLoadingInit(false);
       }
@@ -79,7 +82,7 @@ function StockTransfer() {
 
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once
+  }, []);
 
   // refresh current qty for a row when item or fromWarehouse changes
   async function refreshBinForRow(rowId, itemCode, sourceWh) {
@@ -87,7 +90,7 @@ function StockTransfer() {
       setRows((prev) =>
         prev.map((r) =>
           r.id === rowId
-            ? { ...r, current_qty: "", uom: "", rowError: "" }
+            ? { ...r, current_qty: "", rowError: "", loadingRow: false }
             : r
         )
       );
@@ -102,8 +105,6 @@ function StockTransfer() {
 
     try {
       const bin = await getBinForItemWarehouse(itemCode, sourceWh);
-      const item = finishedItems.find((it) => it.name === itemCode);
-
       setRows((prev) =>
         prev.map((r) =>
           r.id === rowId
@@ -111,7 +112,6 @@ function StockTransfer() {
                 ...r,
                 current_qty:
                   bin && bin.actual_qty != null ? String(bin.actual_qty) : "0",
-                uom: item ? item.stock_uom : "",
                 loadingRow: false,
                 rowError: !bin ? "No Bin (no stock yet)" : "",
               }
@@ -134,12 +134,21 @@ function StockTransfer() {
     }
   }
 
-  function handleItemChange(rowId, itemCode) {
+  function handleSelectItem(rowId, itemCode) {
+    const it = items.find((x) => x.name === itemCode);
     setRows((prev) =>
       prev.map((r) =>
-        r.id === rowId ? { ...r, item_code: itemCode, rowError: "" } : r
+        r.id === rowId
+          ? {
+              ...r,
+              item_code: itemCode,
+              uom: it?.stock_uom || "",
+              rowError: "",
+            }
+          : r
       )
     );
+
     if (itemCode && fromWarehouse) {
       refreshBinForRow(rowId, itemCode, fromWarehouse);
     }
@@ -147,9 +156,7 @@ function StockTransfer() {
 
   function handleQtyChange(rowId, value) {
     setRows((prev) =>
-      prev.map((r) =>
-        r.id === rowId ? { ...r, qty: value, rowError: "" } : r
-      )
+      prev.map((r) => (r.id === rowId ? { ...r, qty: value, rowError: "" } : r))
     );
   }
 
@@ -166,10 +173,18 @@ function StockTransfer() {
 
   function handleFromWarehouseChange(value) {
     setFromWarehouse(value);
-    // when fromWarehouse changes, refresh bin for each row that has item_code
+
+    // refresh bins for already selected items
     rows.forEach((row) => {
       if (row.item_code && value) {
         refreshBinForRow(row.id, row.item_code, value);
+      }
+      if (!value) {
+        setRows((prev) =>
+          prev.map((r) =>
+            r.id === row.id ? { ...r, current_qty: "" } : r
+          )
+        );
       }
     });
   }
@@ -179,35 +194,18 @@ function StockTransfer() {
     setError("");
     setMessage("");
 
-    if (!company) {
-      setError("Company is required.");
-      return;
-    }
-
-    if (!postingDate) {
-      setError("Posting date is required.");
-      return;
-    }
-
-    if (!fromWarehouse || !toWarehouse) {
-      setError("Select both From and To warehouse.");
-      return;
-    }
-
-    if (fromWarehouse === toWarehouse) {
-      setError("From and To warehouse cannot be same.");
-      return;
-    }
+    if (!company) return setError("Company is required.");
+    if (!postingDate) return setError("Posting date is required.");
+    if (!fromWarehouse || !toWarehouse)
+      return setError("Select both From and To warehouse.");
+    if (fromWarehouse === toWarehouse)
+      return setError("From and To warehouse cannot be same.");
 
     const validRows = rows.filter(
-      (r) =>
-        r.item_code && !isNaN(parseFloat(r.qty)) && parseFloat(r.qty) > 0
+      (r) => r.item_code && !isNaN(parseFloat(r.qty)) && parseFloat(r.qty) > 0
     );
 
-    if (!validRows.length) {
-      setError("Add at least one item with quantity.");
-      return;
-    }
+    if (!validRows.length) return setError("Add at least one item with quantity.");
 
     const payload = {
       doctype: "Stock Entry",
@@ -229,9 +227,7 @@ function StockTransfer() {
 
       if (name) {
         await submitDoc("Stock Entry", name);
-        setMessage(
-          `Stock Entry (Material Transfer) created and submitted: ${name}`
-        );
+        setMessage(`Stock Entry (Material Transfer) created and submitted: ${name}`);
       } else {
         setMessage("Stock Entry created (no name returned).");
       }
@@ -249,14 +245,11 @@ function StockTransfer() {
 
   return (
     <div className="stock-transfer">
-      {/* Header */}
       <div className="stock-transfer-header">
         <div className="stock-transfer-title-block">
-          <h2 className="stock-transfer-title">
-            Stock Transfer (Finished Goods - Products)
-          </h2>
+          <h2 className="stock-transfer-title">Stock Transfer (Any Item)</h2>
           <p className="stock-transfer-subtitle">
-            Move finished products between warehouses with live stock info
+            Move any item between warehouses with live stock info
           </p>
         </div>
         <div className="stock-transfer-pill">
@@ -264,35 +257,21 @@ function StockTransfer() {
         </div>
       </div>
 
-      {/* Messages */}
       {loadingInit && (
         <div className="stock-transfer-loading text-muted">
           Loading items / warehouses...
         </div>
       )}
-      {error && (
-        <div className="alert alert-error stock-transfer-error">
-          {error}
-        </div>
-      )}
+      {error && <div className="alert alert-error stock-transfer-error">{error}</div>}
       {message && (
-        <div className="alert alert-success stock-transfer-message">
-          {message}
-        </div>
+        <div className="alert alert-success stock-transfer-message">{message}</div>
       )}
 
       <form onSubmit={handleSubmit} className="stock-transfer-form">
-        {/* Top form grid */}
         <div className="stock-transfer-form-grid">
           <div className="stock-transfer-field-group">
-            <label
-              htmlFor="stock-transfer-company"
-              className="form-label stock-transfer-field-label"
-            >
-              Company
-            </label>
+            <label className="form-label stock-transfer-field-label">Company</label>
             <select
-              id="stock-transfer-company"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               className="select"
@@ -307,14 +286,8 @@ function StockTransfer() {
           </div>
 
           <div className="stock-transfer-field-group">
-            <label
-              htmlFor="stock-transfer-posting-date"
-              className="form-label stock-transfer-field-label"
-            >
-              Posting Date
-            </label>
+            <label className="form-label stock-transfer-field-label">Posting Date</label>
             <input
-              id="stock-transfer-posting-date"
               type="date"
               value={postingDate}
               onChange={(e) => setPostingDate(e.target.value)}
@@ -323,14 +296,8 @@ function StockTransfer() {
           </div>
 
           <div className="stock-transfer-field-group">
-            <label
-              htmlFor="stock-transfer-from-wh"
-              className="form-label stock-transfer-field-label"
-            >
-              From Warehouse
-            </label>
+            <label className="form-label stock-transfer-field-label">From Warehouse</label>
             <select
-              id="stock-transfer-from-wh"
               value={fromWarehouse}
               onChange={(e) => handleFromWarehouseChange(e.target.value)}
               className="select"
@@ -345,14 +312,8 @@ function StockTransfer() {
           </div>
 
           <div className="stock-transfer-field-group">
-            <label
-              htmlFor="stock-transfer-to-wh"
-              className="form-label stock-transfer-field-label"
-            >
-              To Warehouse
-            </label>
+            <label className="form-label stock-transfer-field-label">To Warehouse</label>
             <select
-              id="stock-transfer-to-wh"
               value={toWarehouse}
               onChange={(e) => setToWarehouse(e.target.value)}
               className="select"
@@ -367,21 +328,13 @@ function StockTransfer() {
           </div>
         </div>
 
-        {/* Items header */}
         <div className="stock-transfer-items-header">
-          <h3 className="stock-transfer-items-title">
-            Items (Finished Goods - Products)
-          </h3>
-          <button
-            type="button"
-            onClick={addRow}
-            className="btn btn-accent btn-sm"
-          >
+          <h3 className="stock-transfer-items-title">Items</h3>
+          <button type="button" onClick={addRow} className="btn btn-accent btn-sm">
             + Add Item
           </button>
         </div>
 
-        {/* Rows */}
         <div className="stock-transfer-rows">
           {rows.map((row, index) => (
             <div key={row.id} className="stock-transfer-row-card">
@@ -400,42 +353,23 @@ function StockTransfer() {
               </div>
 
               <div className="stock-transfer-row-grid">
-                {/* 🔍 SEARCHABLE ITEM FIELD */}
                 <div className="stock-transfer-row-field">
                   <label className="form-label">Item</label>
-                  <input
-                    list={`stock-transfer-item-list-${row.id}`}
+                  <ItemSearchDropdown
+                    items={items}
                     value={row.item_code}
-                    onChange={(e) =>
-                      handleItemChange(row.id, e.target.value)
-                    }
-                    className="input stock-transfer-item-input"
-                    placeholder="Type or select finished item"
+                    onSelect={(code) => handleSelectItem(row.id, code)}
+                    placeholder="Search item name / code..."
                   />
-                  <datalist id={`stock-transfer-item-list-${row.id}`}>
-                    {finishedItems.map((it) => (
-                      <option
-                        key={it.name}
-                        value={it.name}
-                        label={`${it.name} - ${it.item_name}`}
-                      />
-                    ))}
-                  </datalist>
                 </div>
 
                 <div className="stock-transfer-row-field">
                   <label className="form-label">Unit</label>
-                  <input
-                    value={row.uom}
-                    readOnly
-                    className="input input-readonly"
-                  />
+                  <input value={row.uom} readOnly className="input input-readonly" />
                 </div>
 
                 <div className="stock-transfer-row-field">
-                  <label className="form-label">
-                    Current Qty in From Warehouse
-                  </label>
+                  <label className="form-label">Current Qty in From Warehouse</label>
                   <input
                     value={row.current_qty}
                     readOnly
@@ -448,9 +382,7 @@ function StockTransfer() {
                   <input
                     type="number"
                     value={row.qty}
-                    onChange={(e) =>
-                      handleQtyChange(row.id, e.target.value)
-                    }
+                    onChange={(e) => handleQtyChange(row.id, e.target.value)}
                     className="input"
                   />
                 </div>
@@ -464,9 +396,7 @@ function StockTransfer() {
                     </span>
                   )}
                   {row.rowError && (
-                    <span className="stock-transfer-row-error">
-                      {row.rowError}
-                    </span>
+                    <span className="stock-transfer-row-error">{row.rowError}</span>
                   )}
                 </div>
               )}
@@ -484,6 +414,102 @@ function StockTransfer() {
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function ItemSearchDropdown({ items, value, onSelect, placeholder }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const ref = useRef(null);
+
+  const selected = useMemo(() => {
+    return items.find((x) => x.name === value) || null;
+  }, [items, value]);
+
+  const filtered = useMemo(() => {
+    const s = (q || "").trim().toLowerCase();
+    const base = !s
+      ? items
+      : items.filter((it) => {
+          const code = (it.name || "").toLowerCase();
+          const name = (it.item_name || "").toLowerCase();
+          return code.includes(s) || name.includes(s);
+        });
+
+    return base.slice(0, 80); // keep dropdown fast
+  }, [items, q]);
+
+  useEffect(() => {
+    function onDown(e) {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  return (
+    <div className="stdrop" ref={ref}>
+      <button
+        type="button"
+        className={`stdrop-control ${open ? "is-open" : ""}`}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <div className="stdrop-value">
+          {selected ? (
+            <>
+              <div className="stdrop-title">{selected.name}</div>
+              <div className="stdrop-sub">
+                {selected.item_name || ""} {selected.stock_uom ? `· ${selected.stock_uom}` : ""}
+              </div>
+            </>
+          ) : (
+            <div className="stdrop-placeholder">{placeholder}</div>
+          )}
+        </div>
+        <div className="stdrop-caret">▾</div>
+      </button>
+
+      {open && (
+        <div className="stdrop-popover">
+          <div className="stdrop-search">
+            <input
+              autoFocus
+              className="input"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Type to search..."
+            />
+          </div>
+
+          <div className="stdrop-list">
+            {filtered.map((it) => (
+              <button
+                key={it.name}
+                type="button"
+                className="stdrop-item"
+                onClick={() => {
+                  onSelect(it.name);
+                  setOpen(false);
+                  setQ("");
+                }}
+              >
+                <div className="stdrop-item-title">{it.name}</div>
+                <div className="stdrop-item-sub">
+                  {it.item_name || ""} {it.stock_uom ? `· ${it.stock_uom}` : ""}
+                </div>
+              </button>
+            ))}
+
+            {!filtered.length ? (
+              <div className="stdrop-empty">No items found.</div>
+            ) : (
+              <div className="stdrop-hint">Showing up to 80 results</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

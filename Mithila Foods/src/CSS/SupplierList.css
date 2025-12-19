@@ -1,24 +1,50 @@
 /* src/CSS/SupplierList.css */
 
-.supplier-page {
-  padding: 18px 22px 28px;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+/* ==============================
+   Remove outer wrapper "pill"
+   (App.jsx wraps SupplierList in .app-panel)
+   ============================== */
+.app-panel:has(.supplier-page) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-/* ========== SEARCH BAR ROW ========== */
+.app-panel.app-panel-primary:has(.supplier-page),
+.app-panel.app-panel-secondary:has(.supplier-page) {
+  background: transparent !important;
+}
 
+/* Full width (override max-width from app-main-inner) */
+.app-main-inner:has(.supplier-page) {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* ==============================
+   Page
+   ============================== */
+.supplier-page {
+  padding: 12px 10px 18px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  width: 100%;
+}
+
+/* ==============================
+   Search row
+   ============================== */
 .supplier-search-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 
 .supplier-search-input-wrapper {
   position: relative;
-  flex: 1 1 260px;
+  flex: 1 1 340px;
   min-width: 0;
 }
 
@@ -28,61 +54,62 @@
   top: 50%;
   transform: translateY(-50%);
   font-size: 0.9rem;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .supplier-search-input {
   width: 100%;
-  padding: 8px 10px 8px 28px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  background: rgba(15, 23, 42, 0.02);
+  padding: 9px 10px 9px 30px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
   font-size: 0.9rem;
   outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease,
-    background-color 0.18s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .supplier-search-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
-  background: #ffffff;
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25);
 }
 
-/* Dropdown filters */
-
 .supplier-filter-select {
-  min-width: 140px;
-  padding: 7px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.7);
+  min-width: 160px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
   background: #ffffff;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   outline: none;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease,
-    background-color 0.18s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .supplier-filter-select:focus {
-  border-color: #22c55e;
-  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.25);
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25);
 }
 
-/* Search button */
-
-.supplier-search-btn {
-  padding: 7px 16px;
-  border-radius: 999px;
-  font-size: 0.85rem;
+.supplier-search-btn.btn.btn-primary {
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 0.88rem;
   white-space: nowrap;
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  box-shadow: none;
 }
 
-/* ========== HEADER ABOVE TABLE ========== */
+.supplier-search-btn.btn.btn-primary:hover {
+  filter: brightness(1.05);
+}
 
+/* ==============================
+   Header
+   ============================== */
 .supplier-list-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: 10px;
   gap: 12px;
 }
@@ -90,299 +117,256 @@
 .supplier-list-title-block {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .supplier-list-title {
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #0f172a;
+  margin: 0;
 }
 
 .supplier-list-subtitle {
-  font-size: 0.8rem;
-  color: #6b7280;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
 }
 
 .supplier-count-pill {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  background: linear-gradient(
-    135deg,
-    rgba(56, 189, 248, 0.16),
-    rgba(129, 140, 248, 0.16)
-  );
-  color: #0f172a;
-  border: 1px solid rgba(129, 140, 248, 0.35);
-}
-
-/* ========== STATE TEXTS ========== */
-
-.supplier-loading,
-.supplier-empty {
-  margin-top: 14px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  color: #64748b;
   font-size: 0.85rem;
 }
 
-.text-muted {
-  color: #6b7280;
+/* ==============================
+   State text
+   ============================== */
+.supplier-loading,
+.supplier-empty {
+  margin-top: 14px;
+  font-size: 0.9rem;
 }
 
-/* ========== TABLE ========== */
+.text-muted {
+  color: #64748b;
+}
 
+/* ==============================
+   Table (NO horizontal scroll)
+   ============================== */
 .supplier-table-wrapper {
   margin-top: 8px;
-  overflow-x: auto;              /* 👈 allow horizontal scroll if needed */
+  width: 100%;
+  overflow-x: hidden;            /* ✅ no horizontal scrolling */
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
 }
 
-/* Let table size naturally based on content */
 .supplier-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.86rem;
-  table-layout: auto !important;  /* 👈 NO fixed layout */
+  font-size: 0.9rem;
+  table-layout: fixed;           /* ✅ makes columns obey widths and fit container */
 }
 
+/* Basic header */
 .supplier-table thead {
-  background: linear-gradient(
-    135deg,
-    rgba(226, 232, 240, 0.9),
-    rgba(241, 245, 249, 0.9)
-  );
+  background: #f8fafc;
 }
 
 .supplier-table th,
 .supplier-table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 9px 10px;
+  border-bottom: 1px solid #e2e8f0;
   text-align: left;
   vertical-align: middle;
-  white-space: normal !important;     /* 👈 allow wrapping */
-  overflow: visible !important;       /* 👈 no clipping */
-  text-overflow: clip !important;     /* 👈 no ... */
-  word-break: break-word;             /* 👈 break long strings if needed */
 }
 
-.supplier-table th:first-child,
-.supplier-table td:first-child {
-  padding-left: 14px;
+/* ✅ Allow header to wrap at spaces (no "Feature s"), but never break inside words */
+.supplier-table th {
+  font-weight: 700;
+  color: #0f172a;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  line-height: 1.15;
 }
 
-.supplier-table th:last-child,
-.supplier-table td:last-child {
-  padding-right: 14px;
+/* Body cells wrap nicely */
+.supplier-table td {
+  color: #0f172a;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
+/* ===== Column sizing (fits without scroll) =====
+   1 ID
+   2 Supplier Name
+   3 Category
+   4 Phone
+   5 Email  (shorter)
+   6 Contact Person
+   7 Credit Limit (stretched - number field)
+   8 Custom Status
+   9 Features (stretched a bit)
+*/
+.supplier-table th:nth-child(1),
+.supplier-table td:nth-child(1) { width: 9%; }
+
+.supplier-table th:nth-child(2),
+.supplier-table td:nth-child(2) { width: 16%; }
+
+.supplier-table th:nth-child(3),
+.supplier-table td:nth-child(3) { width: 10%; }
+
+.supplier-table th:nth-child(4),
+.supplier-table td:nth-child(4) { width: 10%; }
+
+.supplier-table th:nth-child(5),
+.supplier-table td:nth-child(5) { width: 12%; }   /* ✅ email slightly shorter */
+
+.supplier-table th:nth-child(6),
+.supplier-table td:nth-child(6) { width: 12%; }
+
+.supplier-table th:nth-child(7),
+.supplier-table td:nth-child(7) { width: 11%; }   /* ✅ credit limit wider */
+
+.supplier-table th:nth-child(8),
+.supplier-table td:nth-child(8) { width: 10%; }
+
+.supplier-table th:nth-child(9),
+.supplier-table td:nth-child(9) { width: 10%; }   /* ✅ last column wider */
+
+/* Zebra + hover */
 .supplier-table tbody tr:nth-child(even) {
-  background: rgba(248, 250, 252, 0.7);
+  background: #fcfcfd;
 }
-
-/* Row hover / selection */
 
 .supplier-row {
   cursor: pointer;
-  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+  transition: background-color 0.12s ease;
 }
 
 .supplier-row:hover {
-  background: rgba(219, 234, 254, 0.55);
+  background: #f1f5f9;
 }
 
 .supplier-row-highlight {
-  background: rgba(129, 140, 248, 0.12) !important;
-  box-shadow: inset 2px 0 0 #4f46e5;
+  background: #eef2ff !important;
+  box-shadow: inset 3px 0 0 #334155;
 }
 
-/* Column-specific tweaks */
-
+/* Column tweaks */
 .supplier-cell-id {
-  font-weight: 600;
-  color: #1d4ed8;
+  font-weight: 700;
 }
 
 .supplier-cell-name {
-  font-weight: 500;
-  color: #0f172a;
+  font-weight: 600;
 }
 
-.supplier-cell-category {
-  font-size: 0.82rem;
-  color: #4b5563;
-  max-width: 110px;     /* ⬅️ make category column narrower */
-}
-
+.supplier-cell-category,
 .supplier-cell-phone {
-  font-size: 0.82rem;
-  min-width: 170px;      /* ⬅️ give phone column more room */
+  color: #334155;
 }
 
-
-.supplier-cell-email {
-  /* email pills will wrap/expand inside this cell */
-  white-space: normal;
-  word-break: break-word;
-}
-
-.supplier-cell-features {
-  /* keep simple, let it wrap if needed */
-  white-space: normal;
-  word-break: break-word;
-}
-
-
-.supplier-cell-actions {
-  text-align: right;
-}
-
-/* Items column: allow multiple lines */
-.supplier-cell-items {
-  font-size: 0.8rem;
-}
-
-/* Link-like ID button */
-
+/* ID button */
 .linkish-btn {
   padding: 0;
   border: none;
   background: none;
-  color: #1d4ed8;
-  font-size: 0.86rem;
-  font-weight: 600;
+  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 700;
   cursor: pointer;
-  text-decoration: none;
 }
 
 .linkish-btn:hover {
   text-decoration: underline;
 }
 
-/* Status pill */
-
-.supplier-status-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 70px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.supplier-status-pill.active {
-  background: rgba(22, 163, 74, 0.1);
-  color: #15803d;
-  border: 1px solid rgba(22, 163, 74, 0.35);
-}
-
-.supplier-status-pill.inactive {
-  background: rgba(148, 163, 184, 0.12);
-  color: #6b7280;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-}
-
 /* Email pill */
-
 .supplier-email-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(59, 130, 246, 0.08);
-  color: #1d4ed8;
-  font-size: 0.78rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  font-size: 0.82rem;
+  max-width: 100%;
 }
 
 .supplier-email-icon {
-  font-size: 0.8rem;
+  opacity: 0.7;
 }
 
 .supplier-email-none {
-  font-size: 0.78rem;
-  color: #9ca3af;
+  font-size: 0.82rem;
+  color: #94a3b8;
 }
 
-/* Features pill */
-
+/* Feature pill */
 .supplier-feature-pill {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 999px;
-  font-size: 0.75rem;
-  background: rgba(236, 72, 153, 0.08);
-  color: #db2777;
-  border: 1px solid rgba(236, 72, 153, 0.4);
-}
-
-/* Action buttons */
-
-.supplier-action-btn {
-  border: none;
-  background: rgba(226, 232, 240, 0.8);
-  border-radius: 8px;
-  padding: 4px 6px;
-  margin-left: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  line-height: 1;
-  transition: background-color 0.12s ease, transform 0.12s ease,
-    box-shadow 0.12s ease;
-}
-
-.supplier-action-btn.view {
-  background: rgba(59, 130, 246, 0.1);
-}
-
-.supplier-action-btn.edit {
-  background: rgba(234, 179, 8, 0.12);
-}
-
-.supplier-action-btn.delete {
-  background: rgba(248, 113, 113, 0.12);
-}
-
-.supplier-action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+  font-size: 0.82rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
 }
 
 /* Alerts */
-
 .alert {
   margin-top: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  font-size: 0.85rem;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
 }
 
 .alert-error {
-  background: rgba(248, 113, 113, 0.12);
-  border: 1px solid rgba(248, 113, 113, 0.6);
-  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
 }
 
 .alert-success {
-  background: rgba(34, 197, 94, 0.11);
-  border: 1px solid rgba(34, 197, 94, 0.6);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
   color: #166534;
 }
 
 /* Responsive tweaks */
-
 @media (max-width: 900px) {
   .supplier-search-row {
     align-items: stretch;
   }
 
   .supplier-filter-select {
-    flex: 0 0 calc(50% - 5px);
+    flex: 1 1 160px;
   }
 
   .supplier-list-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .supplier-table {
+    font-size: 0.86rem;
+  }
+
+  .supplier-table th,
+  .supplier-table td {
+    padding: 8px 9px;
   }
 }

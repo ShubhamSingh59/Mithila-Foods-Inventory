@@ -1,4 +1,5 @@
-/* OPENING STOCK – CARD WRAPPER */
+/*
+OPENING STOCK – CARD WRAPPER
 
 .opening-stock {
   margin-top: 0.4rem;
@@ -17,7 +18,7 @@
   gap: 0.75rem;
 }
 
-/* Header */
+Header
 
 .opening-stock-header-row {
   display: flex;
@@ -59,14 +60,14 @@
   gap: 0.25rem;
 }
 
-/* States */
+States
 
 .opening-stock-loading {
   font-size: 0.85rem;
   color: var(--color-text-muted);
 }
 
-/* Form */
+Form
 
 .opening-stock-form {
   display: flex;
@@ -74,7 +75,7 @@
   gap: 0.9rem;
 }
 
-/* Top grid (company + date) */
+Top grid (company + date)
 
 .opening-stock-top-grid {
   display: grid;
@@ -88,7 +89,7 @@
   gap: 0.25rem;
 }
 
-/* Rows header */
+Rows header
 
 .opening-stock-rows-header {
   display: flex;
@@ -102,7 +103,7 @@
   font-weight: 600;
 }
 
-/* Table */
+Table
 
 .opening-stock-table-wrapper {
   margin-top: 0.15rem;
@@ -116,7 +117,7 @@
   border-spacing: 0;
 }
 
-/* Table head */
+Table head
 
 .opening-stock-table thead tr {
   background: linear-gradient(
@@ -142,7 +143,7 @@
   border-top-right-radius: 0.75rem;
 }
 
-/* Table body rows */
+Table body rows
 
 .opening-stock-table tbody tr:nth-child(even) {
   background: rgba(248, 250, 252, 0.85);
@@ -161,18 +162,19 @@
 .opening-stock-table tbody tr:last-child td:first-child {
   border-bottom-left-radius: 0.75rem;
 }
+
 .opening-stock-table tbody tr:last-child td:last-child {
   border-bottom-right-radius: 0.75rem;
 }
 
-/* Inputs inside table */
+Inputs inside table
 
 .opening-stock-item-input,
 .opening-stock-warehouse-input {
   width: 100%;
 }
 
-/* Rate cell with Auto button */
+Rate cell with Auto button
 
 .opening-stock-rate-cell {
   display: flex;
@@ -190,7 +192,7 @@
   padding-inline: 0.55rem;
 }
 
-/* Row-level error */
+Row-level error
 
 .opening-stock-row-error {
   margin-top: 0.18rem;
@@ -198,7 +200,7 @@
   color: #b91c1c;
 }
 
-/* Submit row */
+Submit row
 
 .opening-stock-submit-row {
   display: flex;
@@ -206,13 +208,13 @@
   margin-top: 0.4rem;
 }
 
-/* Small text helpers */
+Small text helpers
 
 .text-muted {
   color: var(--color-text-muted);
 }
 
-/* Responsive tweaks */
+Responsive tweaks
 
 @media (max-width: 768px) {
   .opening-stock-top-grid {
@@ -225,5 +227,492 @@
 
   .opening-stock-table tbody td {
     padding: 0.4rem 0.45rem;
+  }
+}
+*/
+/* src/CSS/OpeningStockEntry.css */
+/* src/CSS/OpeningStockEntry.css */
+
+/* ==============================
+   Remove outer wrapper "pill"
+   (App.jsx wraps OpeningStockEntry in .app-panel)
+   ============================== */
+.app-panel:has(.opening-stock) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.app-panel.app-panel-primary:has(.opening-stock),
+.app-panel.app-panel-secondary:has(.opening-stock) {
+  background: transparent !important;
+}
+
+/* Full width like SupplierList */
+.app-main-inner:has(.opening-stock) {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* ==============================
+   Page
+   ============================== */
+.opening-stock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 10px 18px;
+  width: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ==============================
+   Header (basic like StockMfg)
+   ============================== */
+.opening-stock-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.opening-stock-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.opening-stock-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0;
+}
+
+.opening-stock-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.opening-stock-pill {
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* ==============================
+   Alerts (same style across pages)
+   ============================== */
+.alert {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.text-muted {
+  color: #64748b;
+}
+
+/* ==============================
+   Form layout
+   ============================== */
+.opening-stock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Top controls */
+.opening-stock-top-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: end;
+
+  overflow: visible;
+}
+
+@media (max-width: 900px) {
+  .opening-stock-top-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Inputs/selects (scoped to Opening Stock page only) */
+.opening-stock .input,
+.opening-stock .select {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.opening-stock .input:focus,
+.opening-stock .select:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* ==============================
+   Rows header
+   ============================== */
+.opening-stock-rows-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.opening-stock-rows-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* ==============================
+   Buttons (basic)
+   ============================== */
+.opening-stock .btn {
+  border-radius: 10px;
+}
+
+.opening-stock .btn.btn-primary,
+.opening-stock .btn.btn-accent {
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.opening-stock .btn.btn-primary:hover,
+.opening-stock .btn.btn-accent:hover {
+  filter: brightness(1.05);
+}
+
+.opening-stock .btn.btn-outline {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+
+.opening-stock .btn.btn-outline:hover {
+  background: #f8fafc;
+}
+
+.opening-stock .btn.btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #0f172a;
+}
+
+.opening-stock .btn.btn-ghost:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+/* ==============================
+   Table wrapper
+   IMPORTANT: do NOT clip dropdown popover
+   ============================== */
+.opening-stock-table-wrapper {
+  width: 100%;
+  margin-top: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+
+  overflow: visible;
+}
+
+.opening-stock-table-wrapper.table-container {
+  overflow: visible !important; /* override any global .table-container */
+}
+
+/* Table layout (no forced horizontal scroll) */
+.opening-stock-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.9rem;
+  min-width: 0;
+}
+
+.opening-stock-table thead {
+  background: #f8fafc;
+}
+
+.opening-stock-table th,
+.opening-stock-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: top;
+
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+
+  overflow: visible; /* ✅ allow dropdown popover */
+}
+
+.opening-stock-table th {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Zebra + hover (basic) */
+.opening-stock-table tbody tr:nth-child(even) {
+  background: #fcfcfd;
+}
+
+.opening-stock-table tbody tr:hover {
+  background: #f1f5f9;
+}
+
+/* Column widths (sum ~ 100%) */
+.opening-stock-table th:nth-child(1),
+.opening-stock-table td:nth-child(1) { width: 17%; }
+
+.opening-stock-table th:nth-child(2),
+.opening-stock-table td:nth-child(2) { width: 14%; }
+
+.opening-stock-table th:nth-child(3),
+.opening-stock-table td:nth-child(3) { width: 17%; }
+
+.opening-stock-table th:nth-child(4),
+.opening-stock-table td:nth-child(4) { width: 6%; }
+
+.opening-stock-table th:nth-child(5),
+.opening-stock-table td:nth-child(5) { width: 7%; }
+
+.opening-stock-table th:nth-child(6),
+.opening-stock-table td:nth-child(6) { width: 10%; }
+
+.opening-stock-table th:nth-child(7),
+.opening-stock-table td:nth-child(7) { width: 12%; }
+
+.opening-stock-table th:nth-child(8),
+.opening-stock-table td:nth-child(8) { width: 11%; }
+
+.opening-stock-table th:nth-child(9),
+.opening-stock-table td:nth-child(9) { width: 6%; }
+
+/* Rate cell layout */
+.opening-stock-rate-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.opening-stock-rate-cell .input {
+  min-width: 0;
+}
+
+.opening-stock-rate-btn {
+  white-space: nowrap;
+}
+
+/* Row error */
+.opening-stock-row-error {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #991b1b;
+}
+
+/* Submit row */
+.opening-stock-submit-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* ==============================
+   Searchable dropdown (stdrop)
+   SAME BEHAVIOR as StockManufactureEntry finished item dropdown
+   ============================== */
+.opening-stock .stdrop {
+  position: relative;
+  width: 100%;
+}
+
+.opening-stock .stdrop.is-disabled {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* This fixes the "caret goes down" issue */
+.opening-stock .stdrop-control {
+  width: 100%;
+  min-height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* ✅ caret stays right */
+  gap: 10px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.opening-stock .stdrop-control:hover {
+  border-color: #94a3b8;
+}
+
+.opening-stock .stdrop-control.is-open {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+.opening-stock .stdrop-value {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.opening-stock .stdrop-title {
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.opening-stock .stdrop-sub {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.opening-stock .stdrop-placeholder {
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.opening-stock .stdrop-caret {
+  opacity: 0.6;
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* Popover overlay */
+.opening-stock .stdrop-popover {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.opening-stock .stdrop-search {
+  padding: 10px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.opening-stock .stdrop-list {
+  max-height: 280px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.opening-stock .stdrop-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.opening-stock .stdrop-item:hover {
+  background: #f1f5f9;
+}
+
+.opening-stock .stdrop-item-title {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.opening-stock .stdrop-item-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.opening-stock .stdrop-empty {
+  padding: 14px;
+  color: #64748b;
+}
+
+/* Mobile tweaks */
+@media (max-width: 768px) {
+  .opening-stock-table th,
+  .opening-stock-table td {
+    padding: 8px 10px;
+    font-size: 0.86rem;
   }
 }

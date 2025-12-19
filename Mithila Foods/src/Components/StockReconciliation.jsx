@@ -1,5 +1,5 @@
 // src/StockReconciliation.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   getItemsForBOM, // we reuse this to list items
   getWarehouses,
@@ -52,23 +52,21 @@ function StockReconciliation() {
           getCompanies(),
         ]);
 
-        setItems(itemData);
-        setWarehouses(whData);
-        setCompanies(companiesData);
+        setItems(itemData || []);
+        setWarehouses(whData || []);
+        setCompanies(companiesData || []);
 
         // auto-select company if possible
         if (!company) {
-          if (companiesData.length === 1) {
+          if ((companiesData || []).length === 1) {
             setCompany(companiesData[0].name);
-          } else if (whData.length > 0) {
+          } else if ((whData || []).length > 0) {
             setCompany(whData[0].company || "");
           }
         }
       } catch (err) {
         console.error(err);
-        setError(
-          err.message || "Failed to load items / warehouses / companies"
-        );
+        setError(err.message || "Failed to load items / warehouses / companies");
       } finally {
         setLoadingInit(false);
       }
@@ -270,14 +268,10 @@ function StockReconciliation() {
         </div>
       )}
       {error && (
-        <div className="alert alert-error stock-recon-error">
-          {error}
-        </div>
+        <div className="alert alert-error stock-recon-error">{error}</div>
       )}
       {message && (
-        <div className="alert alert-success stock-recon-message">
-          {message}
-        </div>
+        <div className="alert alert-success stock-recon-message">{message}</div>
       )}
 
       {/* Form */}
@@ -325,11 +319,7 @@ function StockReconciliation() {
 
         <div className="stock-recon-items-header">
           <h3 className="stock-recon-items-title">Items to Reconcile</h3>
-          <button
-            type="button"
-            onClick={addRow}
-            className="btn btn-accent btn-sm"
-          >
+          <button type="button" onClick={addRow} className="btn btn-accent btn-sm">
             + Add Item
           </button>
         </div>
@@ -353,36 +343,22 @@ function StockReconciliation() {
               </div>
 
               <div className="stock-recon-row-grid">
-                {/* SEARCHABLE ITEM FIELD */}
+                {/* ITEM DROPDOWN LIKE STOCK TRANSFER */}
                 <div className="stock-recon-row-field">
                   <label className="form-label">Item</label>
-                  <input
-                    list={`stock-recon-item-list-${row.id}`}
+                  <ItemSearchDropdown
+                    items={items}
                     value={row.item_code}
-                    onChange={(e) =>
-                      handleItemChange(row.id, e.target.value)
-                    }
-                    className="input stock-recon-item-input"
-                    placeholder="Type or select item code"
+                    onSelect={(code) => handleItemChange(row.id, code)}
+                    placeholder="Search item name / code..."
                   />
-                  <datalist id={`stock-recon-item-list-${row.id}`}>
-                    {items.map((it) => (
-                      <option
-                        key={it.name}
-                        value={it.name}
-                        label={`${it.name} - ${it.item_name}`}
-                      />
-                    ))}
-                  </datalist>
                 </div>
 
                 <div className="stock-recon-row-field">
                   <label className="form-label">Warehouse</label>
                   <select
                     value={row.warehouse}
-                    onChange={(e) =>
-                      handleWarehouseChange(row.id, e.target.value)
-                    }
+                    onChange={(e) => handleWarehouseChange(row.id, e.target.value)}
                     className="select"
                   >
                     <option value="">-- select warehouse --</option>
@@ -396,11 +372,7 @@ function StockReconciliation() {
 
                 <div className="stock-recon-row-field">
                   <label className="form-label">Current Qty</label>
-                  <input
-                    value={row.current_qty}
-                    readOnly
-                    className="input input-readonly"
-                  />
+                  <input value={row.current_qty} readOnly className="input input-readonly" />
                 </div>
 
                 <div className="stock-recon-row-field">
@@ -408,9 +380,7 @@ function StockReconciliation() {
                   <input
                     type="number"
                     value={row.new_qty}
-                    onChange={(e) =>
-                      handleRowChange(row.id, "new_qty", e.target.value)
-                    }
+                    onChange={(e) => handleRowChange(row.id, "new_qty", e.target.value)}
                     className="input"
                   />
                 </div>
@@ -436,9 +406,7 @@ function StockReconciliation() {
                     </span>
                   )}
                   {row.rowError && (
-                    <span className="stock-recon-row-error">
-                      {row.rowError}
-                    </span>
+                    <span className="stock-recon-row-error">{row.rowError}</span>
                   )}
                 </div>
               )}
@@ -456,6 +424,111 @@ function StockReconciliation() {
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+/** Item dropdown like StockTransfer (shows ALL items on open, search inside) */
+function ItemSearchDropdown({ items, value, onSelect, placeholder }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const ref = useRef(null);
+
+  const selected = useMemo(() => {
+    return items.find((x) => x.name === value) || null;
+  }, [items, value]);
+
+  const filtered = useMemo(() => {
+    const s = (q || "").trim().toLowerCase();
+    const base = !s
+      ? items
+      : items.filter((it) => {
+          const code = (it.name || "").toLowerCase();
+          const name = (it.item_name || "").toLowerCase();
+          return code.includes(s) || name.includes(s);
+        });
+
+    return base.slice(0, 80);
+  }, [items, q]);
+
+  useEffect(() => {
+    function onDown(e) {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  return (
+    <div className="stdrop" ref={ref}>
+      <button
+        type="button"
+        className={`stdrop-control ${open ? "is-open" : ""}`}
+        onClick={() =>
+          setOpen((v) => {
+            const next = !v;
+            if (next) setQ(""); // ✅ show ALL on open
+            return next;
+          })
+        }
+      >
+        <div className="stdrop-value">
+          {selected ? (
+            <>
+              <div className="stdrop-title">{selected.name}</div>
+              <div className="stdrop-sub">
+                {selected.item_name || ""}{" "}
+                {selected.stock_uom ? `· ${selected.stock_uom}` : ""}
+              </div>
+            </>
+          ) : (
+            <div className="stdrop-placeholder">{placeholder}</div>
+          )}
+        </div>
+        <div className="stdrop-caret">▾</div>
+      </button>
+
+      {open && (
+        <div className="stdrop-popover">
+          <div className="stdrop-search">
+            <input
+              autoFocus
+              className="input"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Type to search..."
+            />
+          </div>
+
+          <div className="stdrop-list">
+            {filtered.map((it) => (
+              <button
+                key={it.name}
+                type="button"
+                className="stdrop-item"
+                onClick={() => {
+                  onSelect(it.name);
+                  setOpen(false);
+                  setQ("");
+                }}
+              >
+                <div className="stdrop-item-title">{it.name}</div>
+                <div className="stdrop-item-sub">
+                  {it.item_name || ""}{" "}
+                  {it.stock_uom ? `· ${it.stock_uom}` : ""}
+                </div>
+              </button>
+            ))}
+
+            {!filtered.length ? (
+              <div className="stdrop-empty">No items found.</div>
+            ) : (
+              <div className="stdrop-hint">Showing up to 80 results</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

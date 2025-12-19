@@ -1,6 +1,7 @@
-/* =========================================
+/* =========================================================
    PURCHASE ORDER – PAGE LAYOUT
-========================================= */
+   (ENTIRE FILE COMMENTED – NO FRONTEND EFFECT)
+=========================================================
 
 .po-page {
   display: flex;
@@ -8,7 +9,6 @@
   gap: 1rem;
 }
 
-/* Generic card wrapper */
 .po-card {
   border-radius: 18px;
   padding: 1.4rem 1.6rem 1.6rem;
@@ -17,7 +17,6 @@
   border: 1px solid rgba(148, 163, 184, 0.45);
 }
 
-/* Main form card with subtle gradient */
 .po-card-main {
   background:
     radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), transparent 55%),
@@ -25,7 +24,6 @@
     #f9fafb;
 }
 
-/* List card a bit softer */
 .po-card-list {
   padding-top: 1rem;
   padding-bottom: 1.2rem;
@@ -33,10 +31,6 @@
     radial-gradient(circle at bottom left, rgba(129, 140, 248, 0.12), transparent 60%),
     #f9fafb;
 }
-
-/* =========================================
-   HEADER
-========================================= */
 
 .po-header {
   display: flex;
@@ -71,14 +65,6 @@
   white-space: nowrap;
 }
 
-.po-header-chip span {
-  font-weight: 600;
-}
-
-/* =========================================
-   MESSAGES
-========================================= */
-
 .po-info-text {
   font-size: 0.82rem;
   color: #94a3b8;
@@ -104,11 +90,6 @@
   color: #166534;
 }
 
-/* =========================================
-   FORM GRID / FIELDS
-========================================= */
-
-/* Two equal columns on desktop */
 .po-form-grid {
   margin-top: 0.6rem;
   display: grid;
@@ -116,176 +97,552 @@
   gap: 1.1rem 1.5rem;
 }
 
-/* Column container */
 .po-form-column {
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
 }
 
-/* Single field */
 .po-field {
   display: flex;
   flex-direction: column;
   gap: 0.28rem;
 }
 
-/* Qty + Rate row – side by side, aligned */
 .po-field-inline {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.7rem;
 }
 
-/* Labels */
 .po-label {
   font-size: 0.82rem;
   font-weight: 500;
   color: #0f172a;
 }
 
-.po-label-hint {
-  font-size: 0.75rem;
-  color: #9ca3af;
-}
-
-/* Inputs / selects / textareas */
-
 .po-input {
   width: 100%;
   border-radius: 10px;
   border: 1px solid rgba(148, 163, 184, 0.95);
   padding: 0.42rem 0.7rem;
-  font-size: 0.86rem;
-  background: rgba(255, 255, 255, 0.96);
-  outline: none;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
-  box-sizing: border-box;
 }
-
-.po-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4);
-  background: #ffffff;
-}
-
-.po-textarea {
-  min-height: 90px;
-  resize: vertical;
-}
-
-/* Main submit button alignment (right column bottom) */
-.po-actions-main {
-  margin-top: 0.35rem;
-}
-
-/* =========================================
-   BUTTONS – FUNKY BUT ELEGANT
-========================================= */
 
 .po-btn {
   border-radius: 999px;
-  border: none;
   padding: 0.45rem 1.1rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-  transform: translateY(0);
-  transition:
-    transform 0.08s ease,
-    box-shadow 0.12s ease,
-    background 0.12s ease,
-    color 0.12s ease,
-    border-color 0.12s ease;
+}
+
+.po-after-actions {
+  margin-top: 0.9rem;
+  display: flex;
+  gap: 0.6rem;
+}
+
+@media (max-width: 960px) {
+  .po-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.po-combo {
+  position: relative;
+  width: 100%;
+}
+
+.po-combo-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  background: #fff;
+}
+
+========================================================= */
+/* src/CSS/PurchaseOrder.css
+   BASIC THEME (same feel as StockTransfer)
+   - clean whites / slate borders
+   - strong alignment
+   - good error/success alerts
+   - FORM and LIST look like different parts
+*/
+
+/* ==============================
+   Remove outer wrapper "pill"
+   ============================== */
+.app-panel:has(.po-page) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.app-panel.app-panel-primary:has(.po-page),
+.app-panel.app-panel-secondary:has(.po-page) {
+  background: transparent !important;
+}
+
+.app-main-inner:has(.po-page) {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* ==============================
+   Page layout (STACKED: top + bottom)
+   ============================== */
+.po-page {
+  width: 100%;
+  padding: 12px 10px 18px;
+  display: flex;              /* ✅ stacked */
+  flex-direction: column;     /* ✅ stacked */
+  gap: 12px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow: visible;
+}
+
+/* remove old 2-column behavior completely */
+@media (max-width: 1050px) {
+  .po-page {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+
+/* ==============================
+   Cards (FORM vs LIST look different)
+   ============================== */
+.po-card {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* MAIN form area: white */
+.po-card-main {
+  background: #ffffff;
+  padding: 12px;
+}
+
+/* LIST area: light grey panel + inner white list box */
+.po-card-list {
+  background: #f8fafc;
+  padding: 12px;
+}
+
+/* ==============================
+   Header
+   ============================== */
+.po-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.po-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.po-subtitle {
+  margin: 3px 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.po-header-chip {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #64748b;
+  font-size: 0.85rem;
   white-space: nowrap;
+}
+
+.po-header-chip span {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* ==============================
+   Messages (good errors/success)
+   ============================== */
+.po-info-text {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.po-error-text,
+.po-message-text {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.po-error-text {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.po-message-text {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+/* ==============================
+   Form grid
+   ============================== */
+.po-form-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  overflow: visible;
+}
+
+@media (max-width: 980px) {
+  .po-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.po-form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: visible;
+}
+
+.po-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: visible;
+}
+
+.po-field-inline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+}
+
+@media (max-width: 750px) {
+  .po-field-inline {
+    grid-template-columns: 1fr;
+  }
+}
+
+.po-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.po-label-hint {
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+/* Inputs */
+.po-input {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.po-input:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+.po-textarea {
+  resize: vertical;
+  padding-top: 8px;
+}
+
+/* ==============================
+   Buttons (basic like StockTransfer)
+   ============================== */
+.po-btn {
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
 }
 
 .po-btn:disabled {
   opacity: 0.6;
   cursor: default;
-  box-shadow: none;
-  transform: none;
 }
 
-/* Primary CTA */
 .po-btn-primary {
-  background: linear-gradient(135deg, #4f46e5, #2563eb);
+  background: #0f172a;
+  border-color: #0f172a;
   color: #ffffff;
-  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.5);
 }
 
 .po-btn-primary:hover:not(:disabled) {
-  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.6);
-  transform: translateY(-1px);
+  filter: brightness(1.05);
 }
 
-/* Accent (email supplier) */
-.po-btn-accent {
-  background: linear-gradient(135deg, #14b8a6, #22c55e);
-  color: #022c22;
-  box-shadow: 0 12px 24px rgba(34, 197, 94, 0.45);
-}
-
-.po-btn-accent:hover:not(:disabled) {
-  box-shadow: 0 16px 32px rgba(34, 197, 94, 0.55);
-  transform: translateY(-1px);
-}
-
-/* Outline (download PDF) */
 .po-btn-outline {
-  background: rgba(15, 23, 42, 0.02);
-  border: 1px solid rgba(148, 163, 184, 0.9);
+  background: #ffffff;
+  border-color: #cbd5e1;
   color: #0f172a;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
 }
 
 .po-btn-outline:hover:not(:disabled) {
-  background: #ffffff;
-  border-color: #6366f1;
-  color: #111827;
-  box-shadow: 0 12px 24px rgba(148, 163, 184, 0.45);
-  transform: translateY(-1px);
+  background: #f8fafc;
 }
 
-/* =========================================
-   AFTER-ACTIONS ROW (email + PDF)
-========================================= */
+.po-btn-accent {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.po-actions-main {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-top: 8px;
+}
 
 .po-after-actions {
-  margin-top: 0.9rem;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
   display: flex;
+  gap: 10px;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  align-items: center;
 }
 
-/* remove default link underlining around button */
-.po-after-actions a {
-  text-decoration: none;
+/* ==============================
+   Search dropdown (stdrop) scoped to PO
+   ============================== */
+.po-page .stdrop {
+  position: relative;
+  width: 100%;
 }
 
-/* =========================================
-   RESPONSIVE
-========================================= */
+.po-page .stdrop-control {
+  width: 100%;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 
-@media (max-width: 960px) {
-  .po-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #ffffff;
+  cursor: pointer;
+}
 
-  .po-header-chip {
-    align-self: flex-start;
-  }
+.po-page .stdrop-control:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
 
-  .po-form-grid {
-    grid-template-columns: 1fr; /* stack columns */
-  }
+.po-page .stdrop-control.is-open {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
 
-  .po-field-inline {
-    grid-template-columns: 1fr; /* stack Qty + Rate on small screens */
-  }
+.po-page .stdrop-value {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.po-page .stdrop-title {
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.po-page .stdrop-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.po-page .stdrop-placeholder {
+  color: #64748b;
+}
+
+.po-page .stdrop-caret {
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+/* Popover */
+.po-page .stdrop-popover {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.po-page .stdrop-search {
+  padding: 10px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.po-page .stdrop-list {
+  max-height: 280px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.po-page .stdrop-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.po-page .stdrop-item:hover {
+  background: #f1f5f9;
+}
+
+.po-page .stdrop-item-title {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.po-page .stdrop-item-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.po-page .stdrop-empty,
+.po-page .stdrop-hint {
+  padding: 10px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ==============================
+   PurchaseOrderList inside right panel
+   (Overrides chip-table style → basic table)
+   ============================== */
+.po-card-list .po-list {
+  margin: 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.po-card-list .po-list-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.po-card-list .po-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: 0.86rem;
+}
+
+.po-card-list .po-list-table thead th {
+  background: #f1f5f9 !important; /* kill gradient */
+  color: #0f172a !important;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+  border-radius: 0 !important; /* kill rounded chip header */
+}
+
+.po-card-list .po-list-table tbody tr {
+  background: transparent !important;   /* kill chip bg */
+  box-shadow: none !important;          /* kill chip shadow */
+  transform: none !important;           /* kill hover lift */
+}
+
+.po-card-list .po-list-table tbody tr:hover {
+  background: #f8fafc !important;
+}
+
+.po-card-list .po-list-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef2f7;
+  border-radius: 0 !important;
+}
+
+/* Keep your existing cell helpers */
+.po-card-list .po-cell-name {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.po-card-list .po-cell-money {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.po-card-list .po-cell-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.po-card-list .po-list-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding-top: 6px;
+  font-size: 0.86rem;
+  color: #64748b;
 }

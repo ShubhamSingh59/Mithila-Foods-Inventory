@@ -1,4 +1,7 @@
-/* PURCHASE ORDER LIST – FLOATING CHIP TABLE */
+/*
+=========================================
+PURCHASE ORDER LIST – FLOATING CHIP TABLE
+=========================================
 
 .po-list {
   margin-top: 0.4rem;
@@ -16,6 +19,8 @@
   flex-direction: column;
   gap: 0.7rem;
 }
+
+HEADER
 
 .po-list-header {
   display: flex;
@@ -48,13 +53,13 @@
   color: var(--color-primary);
 }
 
-/* Table wrapper */
+TABLE WRAPPER
 
 .po-list-table-wrapper {
   overflow-x: auto;
 }
 
-/* Floating rows table */
+FLOATING ROWS TABLE
 
 .po-list-table {
   width: 100%;
@@ -63,7 +68,7 @@
   font-size: 0.84rem;
 }
 
-/* Header */
+TABLE HEADER
 
 .po-list-table thead tr {
   background: linear-gradient(
@@ -90,7 +95,7 @@
   border-bottom-right-radius: 999px;
 }
 
-/* Body rows as chips */
+BODY ROWS AS CHIPS
 
 .po-list-table tbody tr {
   background: rgba(255, 255, 255, 0.95);
@@ -119,7 +124,7 @@
   border-bottom-right-radius: 999px;
 }
 
-/* Cells */
+CELLS
 
 .po-cell-name {
   font-weight: 500;
@@ -135,7 +140,7 @@
   white-space: nowrap;
 }
 
-/* Pagination */
+PAGINATION
 
 .po-list-pagination {
   display: flex;
@@ -147,4 +152,337 @@
 
 .po-list-page-text {
   color: var(--color-text-muted);
+}
+*/
+/* src/CSS/PurchaseOrderList.css
+   BASIC theme (same feel as StockTransfer / PurchaseOrder)
+   ✅ small buttons
+   ✅ no outer pill/shadow
+   ✅ clean table + alignment
+   ✅ good alerts
+*/
+
+/* --------------------------------
+   IMPORTANT: kill any outer pill coming from PurchaseOrder.css
+   -------------------------------- */
+.po-card-list .po-list {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* --------------------------------
+   Wrapper
+   -------------------------------- */
+.po-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;            /* ✅ no outer padding */
+  margin: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* --------------------------------
+   Header (simple)
+   -------------------------------- */
+.po-list-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.po-list-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.po-list-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.po-list-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* right info (not chip) */
+.po-list-pill {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.text-muted {
+  color: #64748b;
+}
+
+/* --------------------------------
+   Alerts (good errors)
+   -------------------------------- */
+.po-list .alert {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.po-list .alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.po-list .alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+/* --------------------------------
+   Table wrapper (THIS is the only "card")
+   -------------------------------- */
+.po-list-table-wrapper {
+  margin-top: 6px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  overflow-x: auto;
+}
+
+/* --------------------------------
+   Table (basic)
+   -------------------------------- */
+.po-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  min-width: 1100px; /* many columns */
+}
+
+.po-list-table thead {
+  background: #f8fafc;
+}
+
+.po-list-table th,
+.po-list-table td {
+  padding: 9px 10px; /* slightly tighter */
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.po-list-table th {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.po-list-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* cells */
+.po-cell-name {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.po-cell-money {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.po-cell-actions {
+  white-space: nowrap;
+}
+
+/* --------------------------------
+   Actions stack (tight)
+   -------------------------------- */
+.po-actions-stack {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: stretch;
+  min-width: 150px;
+}
+
+/* --------------------------------
+   QC inline editor (tight + aligned)
+   -------------------------------- */
+.qc-inline {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  min-width: 200px;
+}
+
+.qc-inline-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.qc-inline-input {
+  width: 100%;
+  height: 30px;          /* ✅ smaller */
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  padding: 6px 8px;
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.qc-inline-input:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* --------------------------------
+   Select (MF Status)
+   -------------------------------- */
+.po-list-table select {
+  width: 100%;
+  height: 30px;          /* ✅ smaller */
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 4px 8px;
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.po-list-table select:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* --------------------------------
+   Buttons (SMALL like StockTransfer)
+   Scoped to this component so it doesn't change other pages.
+   -------------------------------- */
+.po-list .btn {
+  height: 30px;          /* ✅ small */
+  padding: 5px 10px;     /* ✅ tight */
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #f73434;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: none;
+}
+
+.po-list .btn-xs {
+  height: 28px;          /* ✅ even smaller */
+  padding: 4px 10px;
+  font-size: 0.76rem;
+}
+
+.po-list .btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.po-list .btn-primary,
+.po-list .btn-accent {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.po-list .btn-primary:hover:not(:disabled),
+.po-list .btn-accent:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.po-list .btn-outline {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.po-list .btn-outline:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.po-list .btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: #0f172a;
+}
+
+.po-list .btn-ghost:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.po-list .btn-danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.po-list .btn-danger:hover:not(:disabled) {
+  background: #100101;
+}
+
+/* --------------------------------
+   Pagination (small)
+   -------------------------------- */
+.po-list-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.po-list-page-text {
+  font-size: 0.86rem;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.page-btn {
+  height: 30px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.page-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }

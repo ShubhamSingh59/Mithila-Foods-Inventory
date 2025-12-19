@@ -1,2462 +1,5 @@
-////////// src/PurchaseOrder.jsx
-////////import React, { useEffect, useState } from "react";
-////////import {
-////////  getSuppliers,
-////////  getItemsForPO,
-////////  createPurchaseOrder,
-////////  submitDoc,
-////////  sendPurchaseOrderEmail,
-////////  getPurchaseOrderPdfUrl,
-////////  getPurchaseOrderWithItems,
-////////  updatePurchaseOrder,
-////////} from "./erpBackendApi";
-////////import PurchaseOrderList from "./PurchaseOrderList";
-////////import "../CSS/PurchaseOrder.css";
-
-////////function PurchaseOrder() {
-////////  const [suppliers, setSuppliers] = useState([]);
-////////  const [items, setItems] = useState([]);
-
-////////  // supplier = what user sees (supplier_name), not the ID
-////////  const [supplier, setSupplier] = useState("");
-////////  const [supplierEmail, setSupplierEmail] = useState("");
-////////  const [itemCode, setItemCode] = useState("");
-////////  const [qty, setQty] = useState("1.00");
-////////  const [rate, setRate] = useState("0.00");
-////////  const [warehouse, setWarehouse] = useState("Raw Material - MF"); // default warehouse
-////////  const [notes, setNotes] = useState("");
-
-////////  const todayStr = new Date().toISOString().slice(0, 10);
-////////  const [poDate, setPoDate] = useState(todayStr); // transaction_date
-////////  const [receivedByDate, setReceivedByDate] = useState(todayStr); // schedule_date
-
-////////  const [lastPoName, setLastPoName] = useState("");
-////////  const [editingPoName, setEditingPoName] = useState(""); // ⭐ which draft is being edited
-
-////////  const [loadingLists, setLoadingLists] = useState(false);
-////////  const [submitting, setSubmitting] = useState(false);
-////////  const [submittingPo, setSubmittingPo] = useState(false);
-////////  const [emailSending, setEmailSending] = useState(false);
-
-////////  const [error, setError] = useState("");
-////////  const [message, setMessage] = useState("");
-
-////////  useEffect(() => {
-////////    async function loadLists() {
-////////      try {
-////////        setLoadingLists(true);
-////////        setError("");
-
-////////        const [suppliersData, itemsData] = await Promise.all([
-////////          getSuppliers(),
-////////          getItemsForPO(),
-////////        ]);
-
-////////        setSuppliers(suppliersData);
-////////        setItems(itemsData);
-
-////////        if (suppliersData.length > 0) {
-////////          const s0 = suppliersData[0];
-////////          setSupplier(s0.supplier_name || s0.name);
-////////          setSupplierEmail(s0.supplier_email || s0.email_id || "");
-////////        }
-
-////////        if (itemsData.length > 0) {
-////////          setItemCode(itemsData[0].name);
-////////        }
-////////      } catch (err) {
-////////        console.error(err);
-////////        setError("Failed to load suppliers/items");
-////////      } finally {
-////////        setLoadingLists(false);
-////////      }
-////////    }
-
-////////    loadLists();
-////////  }, []);
-
-////////  function handleSupplierChange(e) {
-////////    const value = e.target.value;
-////////    setSupplier(value);
-
-////////    const s = suppliers.find(
-////////      (sup) => sup.supplier_name === value || sup.name === value
-////////    );
-////////    if (s) {
-////////      // ✅ always overwrite email; do not keep old value
-////////      setSupplierEmail(s.supplier_email || s.email_id || "");
-////////    } else {
-////////      setSupplierEmail("");
-////////    }
-////////  }
-
-////////  // 🔁 Load an existing draft PO into the form for editing
-////////  async function handleEditPo(poName) {
-////////    try {
-////////      setError("");
-////////      setMessage(`Loading draft Purchase Order ${poName} for editing...`);
-////////      const po = await getPurchaseOrderWithItems(poName);
-
-////////      const firstItem = (po.items || [])[0] || {};
-
-////////      const supRow = suppliers.find((s) => s.name === po.supplier);
-////////      const displaySupplier = supRow?.supplier_name || po.supplier;
-
-////////      setSupplier(displaySupplier);
-////////      setSupplierEmail(
-////////        supRow?.supplier_email || supRow?.email_id || ""
-////////      ); // ✅ no stale email
-
-////////      setItemCode(firstItem.item_code || "");
-////////      setQty(firstItem.qty != null ? String(firstItem.qty) : "1.00");
-////////      setRate(firstItem.rate != null ? String(firstItem.rate) : "0.00");
-////////      setWarehouse(firstItem.warehouse || "Raw Material - MF");
-////////      setNotes(po.notes || "");
-
-////////      setPoDate(po.transaction_date || todayStr);
-////////      setReceivedByDate(
-////////        firstItem.schedule_date ||
-////////          po.schedule_date ||
-////////          po.transaction_date ||
-////////          todayStr
-////////      );
-
-////////      setEditingPoName(po.name);
-////////      setLastPoName(po.name);
-////////      setMessage(`Editing draft Purchase Order ${poName}.`);
-////////    } catch (err) {
-////////      console.error(err);
-////////      setError(
-////////        err.response?.data?.error?.message ||
-////////          err.message ||
-////////          "Failed to load Purchase Order for editing"
-////////      );
-////////    }
-////////  }
-
-////////  async function handleSubmit(e) {
-////////    e.preventDefault();
-////////    setError("");
-////////    setMessage("");
-
-////////    const q = parseFloat(qty);
-////////    const r = parseFloat(rate);
-
-////////    if (!supplier || !itemCode || isNaN(q) || q <= 0) {
-////////      setError("Please select supplier, item and enter valid quantity.");
-////////      return;
-////////    }
-
-////////    if (!poDate) {
-////////      setError("Please select Purchase Order Date.");
-////////      return;
-////////    }
-
-////////    if (!receivedByDate) {
-////////      setError("Please select Received By date.");
-////////      return;
-////////    }
-
-////////    const selectedSupplier = suppliers.find(
-////////      (s) => s.supplier_name === supplier || s.name === supplier
-////////    );
-////////    if (!selectedSupplier) {
-////////      setError("Please select a valid supplier from the list.");
-////////      return;
-////////    }
-////////    const supplierId = selectedSupplier.name;
-
-////////    try {
-////////      setSubmitting(true);
-
-////////      if (editingPoName) {
-////////        // ✏️ UPDATE EXISTING DRAFT
-////////        const payload = {
-////////          supplier: supplierId,
-////////          transaction_date: poDate,
-////////          schedule_date: receivedByDate,
-////////          notes: notes || "",
-////////          items: [
-////////            {
-////////              item_code: itemCode,
-////////              qty: q,
-////////              rate: isNaN(r) ? 0 : r,
-////////              schedule_date: receivedByDate,
-////////              warehouse: warehouse || undefined,
-////////            },
-////////          ],
-////////        };
-
-////////        await updatePurchaseOrder(editingPoName, payload);
-
-////////        setLastPoName(editingPoName);
-////////        setMessage(`Purchase Order ${editingPoName} saved as draft.`);
-////////      } else {
-////////        // 🆕 CREATE NEW DRAFT
-////////        const po = await createPurchaseOrder({
-////////          supplier: supplierId,
-////////          item_code: itemCode,
-////////          qty: q,
-////////          rate: isNaN(r) ? 0 : r,
-////////          notes,
-////////          warehouse,
-////////          po_date: poDate,
-////////          schedule_date: receivedByDate,
-////////        });
-
-////////        const poName = po.data?.name;
-
-////////        setLastPoName(poName || "");
-////////        setEditingPoName(poName || "");
-////////        setMessage(
-////////          poName
-////////            ? `Purchase Order created as draft: ${poName}`
-////////            : `Purchase Order created (draft)`
-////////        );
-////////      }
-////////    } catch (err) {
-////////      console.error(err);
-////////      setError(
-////////        err.response?.data?.error?.message ||
-////////          err.message ||
-////////          "Failed to create/update Purchase Order"
-////////      );
-////////    } finally {
-////////      setSubmitting(false);
-////////    }
-////////  }
-
-////////  async function handleSubmitPo() {
-////////    setError("");
-////////    setMessage("");
-
-////////    const poName = editingPoName || lastPoName;
-////////    if (!poName) {
-////////      setError("No draft Purchase Order selected to submit.");
-////////      return;
-////////    }
-
-////////    try {
-////////      setSubmittingPo(true);
-////////      await submitDoc("Purchase Order", poName);
-////////      setMessage(`Purchase Order submitted: ${poName}`);
-////////      setEditingPoName("");
-////////    } catch (err) {
-////////      console.error(err);
-////////      setError(
-////////        err.response?.data?.error?.message ||
-////////          err.message ||
-////////          "Failed to submit Purchase Order"
-////////      );
-////////    } finally {
-////////      setSubmittingPo(false);
-////////    }
-////////  }
-
-////////  async function handleEmailSupplier() {
-////////    if (!lastPoName) {
-////////      setError("No Purchase Order to email yet.");
-////////      return;
-////////    }
-////////    if (!supplierEmail) {
-////////      setError("Please enter supplier email address first.");
-////////      return;
-////////    }
-
-////////    setError("");
-////////    setMessage("");
-////////    setEmailSending(true);
-
-////////    try {
-////////      await sendPurchaseOrderEmail({
-////////        poName: lastPoName,
-////////        recipients: supplierEmail,
-////////      });
-////////      setMessage(`Email sent to ${supplierEmail} for PO ${lastPoName}.`);
-////////    } catch (err) {
-////////      console.error(err);
-////////      setError(
-////////        err.response?.data?.error?.message ||
-////////          err.message ||
-////////          "Failed to send email"
-////////      );
-////////    } finally {
-////////      setEmailSending(false);
-////////    }
-////////  }
-
-////////  return (
-////////    <div className="po-page">
-////////      <div className="po-card po-card-main">
-////////        <div className="po-header">
-////////          <div>
-////////            <h1 className="po-title">ERPNext Purchase Order (Raw Material)</h1>
-////////            <p className="po-subtitle">
-////////              Create ERPNext Purchase Orders for raw materials and send to
-////////              suppliers.
-////////            </p>
-////////          </div>
-////////          {lastPoName && (
-////////            <div className="po-header-chip">
-////////              {editingPoName ? "Editing draft" : "Last PO"}:{" "}
-////////              <span>{lastPoName}</span>
-////////            </div>
-////////          )}
-////////        </div>
-
-////////        {loadingLists && (
-////////          <p className="po-info-text">Loading suppliers/items...</p>
-////////        )}
-////////        {error && <p className="po-error-text">{error}</p>}
-////////        {message && <p className="po-message-text">{message}</p>}
-
-////////        <form onSubmit={handleSubmit} className="po-form-grid">
-////////          {/* Left column */}
-////////          <div className="po-form-column">
-////////            <div className="po-field">
-////////              <label className="po-label">Supplier</label>
-////////              <input
-////////                list="po-supplier-list"
-////////                value={supplier}
-////////                onChange={handleSupplierChange}
-////////                disabled={loadingLists || suppliers.length === 0}
-////////                className="po-input"
-////////                placeholder="Type or select supplier"
-////////              />
-////////              <datalist id="po-supplier-list">
-////////                {suppliers.map((s) => (
-////////                  <option
-////////                    key={s.name}
-////////                    value={s.supplier_name || s.name}
-////////                    label={s.name}
-////////                  />
-////////                ))}
-////////              </datalist>
-////////            </div>
-
-////////            <div className="po-field">
-////////              <label className="po-label">
-////////                Supplier Email{" "}
-////////                <span className="po-label-hint">(optional)</span>
-////////              </label>
-////////              <input
-////////                type="email"
-////////                value={supplierEmail}
-////////                onChange={(e) => setSupplierEmail(e.target.value)}
-////////                placeholder="supplier@example.com"
-////////                className="po-input"
-////////              />
-////////            </div>
-
-////////            <div className="po-field">
-////////              <label className="po-label">Notes (optional)</label>
-////////              <textarea
-////////                value={notes}
-////////                onChange={(e) => setNotes(e.target.value)}
-////////                rows={3}
-////////                className="po-input po-textarea"
-////////              />
-////////            </div>
-////////          </div>
-
-////////          {/* Right column */}
-////////          <div className="po-form-column">
-////////            <div className="po-field">
-////////              <label className="po-label">
-////////                Item (Raw Material / Pouch / Sticker)
-////////              </label>
-////////              <input
-////////                list="po-item-list"
-////////                value={itemCode}
-////////                onChange={(e) => setItemCode(e.target.value)}
-////////                disabled={loadingLists || items.length === 0}
-////////                className="po-input"
-////////                placeholder="Type or select item code"
-////////              />
-////////              <datalist id="po-item-list">
-////////                {items.map((item) => (
-////////                  <option
-////////                    key={item.name}
-////////                    value={item.name}
-////////                    label={`${item.name} - ${item.item_name || ""}${
-////////                      item.item_group ? " (" + item.item_group + ")" : ""
-////////                    }`}
-////////                  />
-////////                ))}
-////////              </datalist>
-////////            </div>
-
-////////            <div className="po-field po-field-inline">
-////////              <div>
-////////                <label className="po-label">Quantity</label>
-////////                <input
-////////                  type="number"
-////////                  step="0.01"
-////////                  value={qty}
-////////                  onChange={(e) => setQty(e.target.value)}
-////////                  className="po-input"
-////////                />
-////////              </div>
-////////              <div>
-////////                <label className="po-label">Rate (per unit)</label>
-////////                <input
-////////                  type="number"
-////////                  step="0.01"
-////////                  value={rate}
-////////                  onChange={(e) => setRate(e.target.value)}
-////////                  className="po-input"
-////////                />
-////////              </div>
-////////            </div>
-
-////////            <div className="po-field po-field-inline">
-////////              <div>
-////////                <label className="po-label">Purchase Order Date</label>
-////////                <input
-////////                  type="date"
-////////                  value={poDate}
-////////                  onChange={(e) => setPoDate(e.target.value)}
-////////                  className="po-input"
-////////                />
-////////              </div>
-////////              <div>
-////////                <label className="po-label">Received By (Schedule Date)</label>
-////////                <input
-////////                  type="date"
-////////                  value={receivedByDate}
-////////                  onChange={(e) => setReceivedByDate(e.target.value)}
-////////                  className="po-input"
-////////                />
-////////              </div>
-////////            </div>
-
-////////            <div className="po-field">
-////////              <label className="po-label">Warehouse</label>
-////////              <input
-////////                type="text"
-////////                value={warehouse}
-////////                onChange={(e) => setWarehouse(e.target.value)}
-////////                placeholder="Raw Material - MF"
-////////                className="po-input"
-////////              />
-////////            </div>
-
-////////            <div className="po-actions-main">
-////////              <button
-////////                type="submit"
-////////                disabled={submitting || loadingLists}
-////////                className="po-btn po-btn-primary"
-////////              >
-////////                {submitting
-////////                  ? editingPoName
-////////                    ? "Saving Draft..."
-////////                    : "Creating Draft..."
-////////                  : editingPoName
-////////                  ? "Save Draft"
-////////                  : "Create Draft"}
-////////              </button>
-
-////////              <button
-////////                type="button"
-////////                onClick={handleSubmitPo}
-////////                disabled={submittingPo || loadingLists}
-////////                className="po-btn po-btn-outline"
-////////              >
-////////                {submittingPo ? "Submitting..." : "Submit Purchase Order"}
-////////              </button>
-////////            </div>
-////////          </div>
-////////        </form>
-
-////////        {lastPoName && (
-////////          <div className="po-after-actions">
-////////            <button
-////////              type="button"
-////////              onClick={handleEmailSupplier}
-////////              disabled={emailSending || !supplierEmail}
-////////              className="po-btn po-btn-accent"
-////////            >
-////////              {emailSending ? "Sending email..." : "Email Supplier"}
-////////            </button>
-
-////////            <a
-////////              href={getPurchaseOrderPdfUrl(lastPoName)}
-////////              target="_blank"
-////////              rel="noreferrer"
-////////            >
-////////              <button type="button" className="po-btn po-btn-outline">
-////////                Download PDF
-////////              </button>
-////////            </a>
-////////          </div>
-////////        )}
-////////      </div>
-
-////////      <div className="po-card po-card-list">
-////////        <PurchaseOrderList onEditPo={handleEditPo} />
-////////      </div>
-////////    </div>
-////////  );
-////////}
-
-////////export default PurchaseOrder;
-
-
-//////// src/PurchaseOrder.jsx
-//////import React, { useEffect, useState, useMemo } from "react";
-//////import {
-//////  getSuppliers,
-//////  getItemsForPO,
-//////  createPurchaseOrder,
-//////  submitDoc,
-//////  sendPurchaseOrderEmail,
-//////  getPurchaseOrderPdfUrl,
-//////  getPurchaseOrderWithItems,
-//////  updatePurchaseOrder,
-//////  getItemSuppliers,          // 👈 NEW
-//////} from "./erpBackendApi";
-//////import PurchaseOrderList from "./PurchaseOrderList";
-//////import "../CSS/PurchaseOrder.css";
-
-//////function PurchaseOrder() {
-//////  const [suppliers, setSuppliers] = useState([]);
-//////  const [items, setItems] = useState([]);
-//////  const [itemSuppliers, setItemSuppliers] = useState([]); // 👈 mapping rows
-
-//////  // supplier = what user sees (supplier_name), not the ID
-//////  const [supplier, setSupplier] = useState("");
-//////  const [supplierEmail, setSupplierEmail] = useState("");
-//////  const [itemCode, setItemCode] = useState("");
-//////  const [qty, setQty] = useState("1.00");
-//////  const [rate, setRate] = useState("0.00");
-//////  const [warehouse, setWarehouse] = useState("Raw Material - MF"); // default warehouse
-//////  const [notes, setNotes] = useState("");
-
-//////  const todayStr = new Date().toISOString().slice(0, 10);
-//////  const [poDate, setPoDate] = useState(todayStr); // transaction_date
-//////  const [receivedByDate, setReceivedByDate] = useState(todayStr); // schedule_date
-
-//////  const [lastPoName, setLastPoName] = useState("");
-//////  const [editingPoName, setEditingPoName] = useState(""); // which draft is being edited
-
-//////  const [loadingLists, setLoadingLists] = useState(false);
-//////  const [submitting, setSubmitting] = useState(false);
-//////  const [submittingPo, setSubmittingPo] = useState(false);
-//////  const [emailSending, setEmailSending] = useState(false);
-
-//////  const [error, setError] = useState("");
-//////  const [message, setMessage] = useState("");
-
-//////  // ---- Load suppliers, items, and Item Supplier mapping ----
-//////  useEffect(() => {
-//////    async function loadLists() {
-//////      try {
-//////        setLoadingLists(true);
-//////        setError("");
-
-//////        const [suppliersData, itemsData, itemSupData] = await Promise.all([
-//////          getSuppliers(),
-//////          getItemsForPO(),
-//////          getItemSuppliers(),  // 👈 fetch mapping from Item Purchase section
-//////        ]);
-
-//////        setSuppliers(suppliersData);
-//////        setItems(itemsData);
-//////        setItemSuppliers(itemSupData || []);
-
-//////        if (suppliersData.length > 0) {
-//////          const s0 = suppliersData[0];
-//////          setSupplier(s0.supplier_name || s0.name);
-//////          setSupplierEmail(s0.supplier_email || s0.email_id || "");
-//////        }
-
-//////        if (itemsData.length > 0) {
-//////          setItemCode(itemsData[0].name);
-//////        }
-//////      } catch (err) {
-//////        console.error(err);
-//////        setError("Failed to load suppliers/items");
-//////      } finally {
-//////        setLoadingLists(false);
-//////      }
-//////    }
-
-//////    loadLists();
-//////  }, []);
-
-//////  // Helper: current selected supplier row & ID
-//////  const selectedSupplierRow = useMemo(
-//////    () =>
-//////      suppliers.find(
-//////        (s) => s.supplier_name === supplier || s.name === supplier
-//////      ),
-//////    [suppliers, supplier]
-//////  );
-//////  const selectedSupplierId = selectedSupplierRow?.name || "";
-
-//////  // Build quick lookup maps from Item Supplier rows
-//////  const supplierToItemNames = useMemo(() => {
-//////    const map = new Map(); // supplierId -> Set(itemCode)
-//////    for (const row of itemSuppliers) {
-//////      const sup = row.supplier;
-//////      const item = row.parent;
-//////      if (!sup || !item) continue;
-//////      if (!map.has(sup)) map.set(sup, new Set());
-//////      map.get(sup).add(item);
-//////    }
-//////    return map;
-//////  }, [itemSuppliers]);
-
-//////  const itemToSupplierNames = useMemo(() => {
-//////    const map = new Map(); // itemCode -> Set(supplierId)
-//////    for (const row of itemSuppliers) {
-//////      const sup = row.supplier;
-//////      const item = row.parent;
-//////      if (!sup || !item) continue;
-//////      if (!map.has(item)) map.set(item, new Set());
-//////      map.get(item).add(sup);
-//////    }
-//////    return map;
-//////  }, [itemSuppliers]);
-
-//////  // Items filtered by currently selected supplier
-//////  const itemsForCurrentSupplier = useMemo(() => {
-//////    if (!selectedSupplierId) return items;
-
-//////    const allowedItemsSet = supplierToItemNames.get(selectedSupplierId);
-//////    if (!allowedItemsSet || !allowedItemsSet.size) {
-//////      // if no mapping, show all to avoid confusion
-//////      return items;
-//////    }
-//////    const filtered = items.filter((it) => allowedItemsSet.has(it.name));
-//////    return filtered.length ? filtered : items;
-//////  }, [items, supplierToItemNames, selectedSupplierId]);
-
-//////  // Suppliers filtered by currently selected item
-//////  const suppliersForCurrentItem = useMemo(() => {
-//////    if (!itemCode) return suppliers;
-
-//////    const allowedSupSet = itemToSupplierNames.get(itemCode);
-//////    if (!allowedSupSet || !allowedSupSet.size) {
-//////      return suppliers;
-//////    }
-//////    const filtered = suppliers.filter((s) => allowedSupSet.has(s.name));
-//////    return filtered.length ? filtered : suppliers;
-//////  }, [suppliers, itemToSupplierNames, itemCode]);
-
-//////  // ---- Supplier change ----
-//////  function handleSupplierChange(e) {
-//////    const value = e.target.value;
-//////    setSupplier(value);
-
-//////    const s = suppliers.find(
-//////      (sup) => sup.supplier_name === value || sup.name === value
-//////    );
-
-//////    if (s) {
-//////      // always overwrite email; do not keep old value
-//////      setSupplierEmail(s.supplier_email || s.email_id || "");
-//////    } else {
-//////      setSupplierEmail("");
-//////    }
-
-//////    // Auto-adjust item if current item is not supplied by this supplier
-//////    const supplierId = s?.name;
-//////    if (supplierId && items.length) {
-//////      const allowedItemsSet = supplierToItemNames.get(supplierId);
-//////      if (allowedItemsSet && allowedItemsSet.size) {
-//////        const currentItemAllowed = itemCode && allowedItemsSet.has(itemCode);
-//////        if (!currentItemAllowed) {
-//////          // pick first allowed item
-//////          const firstAllowedItem = items.find((it) =>
-//////            allowedItemsSet.has(it.name)
-//////          );
-//////          if (firstAllowedItem) {
-//////            setItemCode(firstAllowedItem.name);
-//////          }
-//////        }
-//////      }
-//////    }
-//////  }
-
-//////  // ---- Item change ----
-//////  function handleItemChange(e) {
-//////    const value = e.target.value;
-//////    setItemCode(value);
-
-//////    if (!value) return;
-
-//////    // If item has specific suppliers, auto-pick one if needed
-//////    const allowedSupSet = itemToSupplierNames.get(value);
-//////    if (allowedSupSet && allowedSupSet.size) {
-//////      const currentSupplierOk =
-//////        selectedSupplierId && allowedSupSet.has(selectedSupplierId);
-
-//////      if (!currentSupplierOk) {
-//////        // pick the first allowed supplier
-//////        const firstAllowedSupId = Array.from(allowedSupSet)[0];
-//////        const supRow = suppliers.find((s) => s.name === firstAllowedSupId);
-//////        if (supRow) {
-//////          const displaySupplier = supRow.supplier_name || supRow.name;
-//////          setSupplier(displaySupplier);
-//////          setSupplierEmail(supRow.supplier_email || supRow.email_id || "");
-//////        }
-//////      }
-//////    }
-//////  }
-
-//////  // ---- Load existing draft PO for editing ----
-//////  async function handleEditPo(poName) {
-//////    try {
-//////      setError("");
-//////      setMessage(`Loading draft Purchase Order ${poName} for editing...`);
-//////      const po = await getPurchaseOrderWithItems(poName);
-
-//////      const firstItem = (po.items || [])[0] || {};
-
-//////      const supRow = suppliers.find((s) => s.name === po.supplier);
-//////      const displaySupplier = supRow?.supplier_name || po.supplier;
-
-//////      setSupplier(displaySupplier);
-//////      setSupplierEmail(supRow?.supplier_email || supRow?.email_id || "");
-
-//////      setItemCode(firstItem.item_code || "");
-//////      setQty(firstItem.qty != null ? String(firstItem.qty) : "1.00");
-//////      setRate(firstItem.rate != null ? String(firstItem.rate) : "0.00");
-//////      setWarehouse(firstItem.warehouse || "Raw Material - MF");
-//////      setNotes(po.notes || "");
-
-//////      setPoDate(po.transaction_date || todayStr);
-//////      setReceivedByDate(
-//////        firstItem.schedule_date ||
-//////          po.schedule_date ||
-//////          po.transaction_date ||
-//////          todayStr
-//////      );
-
-//////      setEditingPoName(po.name);
-//////      setLastPoName(po.name);
-//////      setMessage(`Editing draft Purchase Order ${poName}.`);
-//////    } catch (err) {
-//////      console.error(err);
-//////      setError(
-//////        err.response?.data?.error?.message ||
-//////          err.message ||
-//////          "Failed to load Purchase Order for editing"
-//////      );
-//////    }
-//////  }
-
-//////  // ---- Create / save draft ----
-//////  async function handleSubmit(e) {
-//////    e.preventDefault();
-//////    setError("");
-//////    setMessage("");
-
-//////    const q = parseFloat(qty);
-//////    const r = parseFloat(rate);
-
-//////    if (!supplier || !itemCode || isNaN(q) || q <= 0) {
-//////      setError("Please select supplier, item and enter valid quantity.");
-//////      return;
-//////    }
-
-//////    if (!poDate) {
-//////      setError("Please select Purchase Order Date.");
-//////      return;
-//////    }
-
-//////    if (!receivedByDate) {
-//////      setError("Please select Received By date.");
-//////      return;
-//////    }
-
-//////    const selectedSupplier = suppliers.find(
-//////      (s) => s.supplier_name === supplier || s.name === supplier
-//////    );
-//////    if (!selectedSupplier) {
-//////      setError("Please select a valid supplier from the list.");
-//////      return;
-//////    }
-//////    const supplierId = selectedSupplier.name;
-
-//////    // ✅ Validate supplier–item mapping: if there is a mapping for this item,
-//////    // require that the chosen supplier is one of them.
-//////    const allowedSupSet = itemToSupplierNames.get(itemCode);
-//////    if (allowedSupSet && allowedSupSet.size && !allowedSupSet.has(supplierId)) {
-//////      setError(
-//////        `This item is linked to different supplier(s) in the Item Purchase section. Please select one of those suppliers or update the Item.`
-//////      );
-//////      return;
-//////    }
-
-//////    try {
-//////      setSubmitting(true);
-
-//////      if (editingPoName) {
-//////        // UPDATE EXISTING DRAFT
-//////        const payload = {
-//////          supplier: supplierId,
-//////          transaction_date: poDate,
-//////          schedule_date: receivedByDate,
-//////          notes: notes || "",
-//////          items: [
-//////            {
-//////              item_code: itemCode,
-//////              qty: q,
-//////              rate: isNaN(r) ? 0 : r,
-//////              schedule_date: receivedByDate,
-//////              warehouse: warehouse || undefined,
-//////            },
-//////          ],
-//////        };
-
-//////        await updatePurchaseOrder(editingPoName, payload);
-
-//////        setLastPoName(editingPoName);
-//////        setMessage(`Purchase Order ${editingPoName} saved as draft.`);
-//////      } else {
-//////        // CREATE NEW DRAFT
-//////        const po = await createPurchaseOrder({
-//////          supplier: supplierId,
-//////          item_code: itemCode,
-//////          qty: q,
-//////          rate: isNaN(r) ? 0 : r,
-//////          notes,
-//////          warehouse,
-//////          po_date: poDate,
-//////          schedule_date: receivedByDate,
-//////        });
-
-//////        const poName = po.data?.name;
-
-//////        setLastPoName(poName || "");
-//////        setEditingPoName(poName || "");
-//////        setMessage(
-//////          poName
-//////            ? `Purchase Order created as draft: ${poName}`
-//////            : `Purchase Order created (draft)`
-//////        );
-//////      }
-//////    } catch (err) {
-//////      console.error(err);
-//////      setError(
-//////        err.response?.data?.error?.message ||
-//////          err.message ||
-//////          "Failed to create/update Purchase Order"
-//////      );
-//////    } finally {
-//////      setSubmitting(false);
-//////    }
-//////  }
-
-//////  // ---- Submit PO ----
-//////  async function handleSubmitPo() {
-//////    setError("");
-//////    setMessage("");
-
-//////    const poName = editingPoName || lastPoName;
-//////    if (!poName) {
-//////      setError("No draft Purchase Order selected to submit.");
-//////      return;
-//////    }
-
-//////    try {
-//////      setSubmittingPo(true);
-//////      await submitDoc("Purchase Order", poName);
-//////      setMessage(`Purchase Order submitted: ${poName}`);
-//////      setEditingPoName("");
-//////    } catch (err) {
-//////      console.error(err);
-//////      setError(
-//////        err.response?.data?.error?.message ||
-//////          err.message ||
-//////          "Failed to submit Purchase Order"
-//////      );
-//////    } finally {
-//////      setSubmittingPo(false);
-//////    }
-//////  }
-
-//////  // ---- Email supplier ----
-//////  async function handleEmailSupplier() {
-//////    if (!lastPoName) {
-//////      setError("No Purchase Order to email yet.");
-//////      return;
-//////    }
-//////    if (!supplierEmail) {
-//////      setError("Please enter supplier email address first.");
-//////      return;
-//////    }
-
-//////    setError("");
-//////    setMessage("");
-//////    setEmailSending(true);
-
-//////    try {
-//////      await sendPurchaseOrderEmail({
-//////        poName: lastPoName,
-//////        recipients: supplierEmail,
-//////      });
-//////      setMessage(`Email sent to ${supplierEmail} for PO ${lastPoName}.`);
-//////    } catch (err) {
-//////      console.error(err);
-//////      setError(
-//////        err.response?.data?.error?.message ||
-//////          err.message ||
-//////          "Failed to send email"
-//////      );
-//////    } finally {
-//////      setEmailSending(false);
-//////    }
-//////  }
-
-//////  return (
-//////    <div className="po-page">
-//////      <div className="po-card po-card-main">
-//////        <div className="po-header">
-//////          <div>
-//////            <h1 className="po-title">ERPNext Purchase Order (Raw Material)</h1>
-//////            <p className="po-subtitle">
-//////              Create ERPNext Purchase Orders for raw materials and send to
-//////              suppliers.
-//////            </p>
-//////          </div>
-//////          {lastPoName && (
-//////            <div className="po-header-chip">
-//////              {editingPoName ? "Editing draft" : "Last PO"}:{" "}
-//////              <span>{lastPoName}</span>
-//////            </div>
-//////          )}
-//////        </div>
-
-//////        {loadingLists && (
-//////          <p className="po-info-text">Loading suppliers/items...</p>
-//////        )}
-//////        {error && <p className="po-error-text">{error}</p>}
-//////        {message && <p className="po-message-text">{message}</p>}
-
-//////        <form onSubmit={handleSubmit} className="po-form-grid">
-//////          {/* Left column */}
-//////          <div className="po-form-column">
-//////            <div className="po-field">
-//////              <label className="po-label">Supplier</label>
-//////              <input
-//////                list="po-supplier-list"
-//////                value={supplier}
-//////                onChange={handleSupplierChange}
-//////                disabled={loadingLists || suppliers.length === 0}
-//////                className="po-input"
-//////                placeholder="Type or select supplier"
-//////              />
-//////              <datalist id="po-supplier-list">
-//////                {suppliersForCurrentItem.map((s) => (
-//////                  <option
-//////                    key={s.name}
-//////                    value={s.supplier_name || s.name}
-//////                    label={s.name}
-//////                  />
-//////                ))}
-//////              </datalist>
-//////            </div>
-
-//////            <div className="po-field">
-//////              <label className="po-label">
-//////                Supplier Email{" "}
-//////                <span className="po-label-hint">(optional)</span>
-//////              </label>
-//////              <input
-//////                type="email"
-//////                value={supplierEmail}
-//////                onChange={(e) => setSupplierEmail(e.target.value)}
-//////                placeholder="supplier@example.com"
-//////                className="po-input"
-//////              />
-//////            </div>
-
-//////            <div className="po-field">
-//////              <label className="po-label">Notes (optional)</label>
-//////              <textarea
-//////                value={notes}
-//////                onChange={(e) => setNotes(e.target.value)}
-//////                rows={3}
-//////                className="po-input po-textarea"
-//////              />
-//////            </div>
-//////          </div>
-
-//////          {/* Right column */}
-//////          <div className="po-form-column">
-//////            <div className="po-field">
-//////              <label className="po-label">
-//////                Item (Raw Material / Pouch / Sticker)
-//////              </label>
-//////              <input
-//////                list="po-item-list"
-//////                value={itemCode}
-//////                onChange={handleItemChange}
-//////                disabled={loadingLists || items.length === 0}
-//////                className="po-input"
-//////                placeholder="Type or select item code"
-//////              />
-//////              <datalist id="po-item-list">
-//////                {itemsForCurrentSupplier.map((item) => (
-//////                  <option
-//////                    key={item.name}
-//////                    value={item.name}
-//////                    label={`${item.name} - ${item.item_name || ""}${
-//////                      item.item_group ? " (" + item.item_group + ")" : ""
-//////                    }`}
-//////                  />
-//////                ))}
-//////              </datalist>
-//////            </div>
-
-//////            <div className="po-field po-field-inline">
-//////              <div>
-//////                <label className="po-label">Quantity</label>
-//////                <input
-//////                  type="number"
-//////                  step="0.01"
-//////                  value={qty}
-//////                  onChange={(e) => setQty(e.target.value)}
-//////                  className="po-input"
-//////                />
-//////              </div>
-//////              <div>
-//////                <label className="po-label">Rate (per unit)</label>
-//////                <input
-//////                  type="number"
-//////                  step="0.01"
-//////                  value={rate}
-//////                  onChange={(e) => setRate(e.target.value)}
-//////                  className="po-input"
-//////                />
-//////              </div>
-//////            </div>
-
-//////            <div className="po-field po-field-inline">
-//////              <div>
-//////                <label className="po-label">Purchase Order Date</label>
-//////                <input
-//////                  type="date"
-//////                  value={poDate}
-//////                  onChange={(e) => setPoDate(e.target.value)}
-//////                  className="po-input"
-//////                />
-//////              </div>
-//////              <div>
-//////                <label className="po-label">Received By (Schedule Date)</label>
-//////                <input
-//////                  type="date"
-//////                  value={receivedByDate}
-//////                  onChange={(e) => setReceivedByDate(e.target.value)}
-//////                  className="po-input"
-//////                />
-//////              </div>
-//////            </div>
-
-//////            <div className="po-field">
-//////              <label className="po-label">Warehouse</label>
-//////              <input
-//////                type="text"
-//////                value={warehouse}
-//////                onChange={(e) => setWarehouse(e.target.value)}
-//////                placeholder="Raw Material - MF"
-//////                className="po-input"
-//////              />
-//////            </div>
-
-//////            <div className="po-actions-main">
-//////              <button
-//////                type="submit"
-//////                disabled={submitting || loadingLists}
-//////                className="po-btn po-btn-primary"
-//////              >
-//////                {submitting
-//////                  ? editingPoName
-//////                    ? "Saving Draft..."
-//////                    : "Creating Draft..."
-//////                  : editingPoName
-//////                  ? "Save Draft"
-//////                  : "Create Draft"}
-//////              </button>
-
-//////              <button
-//////                type="button"
-//////                onClick={handleSubmitPo}
-//////                disabled={submittingPo || loadingLists}
-//////                className="po-btn po-btn-outline"
-//////              >
-//////                {submittingPo ? "Submitting..." : "Submit Purchase Order"}
-//////              </button>
-//////            </div>
-//////          </div>
-//////        </form>
-
-//////        {lastPoName && (
-//////          <div className="po-after-actions">
-//////            <button
-//////              type="button"
-//////              onClick={handleEmailSupplier}
-//////              disabled={emailSending || !supplierEmail}
-//////              className="po-btn po-btn-accent"
-//////            >
-//////              {emailSending ? "Sending email..." : "Email Supplier"}
-//////            </button>
-
-//////            <a
-//////              href={getPurchaseOrderPdfUrl(lastPoName)}
-//////              target="_blank"
-//////              rel="noreferrer"
-//////            >
-//////              <button type="button" className="po-btn po-btn-outline">
-//////                Download PDF
-//////              </button>
-//////            </a>
-//////          </div>
-//////        )}
-//////      </div>
-
-//////      <div className="po-card po-card-list">
-//////        <PurchaseOrderList onEditPo={handleEditPo} />
-//////      </div>
-//////    </div>
-//////  );
-//////}
-
-//////export default PurchaseOrder;
-
-
-////// src/PurchaseOrder.jsx
-////import React, { useEffect, useState, useMemo } from "react";
-////import {
-////  getSuppliers,
-////  getItemsForPO,
-////  createPurchaseOrder,
-////  submitDoc,
-////  sendPurchaseOrderEmail,
-////  getPurchaseOrderPdfUrl,
-////  getPurchaseOrderWithItems,
-////  updatePurchaseOrder,
-////  getItemSuppliers, // 👈 mapping from Item "Supplier Items" child table
-////} from "./erpBackendApi";
-////import PurchaseOrderList from "./PurchaseOrderList";
-////import "../CSS/PurchaseOrder.css";
-
-////function PurchaseOrder() {
-////  const [suppliers, setSuppliers] = useState([]);
-////  const [items, setItems] = useState([]);
-////  const [itemSuppliers, setItemSuppliers] = useState([]); // rows from Item Supplier child table
-
-////  // supplier = what user sees (supplier_name), not the ID
-////  const [supplier, setSupplier] = useState("");
-////  const [supplierEmail, setSupplierEmail] = useState("");
-////  const [itemCode, setItemCode] = useState("");
-
-////  const [qty, setQty] = useState("1.00");
-////  const [rate, setRate] = useState("0.00");
-////  const [warehouse, setWarehouse] = useState("Raw Material - MF"); // default warehouse
-////  const [notes, setNotes] = useState("");
-
-////  const todayStr = new Date().toISOString().slice(0, 10);
-////  const [poDate, setPoDate] = useState(todayStr); // transaction_date
-////  const [receivedByDate, setReceivedByDate] = useState(todayStr); // schedule_date
-
-////  const [lastPoName, setLastPoName] = useState("");
-////  const [editingPoName, setEditingPoName] = useState(""); // which draft is being edited
-
-////  const [loadingLists, setLoadingLists] = useState(false);
-////  const [submitting, setSubmitting] = useState(false);
-////  const [submittingPo, setSubmittingPo] = useState(false);
-////  const [emailSending, setEmailSending] = useState(false);
-
-////  const [error, setError] = useState("");
-////  const [message, setMessage] = useState("");
-
-////  // ---------------- Load suppliers, items, and Item Supplier mapping -------------
-////  useEffect(() => {
-////    async function loadLists() {
-////      try {
-////        setLoadingLists(true);
-////        setError("");
-
-////        const [suppliersData, itemsData, itemSupData] = await Promise.all([
-////          getSuppliers(),
-////          getItemsForPO(),
-////          getItemSuppliers(), // Item Supplier child rows
-////        ]);
-
-////        setSuppliers(suppliersData || []);
-////        setItems(itemsData || []);
-////        setItemSuppliers(itemSupData || []);
-
-////        // default supplier + email
-////        if (suppliersData && suppliersData.length > 0) {
-////          const s0 = suppliersData[0];
-////          setSupplier(s0.supplier_name || s0.name);
-////          setSupplierEmail(s0.supplier_email || s0.email_id || "");
-////        }
-
-////        // default item
-////        if (itemsData && itemsData.length > 0) {
-////          setItemCode(itemsData[0].name);
-////        }
-////      } catch (err) {
-////        console.error(err);
-////        setError("Failed to load suppliers/items");
-////      } finally {
-////        setLoadingLists(false);
-////      }
-////    }
-
-////    loadLists();
-////  }, []);
-
-////  // -------- Helper: currently selected supplier row & ID ----------------
-////  const selectedSupplierRow = useMemo(
-////    () =>
-////      suppliers.find(
-////        (s) => s.supplier_name === supplier || s.name === supplier
-////      ),
-////    [suppliers, supplier]
-////  );
-////  const selectedSupplierId = selectedSupplierRow?.name || "";
-
-////  // -------- Build mapping: supplier -> item_codes ----------------
-////  const supplierToItemNames = useMemo(() => {
-////    const map = new Map(); // supplierId -> Set(itemCode)
-////    for (const row of itemSuppliers) {
-////      const sup = row.supplier;
-////      const item = row.parent; // parent = Item code
-////      if (!sup || !item) continue;
-////      if (!map.has(sup)) map.set(sup, new Set());
-////      map.get(sup).add(item);
-////    }
-////    return map;
-////  }, [itemSuppliers]);
-
-////  // -------- Build mapping: item_code -> supplierIds ----------------
-////  const itemToSupplierNames = useMemo(() => {
-////    const map = new Map(); // itemCode -> Set(supplierId)
-////    for (const row of itemSuppliers) {
-////      const sup = row.supplier;
-////      const item = row.parent;
-////      if (!sup || !item) continue;
-////      if (!map.has(item)) map.set(item, new Set());
-////      map.get(item).add(sup);
-////    }
-////    return map;
-////  }, [itemSuppliers]);
-
-////  // -------- Items filtered by currently selected supplier -----------
-////  const itemsForCurrentSupplier = useMemo(() => {
-////    if (!selectedSupplierId) return items;
-
-////    const allowedItemsSet = supplierToItemNames.get(selectedSupplierId);
-////    if (!allowedItemsSet || !allowedItemsSet.size) {
-////      // supplier not linked to any items → show all
-////      return items;
-////    }
-////    const filtered = items.filter((it) => allowedItemsSet.has(it.name));
-////    return filtered.length ? filtered : items;
-////  }, [items, supplierToItemNames, selectedSupplierId]);
-
-////  // -------- Suppliers filtered by currently selected item ---------
-////  const suppliersForCurrentItem = useMemo(() => {
-////    if (!itemCode) return suppliers;
-
-////    const allowedSupSet = itemToSupplierNames.get(itemCode);
-////    if (!allowedSupSet || !allowedSupSet.size) {
-////      // item not linked to any suppliers → show all
-////      return suppliers;
-////    }
-////    const filtered = suppliers.filter((s) => allowedSupSet.has(s.name));
-////    return filtered.length ? filtered : suppliers;
-////  }, [suppliers, itemToSupplierNames, itemCode]);
-
-////  // -------------------- Supplier change --------------------
-////  function handleSupplierChange(e) {
-////    const value = e.target.value;
-////    setSupplier(value);
-
-////    const s = suppliers.find(
-////      (sup) => sup.supplier_name === value || sup.name === value
-////    );
-
-////    if (s) {
-////      setSupplierEmail(s.supplier_email || s.email_id || "");
-////    } else {
-////      setSupplierEmail("");
-////    }
-
-////    // Auto-adjust item if current item is not supplied by this supplier
-////    const supplierId = s?.name;
-////    if (supplierId && items.length) {
-////      const allowedItemsSet = supplierToItemNames.get(supplierId);
-////      if (allowedItemsSet && allowedItemsSet.size) {
-////        const currentItemAllowed = itemCode && allowedItemsSet.has(itemCode);
-////        if (!currentItemAllowed) {
-////          const firstAllowedItem = items.find((it) =>
-////            allowedItemsSet.has(it.name)
-////          );
-////          if (firstAllowedItem) {
-////            setItemCode(firstAllowedItem.name);
-////          }
-////        }
-////      }
-////    }
-////  }
-
-////  // -------------------- Item change --------------------
-////  function handleItemChange(e) {
-////    const value = e.target.value;
-////    setItemCode(value);
-
-////    if (!value) return;
-
-////    // If item has specific suppliers, auto-pick one if current supplier not allowed
-////    const allowedSupSet = itemToSupplierNames.get(value);
-////    if (allowedSupSet && allowedSupSet.size) {
-////      const currentSupplierOk =
-////        selectedSupplierId && allowedSupSet.has(selectedSupplierId);
-
-////      if (!currentSupplierOk) {
-////        const firstAllowedSupId = Array.from(allowedSupSet)[0];
-////        const supRow = suppliers.find((s) => s.name === firstAllowedSupId);
-////        if (supRow) {
-////          const displaySupplier = supRow.supplier_name || supRow.name;
-////          setSupplier(displaySupplier);
-////          setSupplierEmail(supRow.supplier_email || supRow.email_id || "");
-////        }
-////      }
-////    }
-////  }
-
-////  // -------------------- Load existing draft PO for editing --------------------
-////  async function handleEditPo(poName) {
-////    try {
-////      setError("");
-////      setMessage(`Loading draft Purchase Order ${poName} for editing...`);
-////      const po = await getPurchaseOrderWithItems(poName);
-
-////      const firstItem = (po.items || [])[0] || {};
-
-////      const supRow = suppliers.find((s) => s.name === po.supplier);
-////      const displaySupplier = supRow?.supplier_name || po.supplier;
-
-////      setSupplier(displaySupplier);
-////      setSupplierEmail(supRow?.supplier_email || supRow?.email_id || "");
-
-////      setItemCode(firstItem.item_code || "");
-////      setQty(firstItem.qty != null ? String(firstItem.qty) : "1.00");
-////      setRate(firstItem.rate != null ? String(firstItem.rate) : "0.00");
-////      setWarehouse(firstItem.warehouse || "Raw Material - MF");
-////      setNotes(po.notes || "");
-
-////      setPoDate(po.transaction_date || todayStr);
-////      setReceivedByDate(
-////        firstItem.schedule_date ||
-////          po.schedule_date ||
-////          po.transaction_date ||
-////          todayStr
-////      );
-
-////      setEditingPoName(po.name);
-////      setLastPoName(po.name);
-////      setMessage(`Editing draft Purchase Order ${poName}.`);
-////    } catch (err) {
-////      console.error(err);
-////      setError(
-////        err.response?.data?.error?.message ||
-////          err.message ||
-////          "Failed to load Purchase Order for editing"
-////      );
-////    }
-////  }
-
-////  // -------------------- Create / save draft --------------------
-////  async function handleSubmit(e) {
-////    e.preventDefault();
-////    setError("");
-////    setMessage("");
-
-////    const q = parseFloat(qty);
-////    const r = parseFloat(rate);
-
-////    if (!supplier || !itemCode || isNaN(q) || q <= 0) {
-////      setError("Please select supplier, item and enter valid quantity.");
-////      return;
-////    }
-
-////    if (!poDate) {
-////      setError("Please select Purchase Order Date.");
-////      return;
-////    }
-
-////    if (!receivedByDate) {
-////      setError("Please select Received By date.");
-////      return;
-////    }
-
-////    const selectedSupplier = suppliers.find(
-////      (s) => s.supplier_name === supplier || s.name === supplier
-////    );
-////    if (!selectedSupplier) {
-////      setError("Please select a valid supplier from the list.");
-////      return;
-////    }
-////    const supplierId = selectedSupplier.name;
-
-////    // Validate: if item is linked to specific suppliers, chosen supplier must be one of them
-////    const allowedSupSet = itemToSupplierNames.get(itemCode);
-////    if (allowedSupSet && allowedSupSet.size && !allowedSupSet.has(supplierId)) {
-////      setError(
-////        "This item is linked to different supplier(s) in the Item form. Please select one of those suppliers or update the Item."
-////      );
-////      return;
-////    }
-
-////    try {
-////      setSubmitting(true);
-
-////      if (editingPoName) {
-////        // UPDATE EXISTING DRAFT
-////        const payload = {
-////          supplier: supplierId,
-////          transaction_date: poDate,
-////          schedule_date: receivedByDate,
-////          notes: notes || "",
-////          items: [
-////            {
-////              item_code: itemCode,
-////              qty: q,
-////              rate: isNaN(r) ? 0 : r,
-////              schedule_date: receivedByDate,
-////              warehouse: warehouse || undefined,
-////            },
-////          ],
-////        };
-
-////        await updatePurchaseOrder(editingPoName, payload);
-
-////        setLastPoName(editingPoName);
-////        setMessage(`Purchase Order ${editingPoName} saved as draft.`);
-////      } else {
-////        // CREATE NEW DRAFT
-////        const po = await createPurchaseOrder({
-////          supplier: supplierId,
-////          item_code: itemCode,
-////          qty: q,
-////          rate: isNaN(r) ? 0 : r,
-////          notes,
-////          warehouse,
-////          po_date: poDate,
-////          schedule_date: receivedByDate,
-////        });
-
-////        const poName = po.data?.name;
-
-////        setLastPoName(poName || "");
-////        setEditingPoName(poName || "");
-////        setMessage(
-////          poName
-////            ? `Purchase Order created as draft: ${poName}`
-////            : "Purchase Order created (draft)"
-////        );
-////      }
-////    } catch (err) {
-////      console.error(err);
-////      setError(
-////        err.response?.data?.error?.message ||
-////          err.message ||
-////          "Failed to create/update Purchase Order"
-////      );
-////    } finally {
-////      setSubmitting(false);
-////    }
-////  }
-
-////  // -------------------- Submit PO --------------------
-////  async function handleSubmitPo() {
-////    setError("");
-////    setMessage("");
-
-////    const poName = editingPoName || lastPoName;
-////    if (!poName) {
-////      setError("No draft Purchase Order selected to submit.");
-////      return;
-////    }
-
-////    try {
-////      setSubmittingPo(true);
-////      await submitDoc("Purchase Order", poName);
-////      setMessage(`Purchase Order submitted: ${poName}`);
-////      setEditingPoName("");
-////    } catch (err) {
-////      console.error(err);
-////      setError(
-////        err.response?.data?.error?.message ||
-////          err.message ||
-////          "Failed to submit Purchase Order"
-////      );
-////    } finally {
-////      setSubmittingPo(false);
-////    }
-////  }
-
-////  // -------------------- Email supplier --------------------
-////  async function handleEmailSupplier() {
-////    if (!lastPoName) {
-////      setError("No Purchase Order to email yet.");
-////      return;
-////    }
-////    if (!supplierEmail) {
-////      setError("Please enter supplier email address first.");
-////      return;
-////    }
-
-////    setError("");
-////    setMessage("");
-////    setEmailSending(true);
-
-////    try {
-////      await sendPurchaseOrderEmail({
-////        poName: lastPoName,
-////        recipients: supplierEmail,
-////      });
-////      setMessage(`Email sent to ${supplierEmail} for PO ${lastPoName}.`);
-////    } catch (err) {
-////      console.error(err);
-////      setError(
-////        err.response?.data?.error?.message ||
-////          err.message ||
-////          "Failed to send email"
-////      );
-////    } finally {
-////      setEmailSending(false);
-////    }
-////  }
-
-////  // -------------------- JSX --------------------
-////  return (
-////    <div className="po-page">
-////      <div className="po-card po-card-main">
-////        <div className="po-header">
-////          <div>
-////            <h1 className="po-title">ERPNext Purchase Order (Raw Material)</h1>
-////            <p className="po-subtitle">
-////              Create ERPNext Purchase Orders for raw materials and send to
-////              suppliers.
-////            </p>
-////          </div>
-////          {lastPoName && (
-////            <div className="po-header-chip">
-////              {editingPoName ? "Editing draft" : "Last PO"}:{" "}
-////              <span>{lastPoName}</span>
-////            </div>
-////          )}
-////        </div>
-
-////        {loadingLists && (
-////          <p className="po-info-text">Loading suppliers/items...</p>
-////        )}
-////        {error && <p className="po-error-text">{error}</p>}
-////        {message && <p className="po-message-text">{message}</p>}
-
-////        <form onSubmit={handleSubmit} className="po-form-grid">
-////          {/* Left column */}
-////          <div className="po-form-column">
-////            <div className="po-field">
-////              <label className="po-label">Supplier</label>
-////              <input
-////                list="po-supplier-list"
-////                value={supplier}
-////                onChange={handleSupplierChange}
-////                disabled={loadingLists || suppliers.length === 0}
-////                className="po-input"
-////                placeholder="Type or select supplier"
-////              />
-////              <datalist id="po-supplier-list">
-////                {suppliersForCurrentItem.map((s) => (
-////                  <option
-////                    key={s.name}
-////                    value={s.supplier_name || s.name}
-////                    label={s.name}
-////                  />
-////                ))}
-////              </datalist>
-////            </div>
-
-////            <div className="po-field">
-////              <label className="po-label">
-////                Supplier Email{" "}
-////                <span className="po-label-hint">(optional)</span>
-////              </label>
-////              <input
-////                type="email"
-////                value={supplierEmail}
-////                onChange={(e) => setSupplierEmail(e.target.value)}
-////                placeholder="supplier@example.com"
-////                className="po-input"
-////              />
-////            </div>
-
-////            <div className="po-field">
-////              <label className="po-label">Notes (optional)</label>
-////              <textarea
-////                value={notes}
-////                onChange={(e) => setNotes(e.target.value)}
-////                rows={3}
-////                className="po-input po-textarea"
-////              />
-////            </div>
-////          </div>
-
-////          {/* Right column */}
-////          <div className="po-form-column">
-////            <div className="po-field">
-////              <label className="po-label">
-////                Item (Raw Material / Pouch / Sticker)
-////              </label>
-////              <input
-////                list="po-item-list"
-////                value={itemCode}
-////                onChange={handleItemChange}
-////                disabled={loadingLists || items.length === 0}
-////                className="po-input"
-////                placeholder="Type or select item code"
-////              />
-////              <datalist id="po-item-list">
-////                {itemsForCurrentSupplier.map((item) => (
-////                  <option
-////                    key={item.name}
-////                    value={item.name}
-////                    label={`${item.name} - ${item.item_name || ""}${
-////                      item.item_group ? " (" + item.item_group + ")" : ""
-////                    }`}
-////                  />
-////                ))}
-////              </datalist>
-////            </div>
-
-////            <div className="po-field po-field-inline">
-////              <div>
-////                <label className="po-label">Quantity</label>
-////                <input
-////                  type="number"
-////                  step="0.01"
-////                  value={qty}
-////                  onChange={(e) => setQty(e.target.value)}
-////                  className="po-input"
-////                />
-////              </div>
-////              <div>
-////                <label className="po-label">Rate (per unit)</label>
-////                <input
-////                  type="number"
-////                  step="0.01"
-////                  value={rate}
-////                  onChange={(e) => setRate(e.target.value)}
-////                  className="po-input"
-////                />
-////              </div>
-////            </div>
-
-////            <div className="po-field po-field-inline">
-////              <div>
-////                <label className="po-label">Purchase Order Date</label>
-////                <input
-////                  type="date"
-////                  value={poDate}
-////                  onChange={(e) => setPoDate(e.target.value)}
-////                  className="po-input"
-////                />
-////              </div>
-////              <div>
-////                <label className="po-label">Received By (Schedule Date)</label>
-////                <input
-////                  type="date"
-////                  value={receivedByDate}
-////                  onChange={(e) => setReceivedByDate(e.target.value)}
-////                  className="po-input"
-////                />
-////              </div>
-////            </div>
-
-////            <div className="po-field">
-////              <label className="po-label">Warehouse</label>
-////              <input
-////                type="text"
-////                value={warehouse}
-////                onChange={(e) => setWarehouse(e.target.value)}
-////                placeholder="Raw Material - MF"
-////                className="po-input"
-////              />
-////            </div>
-
-////            <div className="po-actions-main">
-////              <button
-////                type="submit"
-////                disabled={submitting || loadingLists}
-////                className="po-btn po-btn-primary"
-////              >
-////                {submitting
-////                  ? editingPoName
-////                    ? "Saving Draft..."
-////                    : "Creating Draft..."
-////                  : editingPoName
-////                  ? "Save Draft"
-////                  : "Create Draft"}
-////              </button>
-
-////              <button
-////                type="button"
-////                onClick={handleSubmitPo}
-////                disabled={submittingPo || loadingLists}
-////                className="po-btn po-btn-outline"
-////              >
-////                {submittingPo ? "Submitting..." : "Submit Purchase Order"}
-////              </button>
-////            </div>
-////          </div>
-////        </form>
-
-////        {lastPoName && (
-////          <div className="po-after-actions">
-////            <button
-////              type="button"
-////              onClick={handleEmailSupplier}
-////              disabled={emailSending || !supplierEmail}
-////              className="po-btn po-btn-accent"
-////            >
-////              {emailSending ? "Sending email..." : "Email Supplier"}
-////            </button>
-
-////            <a
-////              href={getPurchaseOrderPdfUrl(lastPoName)}
-////              target="_blank"
-////              rel="noreferrer"
-////            >
-////              <button type="button" className="po-btn po-btn-outline">
-////                Download PDF
-////              </button>
-////            </a>
-////          </div>
-////        )}
-////      </div>
-
-////      <div className="po-card po-card-list">
-////        <PurchaseOrderList onEditPo={handleEditPo} />
-////      </div>
-////    </div>
-////  );
-////}
-
-////export default PurchaseOrder;
-
-
-//// src/PurchaseOrder.jsx
-//import React, { useEffect, useState, useMemo } from "react";
-//import {
-//  getSuppliers,
-//  getItemsForPO,
-//  createPurchaseOrder,
-//  submitDoc,
-//  sendPurchaseOrderEmail,
-//  getPurchaseOrderPdfUrl,
-//  getPurchaseOrderWithItems,
-//  updatePurchaseOrder,
-//  deletePurchaseOrder,
-//  getItemSuppliers, // mapping from Item "Supplier Items" child table
-//} from "./erpBackendApi";
-//import PurchaseOrderList from "./PurchaseOrderList";
-//import "../CSS/PurchaseOrder.css";
-
-//function PurchaseOrder() {
-//  const [suppliers, setSuppliers] = useState([]);
-//  const [items, setItems] = useState([]);
-//  const [itemSuppliers, setItemSuppliers] = useState([]); // rows from Item Supplier child table
-
-//  // supplier = what user sees (supplier_name), not the ID
-//  const [supplier, setSupplier] = useState("");
-//  const [supplierEmail, setSupplierEmail] = useState("");
-//  const [itemCode, setItemCode] = useState("");
-
-//  const [qty, setQty] = useState("1.00");
-//  const [rate, setRate] = useState("0.00");
-//  const [warehouse, setWarehouse] = useState("Raw Material - MF"); // default warehouse
-//  const [notes, setNotes] = useState("");
-
-//  const todayStr = new Date().toISOString().slice(0, 10);
-//  const [poDate, setPoDate] = useState(todayStr); // transaction_date
-//  const [receivedByDate, setReceivedByDate] = useState(todayStr); // schedule_date
-
-//  const [lastPoName, setLastPoName] = useState("");
-//  const [editingPoName, setEditingPoName] = useState(""); // which draft is being edited
-
-//  const [loadingLists, setLoadingLists] = useState(false);
-//  const [submitting, setSubmitting] = useState(false);
-//  const [submittingPo, setSubmittingPo] = useState(false);
-//  const [emailSending, setEmailSending] = useState(false);
-
-//  const [error, setError] = useState("");
-//  const [message, setMessage] = useState("");
-
-//  // ---------------- Load suppliers, items, and Item Supplier mapping -------------
-//  useEffect(() => {
-//    async function loadLists() {
-//      try {
-//        setLoadingLists(true);
-//        setError("");
-
-//        const [suppliersData, itemsData, itemSupData] = await Promise.all([
-//          getSuppliers(),
-//          getItemsForPO(),
-//          getItemSuppliers(), // Item Supplier child rows
-//        ]);
-
-//        setSuppliers(suppliersData || []);
-//        setItems(itemsData || []);
-//        setItemSuppliers(itemSupData || []);
-
-//        // ---- INITIAL DEFAULTS (fixed logic) ----
-//        if (suppliersData && suppliersData.length > 0) {
-//          const s0 = suppliersData[0];
-//          const displayName = s0.supplier_name || s0.name;
-//          const email = s0.supplier_email || s0.email_id || "";
-
-//          let initialItemCode = "";
-
-//          if (itemsData && itemsData.length > 0) {
-//            // find items that this supplier actually supplies
-//            const rowsForS0 = (itemSupData || []).filter(
-//              (row) => row.supplier === s0.name
-//            );
-//            const allowedSet = new Set(rowsForS0.map((row) => row.parent));
-
-//            if (allowedSet.size) {
-//              const firstAllowedItem = itemsData.find((it) =>
-//                allowedSet.has(it.name)
-//              );
-//              if (firstAllowedItem) {
-//                initialItemCode = firstAllowedItem.name; // ✅ item really from this supplier
-//              }
-//            }
-
-//            // if supplier has no mapped items, or no match found → fall back to first item
-//            if (!initialItemCode) {
-//              initialItemCode = itemsData[0].name;
-//            }
-//          }
-
-//          setSupplier(displayName);
-//          setSupplierEmail(email);
-//          if (initialItemCode) setItemCode(initialItemCode);
-//        } else if (itemsData && itemsData.length > 0) {
-//          // no suppliers but we do have items
-//          setItemCode(itemsData[0].name);
-//        }
-//      } catch (err) {
-//        console.error(err);
-//        setError("Failed to load suppliers/items");
-//      } finally {
-//        setLoadingLists(false);
-//      }
-//    }
-
-//    loadLists();
-//  }, []);
-
-//  // -------- Helper: currently selected supplier row & ID ----------------
-//  const selectedSupplierRow = useMemo(
-//    () =>
-//      suppliers.find(
-//        (s) => s.supplier_name === supplier || s.name === supplier
-//      ),
-//    [suppliers, supplier]
-//  );
-//  const selectedSupplierId = selectedSupplierRow?.name || "";
-
-//  // -------- Build mapping: supplier -> item_codes ----------------
-//  const supplierToItemNames = useMemo(() => {
-//    const map = new Map(); // supplierId -> Set(itemCode)
-//    for (const row of itemSuppliers) {
-//      const sup = row.supplier;
-//      const item = row.parent; // parent = Item code
-//      if (!sup || !item) continue;
-//      if (!map.has(sup)) map.set(sup, new Set());
-//      map.get(sup).add(item);
-//    }
-//    return map;
-//  }, [itemSuppliers]);
-
-//  // -------- Build mapping: item_code -> supplierIds ----------------
-//  const itemToSupplierNames = useMemo(() => {
-//    const map = new Map(); // itemCode -> Set(supplierId)
-//    for (const row of itemSuppliers) {
-//      const sup = row.supplier;
-//      const item = row.parent;
-//      if (!sup || !item) continue;
-//      if (!map.has(item)) map.set(item, new Set());
-//      map.get(item).add(sup);
-//    }
-//    return map;
-//  }, [itemSuppliers]);
-
-//  // -------- Items filtered by currently selected supplier -----------
-//  const itemsForCurrentSupplier = useMemo(() => {
-//    if (!selectedSupplierId) return items;
-
-//    const allowedItemsSet = supplierToItemNames.get(selectedSupplierId);
-//    if (!allowedItemsSet || !allowedItemsSet.size) {
-//      // supplier not linked to any items → show all
-//      return items;
-//    }
-//    const filtered = items.filter((it) => allowedItemsSet.has(it.name));
-//    return filtered.length ? filtered : items;
-//  }, [items, supplierToItemNames, selectedSupplierId]);
-
-//  // -------- Suppliers filtered by currently selected item ---------
-//  const suppliersForCurrentItem = useMemo(() => {
-//    if (!itemCode) return suppliers;
-
-//    const allowedSupSet = itemToSupplierNames.get(itemCode);
-//    if (!allowedSupSet || !allowedSupSet.size) {
-//      // item not linked to any suppliers → show all
-//      return suppliers;
-//    }
-//    const filtered = suppliers.filter((s) => allowedSupSet.has(s.name));
-//    return filtered.length ? filtered : suppliers;
-//  }, [suppliers, itemToSupplierNames, itemCode]);
-
-//  // -------------------- Supplier change --------------------
-//  function handleSupplierChange(e) {
-//    const value = e.target.value;
-//    setSupplier(value);
-
-//    const s = suppliers.find(
-//      (sup) => sup.supplier_name === value || sup.name === value
-//    );
-
-//    if (s) {
-//      setSupplierEmail(s.supplier_email || s.email_id || "");
-//    } else {
-//      setSupplierEmail("");
-//    }
-
-//    // Auto-adjust item if current item is not supplied by this supplier
-//    const supplierId = s?.name;
-//    if (supplierId && items.length) {
-//      const allowedItemsSet = supplierToItemNames.get(supplierId);
-//      if (allowedItemsSet && allowedItemsSet.size) {
-//        const currentItemAllowed = itemCode && allowedItemsSet.has(itemCode);
-//        if (!currentItemAllowed) {
-//          const firstAllowedItem = items.find((it) =>
-//            allowedItemsSet.has(it.name)
-//          );
-//          if (firstAllowedItem) {
-//            setItemCode(firstAllowedItem.name);
-//          }
-//        }
-//      }
-//    }
-//  }
-
-//  // -------------------- Item change --------------------
-//  function handleItemChange(e) {
-//    const value = e.target.value;
-//    setItemCode(value);
-
-//    if (!value) return;
-
-//    // If item has specific suppliers, auto-pick one if current supplier not allowed
-//    const allowedSupSet = itemToSupplierNames.get(value);
-//    if (allowedSupSet && allowedSupSet.size) {
-//      const currentSupplierOk =
-//        selectedSupplierId && allowedSupSet.has(selectedSupplierId);
-
-//      if (!currentSupplierOk) {
-//        const firstAllowedSupId = Array.from(allowedSupSet)[0];
-//        const supRow = suppliers.find((s) => s.name === firstAllowedSupId);
-//        if (supRow) {
-//          const displaySupplier = supRow.supplier_name || supRow.name;
-//          setSupplier(displaySupplier);
-//          setSupplierEmail(supRow.supplier_email || supRow.email_id || "");
-//        }
-//      }
-//    }
-//  }
-
-//  // -------------------- Load existing draft PO for editing --------------------
-//  async function handleEditPo(poName) {
-//    try {
-//      setError("");
-//      setMessage(`Loading draft Purchase Order ${poName} for editing...`);
-//      const po = await getPurchaseOrderWithItems(poName);
-
-//      const firstItem = (po.items || [])[0] || {};
-
-//      const supRow = suppliers.find((s) => s.name === po.supplier);
-//      const displaySupplier = supRow?.supplier_name || po.supplier;
-
-//      setSupplier(displaySupplier);
-//      setSupplierEmail(supRow?.supplier_email || supRow?.email_id || "");
-
-//      setItemCode(firstItem.item_code || "");
-//      setQty(firstItem.qty != null ? String(firstItem.qty) : "1.00");
-//      setRate(firstItem.rate != null ? String(firstItem.rate) : "0.00");
-//      setWarehouse(firstItem.warehouse || "Raw Material - MF");
-//      setNotes(po.notes || "");
-
-//      setPoDate(po.transaction_date || todayStr);
-//      setReceivedByDate(
-//        firstItem.schedule_date ||
-//          po.schedule_date ||
-//          po.transaction_date ||
-//          todayStr
-//      );
-
-//      setEditingPoName(po.name);
-//      setLastPoName(po.name);
-//      setMessage(`Editing draft Purchase Order ${poName}.`);
-//    } catch (err) {
-//      console.error(err);
-//      setError(
-//        err.response?.data?.error?.message ||
-//          err.message ||
-//          "Failed to load Purchase Order for editing"
-//      );
-//    }
-//  }
-
-//  // -------------------- Create / save draft --------------------
-//  async function handleSubmit(e) {
-//    e.preventDefault();
-//    setError("");
-//    setMessage("");
-
-//    const q = parseFloat(qty);
-//    const r = parseFloat(rate);
-
-//    if (!supplier || !itemCode || isNaN(q) || q <= 0) {
-//      setError("Please select supplier, item and enter valid quantity.");
-//      return;
-//    }
-
-//    if (!poDate) {
-//      setError("Please select Purchase Order Date.");
-//      return;
-//    }
-
-//    if (!receivedByDate) {
-//      setError("Please select Received By date.");
-//      return;
-//    }
-
-//    const selectedSupplier = suppliers.find(
-//      (s) => s.supplier_name === supplier || s.name === supplier
-//    );
-//    if (!selectedSupplier) {
-//      setError("Please select a valid supplier from the list.");
-//      return;
-//    }
-//    const supplierId = selectedSupplier.name;
-
-//    // Validate: if item is linked to specific suppliers, chosen supplier must be one of them
-//    const allowedSupSet = itemToSupplierNames.get(itemCode);
-//    if (allowedSupSet && allowedSupSet.size && !allowedSupSet.has(supplierId)) {
-//      setError(
-//        "This item is linked to different supplier(s) in the Item form. Please select one of those suppliers or update the Item."
-//      );
-//      return;
-//    }
-
-//    try {
-//      setSubmitting(true);
-
-//      if (editingPoName) {
-//        // UPDATE EXISTING DRAFT
-//        const payload = {
-//          supplier: supplierId,
-//          transaction_date: poDate,
-//          schedule_date: receivedByDate,
-//          notes: notes || "",
-//          items: [
-//            {
-//              item_code: itemCode,
-//              qty: q,
-//              rate: isNaN(r) ? 0 : r,
-//              schedule_date: receivedByDate,
-//              warehouse: warehouse || undefined,
-//            },
-//          ],
-//        };
-
-//        await updatePurchaseOrder(editingPoName, payload);
-
-//        setLastPoName(editingPoName);
-//        setMessage(`Purchase Order ${editingPoName} saved as draft.`);
-//      } else {
-//        // CREATE NEW DRAFT
-//        const po = await createPurchaseOrder({
-//          supplier: supplierId,
-//          item_code: itemCode,
-//          qty: q,
-//          rate: isNaN(r) ? 0 : r,
-//          notes,
-//          warehouse,
-//          po_date: poDate,
-//          schedule_date: receivedByDate,
-//        });
-
-//        const poName = po.data?.name;
-
-//        setLastPoName(poName || "");
-//        setEditingPoName(poName || "");
-//        setMessage(
-//          poName
-//            ? `Purchase Order created as draft: ${poName}`
-//            : "Purchase Order created (draft)"
-//        );
-//      }
-//    } catch (err) {
-//      console.error(err);
-//      setError(
-//        err.response?.data?.error?.message ||
-//          err.message ||
-//          "Failed to create/update Purchase Order"
-//      );
-//    } finally {
-//      setSubmitting(false);
-//    }
-//  }
-
-//  // -------------------- Submit PO --------------------
-//  async function handleSubmitPo() {
-//    setError("");
-//    setMessage("");
-
-//    const poName = editingPoName || lastPoName;
-//    if (!poName) {
-//      setError("No draft Purchase Order selected to submit.");
-//      return;
-//    }
-
-//    try {
-//      setSubmittingPo(true);
-//      await submitDoc("Purchase Order", poName);
-//      setMessage(`Purchase Order submitted: ${poName}`);
-//      setEditingPoName("");
-//    } catch (err) {
-//      console.error(err);
-//      setError(
-//        err.response?.data?.error?.message ||
-//          err.message ||
-//          "Failed to submit Purchase Order"
-//      );
-//    } finally {
-//      setSubmittingPo(false);
-//    }
-//  }
-
-//  // -------------------- Email supplier --------------------
-//  async function handleEmailSupplier() {
-//    if (!lastPoName) {
-//      setError("No Purchase Order to email yet.");
-//      return;
-//    }
-//    if (!supplierEmail) {
-//      setError("Please enter supplier email address first.");
-//      return;
-//    }
-
-//    setError("");
-//    setMessage("");
-//    setEmailSending(true);
-
-//    try {
-//      await sendPurchaseOrderEmail({
-//        poName: lastPoName,
-//        recipients: supplierEmail,
-//      });
-//      setMessage(`Email sent to ${supplierEmail} for PO ${lastPoName}.`);
-//    } catch (err) {
-//      console.error(err);
-//      setError(
-//        err.response?.data?.error?.message ||
-//          err.message ||
-//          "Failed to send email"
-//      );
-//    } finally {
-//      setEmailSending(false);
-//    }
-//  }
-//  async function handleDeleteDraftPo() {
-//    setError("");
-//    setMessage("");
-
-//    const poName = editingPoName || lastPoName;
-//    if (!poName) {
-//      setError("No draft Purchase Order selected to delete.");
-//      return;
-//    }
-
-//    const ok = window.confirm(
-//      `Delete draft Purchase Order ${poName}? This cannot be undone.`
-//    );
-//    if (!ok) return;
-
-//    try {
-//      setDeletingPo(true);
-//      await deletePurchaseOrder(poName);
-//      setMessage(`Draft Purchase Order deleted: ${poName}`);
-
-//      // reset form state after deletion
-//      setEditingPoName("");
-//      setLastPoName("");
-//      setQty("1.00");
-//      setRate("0.00");
-//      setNotes("");
-//    } catch (err) {
-//      console.error(err);
-//      setError(
-//        err.response?.data?.error?.message ||
-//          err.message ||
-//          "Failed to delete draft Purchase Order"
-//      );
-//    } finally {
-//      setDeletingPo(false);
-//    }
-//  }
-//  return (
-//    <div className="po-page">
-//      <div className="po-card po-card-main">
-//        <div className="po-header">
-//          <div>
-//            <h1 className="po-title">Purchase Order (Raw Material)</h1>
-//            <p className="po-subtitle">
-//              Create ERPNext Purchase Orders for raw materials and send to
-//              suppliers.
-//            </p>
-//          </div>
-//          {lastPoName && (
-//            <div className="po-header-chip">
-//              {editingPoName ? "Editing draft" : "Last PO"}:{" "}
-//              <span>{lastPoName}</span>
-//            </div>
-//          )}
-//        </div>
-
-//        {loadingLists && (
-//          <p className="po-info-text">Loading suppliers/items...</p>
-//        )}
-//        {error && <p className="po-error-text">{error}</p>}
-//        {message && <p className="po-message-text">{message}</p>}
-
-//        <form onSubmit={handleSubmit} className="po-form-grid">
-//          {/* Left column */}
-//          <div className="po-form-column">
-//            <div className="po-field">
-//              <label className="po-label">Supplier</label>
-//              <input
-//                list="po-supplier-list"
-//                value={supplier}
-//                onChange={handleSupplierChange}
-//                disabled={loadingLists || suppliers.length === 0}
-//                className="po-input"
-//                placeholder="Type or select supplier"
-//              />
-//              <datalist id="po-supplier-list">
-//                {suppliersForCurrentItem.map((s) => (
-//                  <option
-//                    key={s.name}
-//                    value={s.supplier_name || s.name}
-//                    label={s.name}
-//                  />
-//                ))}
-//              </datalist>
-//            </div>
-
-//            <div className="po-field">
-//              <label className="po-label">
-//                Supplier Email{" "}
-//                <span className="po-label-hint">(optional)</span>
-//              </label>
-//              <input
-//                type="email"
-//                value={supplierEmail}
-//                onChange={(e) => setSupplierEmail(e.target.value)}
-//                placeholder="supplier@example.com"
-//                className="po-input"
-//              />
-//            </div>
-
-//            <div className="po-field">
-//              <label className="po-label">Notes (optional)</label>
-//              <textarea
-//                value={notes}
-//                onChange={(e) => setNotes(e.target.value)}
-//                rows={3}
-//                className="po-input po-textarea"
-//              />
-//            </div>
-//          </div>
-
-//          {/* Right column */}
-//          <div className="po-form-column">
-//            <div className="po-field">
-//              <label className="po-label">
-//                Item (Raw Material / Pouch / Sticker)
-//              </label>
-//              <input
-//                list="po-item-list"
-//                value={itemCode}
-//                onChange={handleItemChange}
-//                disabled={loadingLists || items.length === 0}
-//                className="po-input"
-//                placeholder="Type or select item code"
-//              />
-//            <datalist id="po-item-list">
-//              {itemsForCurrentSupplier.map((item) => (
-//                <option
-//                  key={item.name}
-//                  value={item.name}
-//                  label={`${item.name} - ${item.item_name || ""}${
-//                    item.item_group ? " (" + item.item_group + ")" : ""
-//                  }`}
-//                />
-//              ))}
-//            </datalist>
-//            </div>
-
-//            <div className="po-field po-field-inline">
-//              <div>
-//                <label className="po-label">Quantity</label>
-//                <input
-//                  type="number"
-//                  step="0.01"
-//                  value={qty}
-//                  onChange={(e) => setQty(e.target.value)}
-//                  className="po-input"
-//                />
-//              </div>
-//              <div>
-//                <label className="po-label">Rate (per unit)</label>
-//                <input
-//                  type="number"
-//                  step="0.01"
-//                  value={rate}
-//                  onChange={(e) => setRate(e.target.value)}
-//                  className="po-input"
-//                />
-//              </div>
-//            </div>
-
-//            <div className="po-field po-field-inline">
-//              <div>
-//                <label className="po-label">Purchase Order Date</label>
-//                <input
-//                  type="date"
-//                  value={poDate}
-//                  onChange={(e) => setPoDate(e.target.value)}
-//                  className="po-input"
-//                />
-//              </div>
-//              <div>
-//                <label className="po-label">Received By (Schedule Date)</label>
-//                <input
-//                  type="date"
-//                  value={receivedByDate}
-//                  onChange={(e) => setReceivedByDate(e.target.value)}
-//                  className="po-input"
-//                />
-//              </div>
-//            </div>
-
-//            <div className="po-field">
-//              <label className="po-label">Warehouse</label>
-//              <input
-//                type="text"
-//                value={warehouse}
-//                onChange={(e) => setWarehouse(e.target.value)}
-//                placeholder="Raw Material - MF"
-//                className="po-input"
-//              />
-//            </div>
-
-//            <div className="po-actions-main">
-//              <button
-//                type="submit"
-//                disabled={submitting || loadingLists}
-//                className="po-btn po-btn-primary"
-//              >
-//                {submitting
-//                  ? editingPoName
-//                    ? "Saving Draft..."
-//                    : "Creating Draft..."
-//                  : editingPoName
-//                  ? "Save Draft"
-//                  : "Create Draft"}
-//              </button>
-
-//              <button
-//                type="button"
-//                onClick={handleSubmitPo}
-//                disabled={submittingPo || loadingLists}
-//                className="po-btn po-btn-outline"
-//              >
-//                {submittingPo ? "Submitting..." : "Submit Purchase Order"}
-//              </button>
-//              {editingPoName && (
-//                <button
-//                  type="button"
-//                  onClick={handleDeleteDraftPo}
-//                  disabled={deletingPo || loadingLists}
-//                  className="po-btn po-btn-danger"
-//                >
-//                  {deletingPo ? "Deleting..." : "Delete Draft PO"}
-//                </button>
-//              )}
-//            </div>
-//          </div>
-//        </form>
-
-//        {lastPoName && (
-//          <div className="po-after-actions">
-//            <button
-//              type="button"
-//              onClick={handleEmailSupplier}
-//              disabled={emailSending || !supplierEmail}
-//              className="po-btn po-btn-accent"
-//            >
-//              {emailSending ? "Sending email..." : "Email Supplier"}
-//            </button>
-
-//            <a
-//              href={getPurchaseOrderPdfUrl(lastPoName)}
-//              target="_blank"
-//              rel="noreferrer"
-//            >
-//              <button type="button" className="po-btn po-btn-outline">
-//                Download PDF
-//              </button>
-//            </a>
-//          </div>
-//        )}
-//      </div>
-
-//      <div className="po-card po-card-list">
-//        <PurchaseOrderList onEditPo={handleEditPo} />
-//      </div>
-//    </div>
-//  );
-//}
-
-//export default PurchaseOrder;
-
 // src/PurchaseOrder.jsx
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
   getSuppliers,
   getItemsForPO,
@@ -2466,8 +9,8 @@ import {
   getPurchaseOrderPdfUrl,
   getPurchaseOrderWithItems,
   updatePurchaseOrder,
-  getItemSuppliers,     // mapping from Item "Supplier Items" child table
-  deletePurchaseOrder,  // ⬅️ NEW: delete helper
+  getItemSuppliers,
+  deletePurchaseOrder,
 } from "./erpBackendApi";
 import PurchaseOrderList from "./PurchaseOrderList";
 import "../CSS/PurchaseOrder.css";
@@ -2475,33 +18,47 @@ import "../CSS/PurchaseOrder.css";
 function PurchaseOrder() {
   const [suppliers, setSuppliers] = useState([]);
   const [items, setItems] = useState([]);
-  const [itemSuppliers, setItemSuppliers] = useState([]); // rows from Item Supplier child table
+  const [itemSuppliers, setItemSuppliers] = useState([]);
 
   // supplier = what user sees (supplier_name), not the ID
   const [supplier, setSupplier] = useState("");
   const [supplierEmail, setSupplierEmail] = useState("");
-  const [itemCode, setItemCode] = useState("");
 
-  const [qty, setQty] = useState("1.00");
-  const [rate, setRate] = useState("0.00");
-  const [warehouse, setWarehouse] = useState("Raw Material - MF"); // default warehouse
+  // ✅ MULTI ITEMS
+  const [poItems, setPoItems] = useState([
+    { item_code: "", qty: "1.00", rate: "0.00" },
+  ]);
+
+  const [warehouse, setWarehouse] = useState("Raw Material - MF");
   const [notes, setNotes] = useState("");
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  const [poDate, setPoDate] = useState(todayStr); // transaction_date
-  const [receivedByDate, setReceivedByDate] = useState(todayStr); // schedule_date
+  const [poDate, setPoDate] = useState(todayStr);
+  const [receivedByDate, setReceivedByDate] = useState(todayStr);
 
   const [lastPoName, setLastPoName] = useState("");
-  const [editingPoName, setEditingPoName] = useState(""); // which draft is being edited
+  const [editingPoName, setEditingPoName] = useState("");
 
   const [loadingLists, setLoadingLists] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submittingPo, setSubmittingPo] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
-  const [deletingDraft, setDeletingDraft] = useState(false); // ⬅️ NEW
+  const [deletingDraft, setDeletingDraft] = useState(false);
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  const params = new URLSearchParams(window.location.search);
+  const qpItemCode = params.get("itemCode");
+  const qpWarehouse = params.get("warehouse");
+  const qpQty = params.get("qty");
+
+  const [orderTime, setOrderTime] = useState("");
+  const [draftWarningSent, setDraftWarningSent] = useState(false);
+  const [draftWarningSentOn, setDraftWarningSentOn] = useState("");
+  const [mfStatus, setMfStatus] = useState("");
+  const [mfStatusUpdatedOn, setMfStatusUpdatedOn] = useState("");
+  const [mfStockPercent, setMfStockPercent] = useState("");
 
   // ---------------- Load suppliers, items, and Item Supplier mapping -------------
   useEffect(() => {
@@ -2513,7 +70,7 @@ function PurchaseOrder() {
         const [suppliersData, itemsData, itemSupData] = await Promise.all([
           getSuppliers(),
           getItemsForPO(),
-          getItemSuppliers(), // Item Supplier child rows
+          getItemSuppliers(),
         ]);
 
         setSuppliers(suppliersData || []);
@@ -2529,7 +86,6 @@ function PurchaseOrder() {
           let initialItemCode = "";
 
           if (itemsData && itemsData.length > 0) {
-            // items that this supplier actually supplies
             const rowsForS0 = (itemSupData || []).filter(
               (row) => row.supplier === s0.name
             );
@@ -2539,23 +95,26 @@ function PurchaseOrder() {
               const firstAllowedItem = itemsData.find((it) =>
                 allowedSet.has(it.name)
               );
-              if (firstAllowedItem) {
-                initialItemCode = firstAllowedItem.name; // item really from this supplier
-              }
+              if (firstAllowedItem) initialItemCode = firstAllowedItem.name;
             }
 
-            // if supplier has no mapped items, or no match found → fall back to first item
-            if (!initialItemCode) {
-              initialItemCode = itemsData[0].name;
-            }
+            if (!initialItemCode) initialItemCode = itemsData[0].name;
           }
 
           setSupplier(displayName);
           setSupplierEmail(email);
-          if (initialItemCode) setItemCode(initialItemCode);
+
+          const initItem = qpItemCode || initialItemCode || "";
+          const initQty = qpQty || "1.00";
+          setPoItems([{ item_code: initItem, qty: initQty, rate: "0.00" }]);
+
+          if (qpWarehouse) setWarehouse(qpWarehouse);
         } else if (itemsData && itemsData.length > 0) {
-          // no suppliers but we do have items
-          setItemCode(itemsData[0].name);
+          const initItem = qpItemCode || itemsData[0].name || "";
+          const initQty = qpQty || "1.00";
+          setPoItems([{ item_code: initItem, qty: initQty, rate: "0.00" }]);
+
+          if (qpWarehouse) setWarehouse(qpWarehouse);
         }
       } catch (err) {
         console.error(err);
@@ -2566,6 +125,7 @@ function PurchaseOrder() {
     }
 
     loadLists();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // -------- Helper: currently selected supplier row & ID ----------------
@@ -2580,10 +140,10 @@ function PurchaseOrder() {
 
   // -------- Build mapping: supplier -> item_codes ----------------
   const supplierToItemNames = useMemo(() => {
-    const map = new Map(); // supplierId -> Set(itemCode)
+    const map = new Map();
     for (const row of itemSuppliers) {
       const sup = row.supplier;
-      const item = row.parent; // parent = Item code
+      const item = row.parent;
       if (!sup || !item) continue;
       if (!map.has(sup)) map.set(sup, new Set());
       map.get(sup).add(item);
@@ -2593,7 +153,7 @@ function PurchaseOrder() {
 
   // -------- Build mapping: item_code -> supplierIds ----------------
   const itemToSupplierNames = useMemo(() => {
-    const map = new Map(); // itemCode -> Set(supplierId)
+    const map = new Map();
     for (const row of itemSuppliers) {
       const sup = row.supplier;
       const item = row.parent;
@@ -2609,51 +169,102 @@ function PurchaseOrder() {
     if (!selectedSupplierId) return items;
 
     const allowedItemsSet = supplierToItemNames.get(selectedSupplierId);
-    if (!allowedItemsSet || !allowedItemsSet.size) {
-      // supplier not linked to any items → show all
-      return items;
-    }
+    if (!allowedItemsSet || !allowedItemsSet.size) return items;
+
     const filtered = items.filter((it) => allowedItemsSet.has(it.name));
     return filtered.length ? filtered : items;
   }, [items, supplierToItemNames, selectedSupplierId]);
 
-  // -------- Suppliers filtered by currently selected item ---------
-  const suppliersForCurrentItem = useMemo(() => {
-    if (!itemCode) return suppliers;
+  // ✅ Suppliers filtered by ALL selected items (intersection)
+  const suppliersForSelectedItems = useMemo(() => {
+    const codes = poItems.map((r) => r.item_code).filter(Boolean);
+    if (!codes.length) return suppliers;
 
-    const allowedSupSet = itemToSupplierNames.get(itemCode);
-    if (!allowedSupSet || !allowedSupSet.size) {
-      // item not linked to any suppliers → show all
-      return suppliers;
+    let allowed = null;
+
+    for (const code of codes) {
+      const set = itemToSupplierNames.get(code);
+
+      // if no mapping for an item, don't restrict
+      if (!set || !set.size) return suppliers;
+
+      if (allowed === null) {
+        allowed = new Set(set);
+      } else {
+        allowed = new Set([...allowed].filter((x) => set.has(x)));
+        if (!allowed.size) break;
+      }
     }
-    const filtered = suppliers.filter((s) => allowedSupSet.has(s.name));
+
+    if (!allowed || !allowed.size) return suppliers;
+
+    const filtered = suppliers.filter((s) => allowed.has(s.name));
     return filtered.length ? filtered : suppliers;
-  }, [suppliers, itemToSupplierNames, itemCode]);
+  }, [suppliers, itemToSupplierNames, poItems]);
 
-  // -------------------- Supplier change --------------------
-  function handleSupplierChange(e) {
-    const value = e.target.value;
-    setSupplier(value);
+  // ✅ Ensure currently selected supplier remains visible in dropdown
+  const supplierOptions = useMemo(() => {
+    if (!supplier) return suppliersForSelectedItems;
 
-    const s = suppliers.find(
-      (sup) => sup.supplier_name === value || sup.name === value
+    const hasSelected = suppliersForSelectedItems.some(
+      (s) => (s.supplier_name || s.name) === supplier || s.name === supplier
     );
+    if (hasSelected) return suppliersForSelectedItems;
 
-    if (s) {
-      setSupplierEmail(s.supplier_email || s.email_id || "");
-    } else {
-      setSupplierEmail("");
-    }
+    const selectedRow = suppliers.find(
+      (s) => (s.supplier_name || s.name) === supplier || s.name === supplier
+    );
+    return selectedRow
+      ? [selectedRow, ...suppliersForSelectedItems]
+      : suppliersForSelectedItems;
+  }, [suppliersForSelectedItems, suppliers, supplier]);
 
-    // ❌ No auto-change of item. Only the suggestion list is filtered.
+  // ✅ Supplier select
+  function handleSupplierValueChange(displayValue, supplierObj = null) {
+    setSupplier(displayValue);
+
+    const s =
+      supplierObj ||
+      suppliers.find(
+        (sup) => sup.supplier_name === displayValue || sup.name === displayValue
+      );
+
+    if (s) setSupplierEmail(s.supplier_email || s.email_id || "");
+    else setSupplierEmail("");
   }
 
-  // -------------------- Item change --------------------
-  function handleItemChange(e) {
-    const value = e.target.value;
-    setItemCode(value);
+  // ✅ MULTI ITEMS helpers
+  function updatePoItem(idx, patch) {
+    setPoItems((prev) =>
+      prev.map((r, i) => (i === idx ? { ...r, ...patch } : r))
+    );
+  }
 
-    // ❌ No auto-change of supplier. Only the suggestion list is filtered.
+  function addPoItem() {
+    setPoItems((prev) => [
+      ...prev,
+      { item_code: "", qty: "1.00", rate: "0.00" },
+    ]);
+  }
+
+  function removePoItem(idx) {
+    setPoItems((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      return next.length ? next : [{ item_code: "", qty: "1.00", rate: "0.00" }];
+    });
+  }
+
+  function handleItemValueChange(idx, code) {
+    updatePoItem(idx, { item_code: code });
+  }
+
+  // keep selected item visible even if supplier filtering changes
+  function getItemOptionsIncludingSelected(selectedCode) {
+    if (!selectedCode) return itemsForCurrentSupplier;
+    if (itemsForCurrentSupplier.some((it) => it.name === selectedCode))
+      return itemsForCurrentSupplier;
+    const found = items.find((it) => it.name === selectedCode);
+    return found ? [found, ...itemsForCurrentSupplier] : itemsForCurrentSupplier;
   }
 
   // -------------------- Load existing draft PO for editing --------------------
@@ -2671,18 +282,24 @@ function PurchaseOrder() {
       setSupplier(displaySupplier);
       setSupplierEmail(supRow?.supplier_email || supRow?.email_id || "");
 
-      setItemCode(firstItem.item_code || "");
-      setQty(firstItem.qty != null ? String(firstItem.qty) : "1.00");
-      setRate(firstItem.rate != null ? String(firstItem.rate) : "0.00");
+      const mapped = (po.items || []).map((it) => ({
+        item_code: it.item_code || "",
+        qty: it.qty != null ? String(it.qty) : "1.00",
+        rate: it.rate != null ? String(it.rate) : "0.00",
+      }));
+      setPoItems(
+        mapped.length ? mapped : [{ item_code: "", qty: "1.00", rate: "0.00" }]
+      );
+
       setWarehouse(firstItem.warehouse || "Raw Material - MF");
       setNotes(po.notes || "");
 
       setPoDate(po.transaction_date || todayStr);
       setReceivedByDate(
         firstItem.schedule_date ||
-          po.schedule_date ||
-          po.transaction_date ||
-          todayStr
+        po.schedule_date ||
+        po.transaction_date ||
+        todayStr
       );
 
       setEditingPoName(po.name);
@@ -2692,8 +309,8 @@ function PurchaseOrder() {
       console.error(err);
       setError(
         err.response?.data?.error?.message ||
-          err.message ||
-          "Failed to load Purchase Order for editing"
+        err.message ||
+        "Failed to load Purchase Order for editing"
       );
     }
   }
@@ -2704,23 +321,28 @@ function PurchaseOrder() {
     setError("");
     setMessage("");
 
-    const q = parseFloat(qty);
-    const r = parseFloat(rate);
+    const normalizedItems = poItems
+      .map((row) => {
+        const code = (row.item_code || "").trim();
+        const q = parseFloat(row.qty);
+        const r = parseFloat(row.rate);
 
-    if (!supplier || !itemCode || isNaN(q) || q <= 0) {
-      setError("Please select supplier, item and enter valid quantity.");
+        return {
+          item_code: code,
+          qty: isNaN(q) ? 0 : q,
+          rate: isNaN(r) ? 0 : r,
+        };
+      })
+      .filter((x) => x.item_code && x.qty > 0);
+
+    if (!supplier || normalizedItems.length === 0) {
+      setError(
+        "Please select supplier and add at least one valid item with quantity."
+      );
       return;
     }
-
-    if (!poDate) {
-      setError("Please select Purchase Order Date.");
-      return;
-    }
-
-    if (!receivedByDate) {
-      setError("Please select Received By date.");
-      return;
-    }
+    if (!poDate) return setError("Please select Purchase Order Date.");
+    if (!receivedByDate) return setError("Please select Received By date.");
 
     const selectedSupplier = suppliers.find(
       (s) => s.supplier_name === supplier || s.name === supplier
@@ -2730,41 +352,39 @@ function PurchaseOrder() {
       return;
     }
     const supplierId = selectedSupplier.name;
-    // ✅ No hard validation against Item Supplier mapping.
-    // The mapping only filters suggestions; any combination is allowed.
 
     try {
       setSubmitting(true);
 
       if (editingPoName) {
-        // UPDATE EXISTING DRAFT
         const payload = {
           supplier: supplierId,
           transaction_date: poDate,
           schedule_date: receivedByDate,
           notes: notes || "",
-          items: [
-            {
-              item_code: itemCode,
-              qty: q,
-              rate: isNaN(r) ? 0 : r,
-              schedule_date: receivedByDate,
-              warehouse: warehouse || undefined,
-            },
-          ],
+          items: normalizedItems.map((it) => ({
+            item_code: it.item_code,
+            qty: it.qty,
+            rate: it.rate,
+            schedule_date: receivedByDate,
+            warehouse: warehouse || undefined,
+          })),
         };
 
         await updatePurchaseOrder(editingPoName, payload);
-
         setLastPoName(editingPoName);
-        setMessage(`Purchase Order ${editingPoName} saved as draft.`);
+        setMessage(
+          `Purchase Order ${editingPoName} saved as draft. (${normalizedItems.length} items)`
+        );
       } else {
-        // CREATE NEW DRAFT
+        // create with first item (backend helper currently supports single item)
+        const first = normalizedItems[0];
+
         const po = await createPurchaseOrder({
           supplier: supplierId,
-          item_code: itemCode,
-          qty: q,
-          rate: isNaN(r) ? 0 : r,
+          item_code: first.item_code,
+          qty: first.qty,
+          rate: first.rate,
           notes,
           warehouse,
           po_date: poDate,
@@ -2773,11 +393,30 @@ function PurchaseOrder() {
 
         const poName = po.data?.name;
 
+        // if more items, update draft with full items list
+        if (poName && normalizedItems.length > 1) {
+          const payload = {
+            supplier: supplierId,
+            transaction_date: poDate,
+            schedule_date: receivedByDate,
+            notes: notes || "",
+            items: normalizedItems.map((it) => ({
+              item_code: it.item_code,
+              qty: it.qty,
+              rate: it.rate,
+              schedule_date: receivedByDate,
+              warehouse: warehouse || undefined,
+            })),
+          };
+
+          await updatePurchaseOrder(poName, payload);
+        }
+
         setLastPoName(poName || "");
         setEditingPoName(poName || "");
         setMessage(
           poName
-            ? `Purchase Order created as draft: ${poName}`
+            ? `Purchase Order created as draft: ${poName} (${normalizedItems.length} items)`
             : "Purchase Order created (draft)"
         );
       }
@@ -2785,8 +424,8 @@ function PurchaseOrder() {
       console.error(err);
       setError(
         err.response?.data?.error?.message ||
-          err.message ||
-          "Failed to create/update Purchase Order"
+        err.message ||
+        "Failed to create/update Purchase Order"
       );
     } finally {
       setSubmitting(false);
@@ -2799,53 +438,45 @@ function PurchaseOrder() {
     setMessage("");
 
     const poName = editingPoName || lastPoName;
-    if (!poName) {
-      setError("No draft Purchase Order selected to submit.");
-      return;
-    }
+    if (!poName) return setError("No draft Purchase Order selected to submit.");
 
     try {
       setSubmittingPo(true);
       await submitDoc("Purchase Order", poName);
       setMessage(`Purchase Order submitted: ${poName}`);
-      setEditingPoName(""); // after submit, no more draft
+      setEditingPoName("");
     } catch (err) {
       console.error(err);
       setError(
         err.response?.data?.error?.message ||
-          err.message ||
-          "Failed to submit Purchase Order"
+        err.message ||
+        "Failed to submit Purchase Order"
       );
     } finally {
       setSubmittingPo(false);
     }
   }
 
-  // -------------------- Delete draft PO (new) --------------------
+  // -------------------- Delete draft PO --------------------
   async function handleDeleteDraftPo() {
     setError("");
     setMessage("");
 
-    const poName = editingPoName; // only drafts are deletable
-    if (!poName) {
-      setError("No draft Purchase Order selected to delete.");
-      return;
-    }
+    const poName = editingPoName;
+    if (!poName) return setError("No draft Purchase Order selected to delete.");
 
     try {
       setDeletingDraft(true);
       await deletePurchaseOrder(poName);
       setMessage(`Draft Purchase Order deleted: ${poName}`);
-
-      // Clear draft context
       setEditingPoName("");
       setLastPoName("");
     } catch (err) {
       console.error("Delete draft PO error:", err);
       setError(
         err.response?.data?.error?.message ||
-          err.message ||
-          "Failed to delete draft Purchase Order"
+        err.message ||
+        "Failed to delete draft Purchase Order"
       );
     } finally {
       setDeletingDraft(false);
@@ -2854,14 +485,9 @@ function PurchaseOrder() {
 
   // -------------------- Email supplier --------------------
   async function handleEmailSupplier() {
-    if (!lastPoName) {
-      setError("No Purchase Order to email yet.");
-      return;
-    }
-    if (!supplierEmail) {
-      setError("Please enter supplier email address first.");
-      return;
-    }
+    if (!lastPoName) return setError("No Purchase Order to email yet.");
+    if (!supplierEmail)
+      return setError("Please enter supplier email address first.");
 
     setError("");
     setMessage("");
@@ -2877,8 +503,8 @@ function PurchaseOrder() {
       console.error(err);
       setError(
         err.response?.data?.error?.message ||
-          err.message ||
-          "Failed to send email"
+        err.message ||
+        "Failed to send email"
       );
     } finally {
       setEmailSending(false);
@@ -2915,29 +541,21 @@ function PurchaseOrder() {
           <div className="po-form-column">
             <div className="po-field">
               <label className="po-label">Supplier</label>
-              <input
-                list="po-supplier-list"
+
+              <SupplierSearchDropdown
+                suppliers={supplierOptions}
                 value={supplier}
-                onChange={handleSupplierChange}
+                onSelect={(displayValue, obj) =>
+                  handleSupplierValueChange(displayValue, obj)
+                }
+                placeholder="Search supplier..."
                 disabled={loadingLists || suppliers.length === 0}
-                className="po-input"
-                placeholder="Type or select supplier"
               />
-              <datalist id="po-supplier-list">
-                {suppliersForCurrentItem.map((s) => (
-                  <option
-                    key={s.name}
-                    value={s.supplier_name || s.name}
-                    label={s.name}
-                  />
-                ))}
-              </datalist>
             </div>
 
             <div className="po-field">
               <label className="po-label">
-                Supplier Email{" "}
-                <span className="po-label-hint">(optional)</span>
+                Supplier Email <span className="po-label-hint">(optional)</span>
               </label>
               <input
                 type="email"
@@ -2962,51 +580,70 @@ function PurchaseOrder() {
           {/* Right column */}
           <div className="po-form-column">
             <div className="po-field">
-              <label className="po-label">
-                Item (Raw Material / Pouch / Sticker)
-              </label>
-              <input
-                list="po-item-list"
-                value={itemCode}
-                onChange={handleItemChange}
-                disabled={loadingLists || items.length === 0}
-                className="po-input"
-                placeholder="Type or select item code"
-              />
-              <datalist id="po-item-list">
-                {itemsForCurrentSupplier.map((item) => (
-                  <option
-                    key={item.name}
-                    value={item.name}
-                    label={`${item.name} - ${item.item_name || ""}${
-                      item.item_group ? " (" + item.item_group + ")" : ""
-                    }`}
-                  />
-                ))}
-              </datalist>
-            </div>
+              <label className="po-label">Items (multiple allowed)</label>
 
-            <div className="po-field po-field-inline">
-              <div>
-                <label className="po-label">Quantity</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={qty}
-                  onChange={(e) => setQty(e.target.value)}
-                  className="po-input"
-                />
-              </div>
-              <div>
-                <label className="po-label">Rate (per unit)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={rate}
-                  onChange={(e) => setRate(e.target.value)}
-                  className="po-input"
-                />
-              </div>
+              {poItems.map((row, idx) => (
+                <div key={idx} style={{ marginBottom: 12 }}>
+                  <POItemSearchDropdown
+                    items={getItemOptionsIncludingSelected(row.item_code)}
+                    value={row.item_code}
+                    onSelect={(code) => handleItemValueChange(idx, code)}
+                    placeholder={`Search item (row ${idx + 1})...`}
+                    disabled={loadingLists || items.length === 0}
+                  />
+
+                  <div
+                    className="po-field po-field-inline"
+                    style={{ marginTop: 8 }}
+                  >
+                    <div>
+                      <label className="po-label">Quantity</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={row.qty}
+                        onChange={(e) =>
+                          updatePoItem(idx, { qty: e.target.value })
+                        }
+                        className="po-input"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="po-label">Rate (per unit)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={row.rate}
+                        onChange={(e) =>
+                          updatePoItem(idx, { rate: e.target.value })
+                        }
+                        className="po-input"
+                      />
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "flex-end" }}>
+                      <button
+                        type="button"
+                        onClick={() => removePoItem(idx)}
+                        disabled={loadingLists || poItems.length === 1}
+                        className="po-btn po-btn-outline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={addPoItem}
+                disabled={loadingLists}
+                className="po-btn po-btn-outline"
+              >
+                + Add another item
+              </button>
             </div>
 
             <div className="po-field po-field-inline">
@@ -3052,8 +689,8 @@ function PurchaseOrder() {
                     ? "Saving Draft..."
                     : "Creating Draft..."
                   : editingPoName
-                  ? "Save Draft"
-                  : "Create Draft"}
+                    ? "Save Draft"
+                    : "Create Draft"}
               </button>
 
               <button
@@ -3104,6 +741,300 @@ function PurchaseOrder() {
       <div className="po-card po-card-list">
         <PurchaseOrderList onEditPo={handleEditPo} />
       </div>
+    </div>
+  );
+}
+
+/** Supplier dropdown */
+function SupplierSearchDropdown({
+  suppliers,
+  value,
+  onSelect,
+  placeholder,
+  disabled,
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const ref = useRef(null);
+
+  const selected = useMemo(() => {
+    return suppliers.find((x) => (x.supplier_name || x.name) === value) || null;
+  }, [suppliers, value]);
+
+  const filtered = useMemo(() => {
+    const s = (q || "").trim().toLowerCase();
+    const base = !s
+      ? suppliers
+      : suppliers.filter((sup) => {
+        const code = (sup.name || "").toLowerCase();
+        const display = (sup.supplier_name || "").toLowerCase();
+        const email = (sup.supplier_email || sup.email_id || "").toLowerCase();
+        return code.includes(s) || display.includes(s) || email.includes(s);
+      });
+
+    return base.slice(0, 80);
+  }, [suppliers, q]);
+
+  useEffect(() => {
+    function onDown(e) {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  const clearSelection = (e) => {
+    e?.stopPropagation?.();
+    if (disabled) return;
+    onSelect("", null);     // ✅ clear supplier
+    setOpen(false);
+    setQ("");
+  };
+
+  return (
+    <div className="stdrop" ref={ref}>
+      <button
+        type="button"
+        className={`stdrop-control ${open ? "is-open" : ""}`}
+        onClick={() => !disabled && setOpen((v) => !v)}
+        disabled={disabled}
+      >
+        <div className="stdrop-value">
+          {selected ? (
+            <>
+              <div className="stdrop-title">
+                {selected.supplier_name || selected.name}
+              </div>
+              <div className="stdrop-sub">
+                {selected.name}
+                {selected.supplier_email || selected.email_id
+                  ? ` · ${selected.supplier_email || selected.email_id}`
+                  : ""}
+              </div>
+            </>
+          ) : (
+            <div className="stdrop-placeholder">{placeholder}</div>
+          )}
+        </div>
+
+        {/* ✅ Right-side actions: clear + caret (no nested buttons) */}
+        <div className="stdrop-actions">
+          {!!value && !disabled && (
+            <span
+              className="stdrop-clear"
+              role="button"
+              tabIndex={0}
+              title="Clear"
+              onClick={clearSelection}
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && clearSelection(e)}
+            >
+              ✕
+            </span>
+          )}
+          <div className="stdrop-caret">▾</div>
+        </div>
+      </button>
+
+      {open && !disabled && (
+        <div className="stdrop-popover">
+          <div className="stdrop-search">
+            <input
+              autoFocus
+              className="po-input"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Type to search..."
+            />
+          </div>
+
+          <div className="stdrop-list">
+            {/* ✅ Clear option in list */}
+            {!!value && (
+              <button
+                type="button"
+                className="stdrop-item stdrop-item-clear"
+                onClick={() => {
+                  onSelect("", null);
+                  setOpen(false);
+                  setQ("");
+                }}
+              >
+                <div className="stdrop-item-title">Clear selection</div>
+              </button>
+            )}
+
+            {filtered.map((sup) => {
+              const display = sup.supplier_name || sup.name;
+              const sub = `${sup.name}${sup.supplier_email || sup.email_id
+                  ? ` · ${sup.supplier_email || sup.email_id}`
+                  : ""
+                }`;
+
+              return (
+                <button
+                  key={sup.name}
+                  type="button"
+                  className="stdrop-item"
+                  onClick={() => {
+                    onSelect(display, sup);
+                    setOpen(false);
+                    setQ("");
+                  }}
+                >
+                  <div className="stdrop-item-title">{display}</div>
+                  <div className="stdrop-item-sub">{sub}</div>
+                </button>
+              );
+            })}
+
+            {!filtered.length ? (
+              <div className="stdrop-empty">No suppliers found.</div>
+            ) : (
+              <div className="stdrop-hint">Showing up to 80 results</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+/** Item dropdown */
+function POItemSearchDropdown({ items, value, onSelect, placeholder, disabled }) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const ref = useRef(null);
+
+  const selected = useMemo(() => {
+    return items.find((x) => x.name === value) || null;
+  }, [items, value]);
+
+  const filtered = useMemo(() => {
+    const s = (q || "").trim().toLowerCase();
+    const base = !s
+      ? items
+      : items.filter((it) => {
+          const code = (it.name || "").toLowerCase();
+          const name = (it.item_name || "").toLowerCase();
+          const grp = (it.item_group || "").toLowerCase();
+          return code.includes(s) || name.includes(s) || grp.includes(s);
+        });
+
+    return base.slice(0, 80);
+  }, [items, q]);
+
+  useEffect(() => {
+    function onDown(e) {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  const clearSelection = (e) => {
+    e?.stopPropagation?.();
+    if (disabled) return;
+    onSelect("");          // ✅ clear item
+    setOpen(false);
+    setQ("");
+  };
+
+  return (
+    <div className="stdrop" ref={ref}>
+      <button
+        type="button"
+        className={`stdrop-control ${open ? "is-open" : ""}`}
+        onClick={() => !disabled && setOpen((v) => !v)}
+        disabled={disabled}
+      >
+        <div className="stdrop-value">
+          {selected ? (
+            <>
+              <div className="stdrop-title">{selected.name}</div>
+              <div className="stdrop-sub">
+                {selected.item_name || ""}
+                {selected.stock_uom ? ` · ${selected.stock_uom}` : ""}
+              </div>
+            </>
+          ) : (
+            <div className="stdrop-placeholder">{placeholder}</div>
+          )}
+        </div>
+
+        <div className="stdrop-actions">
+          {!!value && !disabled && (
+            <span
+              className="stdrop-clear"
+              role="button"
+              tabIndex={0}
+              title="Clear"
+              onClick={clearSelection}
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && clearSelection(e)}
+            >
+              ✕
+            </span>
+          )}
+          <div className="stdrop-caret">▾</div>
+        </div>
+      </button>
+
+      {open && !disabled && (
+        <div className="stdrop-popover">
+          <div className="stdrop-search">
+            <input
+              autoFocus
+              className="po-input"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Type to search..."
+            />
+          </div>
+
+          <div className="stdrop-list">
+            {!!value && (
+              <button
+                type="button"
+                className="stdrop-item stdrop-item-clear"
+                onClick={() => {
+                  onSelect("");
+                  setOpen(false);
+                  setQ("");
+                }}
+              >
+                <div className="stdrop-item-title">Clear selection</div>
+              </button>
+            )}
+
+            {filtered.map((it) => (
+              <button
+                key={it.name}
+                type="button"
+                className="stdrop-item"
+                onClick={() => {
+                  onSelect(it.name);
+                  setOpen(false);
+                  setQ("");
+                }}
+              >
+                <div className="stdrop-item-title">{it.name}</div>
+                <div className="stdrop-item-sub">
+                  {it.item_name || ""}
+                  {it.stock_uom ? ` · ${it.stock_uom}` : ""}
+                </div>
+              </button>
+            ))}
+
+            {!filtered.length ? (
+              <div className="stdrop-empty">No items found.</div>
+            ) : (
+              <div className="stdrop-hint">Showing up to 80 results</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

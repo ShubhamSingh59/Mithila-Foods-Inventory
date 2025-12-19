@@ -1,6 +1,7 @@
-/* =========================================
-   SALES RETURN – PAGE WRAPPER
-========================================= */
+/*
+=========================================
+SALES RETURN – PAGE WRAPPER
+=========================================
 
 .sales-return {
   border-radius: 18px;
@@ -16,9 +17,7 @@
   gap: 1.25rem;
 }
 
-/* =========================================
-   HEADER
-========================================= */
+HEADER
 
 .sales-return-header {
   display: flex;
@@ -57,9 +56,7 @@
   align-self: center;
 }
 
-/* =========================================
-   GENERIC TEXT / ALERTS (reused)
-========================================= */
+GENERIC TEXT / ALERTS
 
 .text-muted {
   font-size: 0.82rem;
@@ -85,9 +82,7 @@
   color: #166534;
 }
 
-/* =========================================
-   FORM / INPUTS
-========================================= */
+FORM / INPUTS
 
 .form-label {
   font-size: 0.8rem;
@@ -117,9 +112,7 @@
   background: #ffffff;
 }
 
-/* =========================================
-   BUTTONS (same style as EasyShip)
-========================================= */
+BUTTONS
 
 .btn {
   border-radius: 999px;
@@ -128,47 +121,9 @@
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-  transform: translateY(0);
-  transition:
-    transform 0.08s ease,
-    box-shadow 0.12s ease,
-    background 0.12s ease,
-    color 0.12s ease,
-    border-color 0.12s ease;
-  white-space: nowrap;
 }
 
-.btn-sm {
-  padding: 0.3rem 0.8rem;
-  font-size: 0.78rem;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: default;
-  box-shadow: none;
-  transform: none;
-}
-
-/* main CTA */
-.btn-primary {
-  background: linear-gradient(135deg, #ec4899, #6366f1);
-  color: #ffffff;
-  box-shadow: 0 12px 26px rgba(236, 72, 153, 0.55);
-}
-
-.btn-primary:hover:not(:disabled) {
-  box-shadow: 0 16px 34px rgba(236, 72, 153, 0.65);
-  transform: translateY(-1px);
-}
-
-/* =========================================
-   CREATE RETURN CARD
-========================================= */
+CREATE RETURN CARD
 
 .sales-return-card {
   border-radius: 14px;
@@ -178,293 +133,532 @@
   box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
 }
 
+INVOICE DETAILS, TABLES, QUALITY RADIO, LIST, RESPONSIVE,
+SEARCH DROPDOWN (stdrop) — ALL STYLES COMMENTED
+
+@media (max-width: 960px) {
+  responsive overrides
+}
+
+.stdrop,
+.stdrop-control,
+.stdrop-popover,
+.stdrop-item,
+.stdrop-hint {
+  dropdown styles
+}
+*/
+/* src/CSS/SalesReturn.css */
+
+/* ==============================
+   Remove outer wrapper "pill"
+   (App.jsx wraps in .app-panel)
+   ============================== */
+.app-panel:has(.sales-return) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.app-panel.app-panel-primary:has(.sales-return),
+.app-panel.app-panel-secondary:has(.sales-return) {
+  background: transparent !important;
+}
+
+/* Full width like SupplierList */
+.app-main-inner:has(.sales-return) {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* ==============================
+   Page
+   ============================== */
+.sales-return {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 10px 18px;
+  width: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* important so dropdown popover never gets clipped */
+  overflow: visible;
+}
+
+/* ==============================
+   Header (basic)
+   ============================== */
+.sales-return-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.sales-return-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sales-return-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: normal;
+}
+
+.sales-return-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* right text only */
+.sales-return-header-pill {
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .sales-return-header {
+    align-items: flex-start;
+  }
+}
+
+/* ==============================
+   Alerts (same as SupplierList)
+   ============================== */
+.sales-return .alert {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.sales-return .alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.sales-return .alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.sales-return .text-muted {
+  color: #64748b;
+}
+
+/* ==============================
+   Card (Create Return) – basic
+   ============================== */
+.sales-return-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  padding: 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+
+  /* important for dropdown popovers */
+  overflow: visible;
+}
+
 .sales-return-card-header {
-  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .sales-return-card-title {
   margin: 0;
-  font-size: 1.02rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   color: #0f172a;
 }
 
-/* top select row */
+/* ==============================
+   Top fields grid
+   ============================== */
 .sales-return-form-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.9rem;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: end;
+
+  overflow: visible;
+}
+
+@media (max-width: 900px) {
+  .sales-return-form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .sales-return-field-group {
   display: flex;
   flex-direction: column;
-  gap: 0.32rem;
+  gap: 6px;
 }
 
-.sales-return-invoice-select {
+/* labels */
+.sales-return .form-label,
+.sales-return-field-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ==============================
+   Inputs/selects inside this page
+   ============================== */
+.sales-return .input,
+.sales-return .select {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sales-return .input:focus,
+.sales-return .select:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* ==============================
+   Items header
+   ============================== */
+.sales-return-items-header {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-}
-
-.sales-return-loading-inline {
-  font-size: 0.8rem;
-  color: #94a3b8;
-}
-
-/* =========================================
-   INVOICE DETAILS
-========================================= */
-
-.sales-return-invoice-details {
-  margin-top: 0.8rem;
-  border-top: 1px dashed rgba(148, 163, 184, 0.7);
-  padding-top: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
 }
 
 .sales-return-section-title {
-  font-size: 0.9rem;
-  font-weight: 600;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
   color: #0f172a;
 }
 
-.sales-return-section-subtitle {
-  margin: 0.4rem 0 0.25rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #64748b;
+/* ==============================
+   Buttons (basic)
+   ============================== */
+.sales-return .btn {
+  border-radius: 10px;
 }
 
-/* Meta info grid */
-.sales-return-invoice-meta {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.35rem 1.2rem;
-  font-size: 0.82rem;
+.sales-return .btn.btn-primary,
+.sales-return .btn.btn-accent {
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  color: #ffffff;
+  box-shadow: none;
 }
 
-.sales-return-meta-label {
-  display: block;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #9ca3af;
+.sales-return .btn.btn-primary:hover,
+.sales-return .btn.btn-accent:hover {
+  filter: brightness(1.05);
 }
 
-.sales-return-meta-value {
-  display: block;
-  font-weight: 500;
-  color: #111827;
+.sales-return .btn.btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #0f172a;
 }
 
-/* Items table wrapper */
-.table-container {
+.sales-return .btn.btn-ghost:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+/* ==============================
+   Rows / cards (basic)
+   ============================== */
+.sales-return-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  overflow: visible;
+}
+
+.sales-return-row-card {
   border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(209, 213, 219, 0.95);
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.1);
-}
-
-/* generic table style */
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-size: 0.82rem;
-}
-
-.table thead {
-  background: #f1f5f9;
-}
-
-.table th,
-.table td {
-  padding: 0.45rem 0.6rem;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
-  text-align: left;
-}
-
-.table tbody tr:nth-child(even) {
-  background: rgba(248, 250, 252, 0.9);
-}
-
-.table tbody tr:hover {
-  background: #eef2ff;
-}
-
-/* =========================================
-   RETURN QUALITY RADIO
-========================================= */
-
-.sales-return-quality {
-  margin-top: 0.5rem;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 10px;
+
+  /* important for dropdown popover */
+  overflow: visible;
 }
 
-.sales-return-quality-options {
+.sales-return-row-header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.sales-return-radio {
-  display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.7rem;
-  border-radius: 999px;
-  border: 1px solid rgba(209, 213, 219, 0.9);
-  background: rgba(248, 250, 252, 0.95);
-  font-size: 0.8rem;
-  cursor: pointer;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.sales-return-radio input {
-  margin: 0;
+.sales-return-row-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
 }
 
-.sales-return-radio-sub {
-  display: block;
-  font-size: 0.75rem;
-  color: #9ca3af;
+.sales-return-row-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 2.2fr) repeat(4, minmax(160px, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+
+  overflow: visible;
 }
 
-/* submit button row */
-.sales-return-submit-row {
-  margin-top: 0.6rem;
+@media (max-width: 1100px) {
+  .sales-return-row-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-/* =========================================
-   RECENT RETURNS LIST
-========================================= */
+@media (max-width: 750px) {
+  .sales-return-row-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
-.sales-return-list-section {
-  margin-top: 0.5rem;
-  padding-top: 0.9rem;
-  border-top: 1px dashed rgba(148, 163, 184, 0.7);
+.sales-return-row-field {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 6px;
+}
+
+.sales-return-submit-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* ==============================
+   Recent Returns Section (basic)
+   ============================== */
+.sales-return-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .sales-return-list-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  padding: 0;
+  border: none;
+  background: transparent;
 }
 
 .sales-return-list-title {
   margin: 0;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #0f172a;
 }
 
-/* Filter pills */
-.sales-return-filter-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
+/* table wrapper */
+.sales-return .table-container,
+.sales-return-table-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: none;
 }
 
-.sales-return-filter-label {
-  font-size: 0.8rem;
-  color: #64748b;
+/* generic table style */
+.sales-return .table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.88rem;
 }
 
-.sales-return-filter-pill {
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  background: rgba(248, 250, 252, 0.95);
-  padding: 0.25rem 0.7rem;
-  font-size: 0.78rem;
-  cursor: pointer;
-  transition: all 0.12s ease;
+.sales-return .table thead {
+  background: #f8fafc;
 }
 
-.sales-return-filter-pill.active {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #f9fafb;
-  border-color: transparent;
-  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.5);
+.sales-return .table th,
+.sales-return .table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: top;
 }
 
-.sales-return-filter-pill:disabled {
-  opacity: 0.7;
-  cursor: default;
+.sales-return .table tbody tr:hover {
+  background: #f8fafc;
 }
 
-/* list states */
-.sales-return-list-loading,
-.sales-return-list-empty {
-  margin-top: 0.1rem;
-}
-
-/* table alignment */
 .sales-return-name-cell {
-  font-weight: 500;
-  font-size: 0.84rem;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .sales-return-amount-cell {
   text-align: right;
 }
 
-/* quality pill in table */
-.sales-return-quality-pill {
-  display: inline-flex;
+/* ==============================
+   Search dropdown (stdrop)
+   Scoped to this page so it won't break others.
+   Fixes "popover clipped / opening weird".
+   ============================== */
+.sales-return .stdrop {
+  position: relative;
+}
+
+.sales-return .stdrop-control {
+  width: 100%;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.18rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: capitalize;
+  gap: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #ffffff;
+  cursor: pointer;
 }
 
-.sales-return-quality-pill.good {
-  background: rgba(22, 163, 74, 0.12);
-  color: #166534;
+.sales-return .stdrop-control.is-open {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
 }
 
-.sales-return-quality-pill.damaged {
-  background: rgba(248, 113, 113, 0.12);
-  color: #b91c1c;
+.sales-return .stdrop-value {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
 }
 
-.sales-return-quality-pill.unknown {
-  background: rgba(148, 163, 184, 0.12);
-  color: #475569;
+.sales-return .stdrop-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #0f172a;
 }
 
-/* =========================================
-   RESPONSIVE
-========================================= */
+.sales-return .stdrop-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-@media (max-width: 960px) {
-  .sales-return-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.sales-return .stdrop-placeholder {
+  color: #64748b;
+}
 
-  .sales-return-header-pill {
-    align-self: flex-start;
-  }
+.sales-return .stdrop-caret {
+  opacity: 0.6;
+  font-size: 14px;
+}
 
-  .sales-return-invoice-meta {
-    grid-template-columns: 1fr;
-  }
+.sales-return .stdrop-popover {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
 
-  .sales-return-list-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.sales-return .stdrop-search {
+  padding: 10px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.sales-return .stdrop-list {
+  max-height: 280px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.sales-return .stdrop-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.sales-return .stdrop-item:hover {
+  background: #f1f5f9;
+}
+
+.sales-return .stdrop-item-title {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sales-return .stdrop-item-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.sales-return .stdrop-empty {
+  padding: 14px;
+  color: #64748b;
+}
+
+.sales-return .stdrop-hint {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #64748b;
 }

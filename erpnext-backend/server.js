@@ -233,6 +233,50 @@ app.put("/api/doc/:doctype/:name", async (req, res) => {
 
 
 
+// ===== GENERIC QUERY REPORT PROXY =====
+app.get("/api/report/:reportName", async (req, res) => {
+  const { reportName } = req.params;
+
+  try {
+    const response = await erpClient.get("/method/frappe.desk.query_report.run", {
+      params: {
+        report_name: reportName,
+        filters: JSON.stringify(req.query || {}),
+        ignore_prepared_report: 1,
+      },
+    });
+
+    // ✅ send only message (contains columns/result)
+    res.json(response.data.message);
+  } catch (err) {
+    console.error(`Report ${reportName} error:`, err.response?.data || err.message);
+    res.status(err.response?.status || 500).json({ error: err.response?.data || err.message });
+  }
+});
+
+// ===== GENERIC QUERY REPORT PROXY (POST) =====
+app.post("/api/report/run", async (req, res) => {
+  try {
+    const { report_name, filters } = req.body || {};
+
+    if (!report_name) {
+      return res.status(400).json({ error: "report_name is required" });
+    }
+
+    const response = await erpClient.post("/method/frappe.desk.query_report.run", {
+      report_name,
+      filters: JSON.stringify(filters || {}),
+      ignore_prepared_report: 1,
+    });
+
+    res.json(response.data.message); // ✅ columns/result/etc
+  } catch (err) {
+    console.error("Run Report error:", err.response?.data || err.message);
+    res.status(err.response?.status || 500).json({
+      error: err.response?.data || err.message,
+    });
+  }
+});
 
 
 
