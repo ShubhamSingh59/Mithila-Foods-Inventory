@@ -381,6 +381,7 @@ function StockTransfer() {
                   <label className="form-label">Transfer Qty</label>
                   <input
                     type="number"
+                    min='0'
                     value={row.qty}
                     onChange={(e) => handleQtyChange(row.id, e.target.value)}
                     className="input"

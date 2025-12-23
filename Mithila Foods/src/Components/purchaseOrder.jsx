@@ -600,12 +600,29 @@ function PurchaseOrder() {
                       <label className="po-label">Quantity</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="0.5"
+                        min={0}
                         value={row.qty}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const value = e.target.value;
+
+                          // allow empty while typing
+                          if (value === "") {
+                            updatePoItem(idx, { qty: "" });
+                            return;
+                          }
+
+                          const num = Number(value);
+
+                          if (num < 0) {
+                            // ❌ do not update value if negative
+                            return;
+                          }
                           updatePoItem(idx, { qty: e.target.value })
+
                         }
-                        className="po-input"
+                        }
+                        className={`po-input ${row.qty < 0 ? "po-input-error" : ""}`}
                       />
                     </div>
 
@@ -614,13 +631,30 @@ function PurchaseOrder() {
                       <input
                         type="number"
                         step="0.01"
+                        min={0}
                         value={row.rate}
-                        onChange={(e) =>
-                          updatePoItem(idx, { rate: e.target.value })
-                        }
-                        className="po-input"
+                        onChange={(e) => {
+                          const value = e.target.value;
+
+                          // allow empty while typing
+                          if (value === "") {
+                            updatePoItem(idx, { rate: "" });
+                            return;
+                          }
+
+                          const num = Number(value);
+
+                          // block negative values
+                          if (num < 0) {
+                            return;
+                          }
+
+                          updatePoItem(idx, { rate: num });
+                        }}
+                        className={`po-input ${Number(row.rate) < 0 ? "po-input-error" : ""}`}
                       />
                     </div>
+
 
                     <div style={{ display: "flex", alignItems: "flex-end" }}>
                       <button
@@ -667,7 +701,7 @@ function PurchaseOrder() {
               </div>
             </div>
 
-            <div className="po-field">
+            {/*<div className="po-field">
               <label className="po-label">Warehouse</label>
               <input
                 type="text"
@@ -676,7 +710,7 @@ function PurchaseOrder() {
                 placeholder="Raw Material - MF"
                 className="po-input"
               />
-            </div>
+            </div>*/}
 
             <div className="po-actions-main">
               <button
@@ -695,21 +729,36 @@ function PurchaseOrder() {
 
               <button
                 type="button"
-                onClick={handleSubmitPo}
+                onClick={() => {
+                  const poName = editingPoName || lastPoName;
+                  if (!poName) {
+                    setError("No draft Purchase Order selected to submit.");
+                    return;
+                  }
+
+                  const ok = window.confirm(
+                    `You are about to SUBMIT Purchase Order: ${poName}.\n\nOnce submitted, you may not be able to edit it as a draft.\n\nSubmit now?`
+                  );
+                  if (!ok) return;
+
+                  handleSubmitPo();
+                }}
                 disabled={submittingPo || loadingLists}
                 className="po-btn po-btn-outline"
               >
                 {submittingPo ? "Submitting..." : "Submit Purchase Order"}
               </button>
 
+
               <button
                 type="button"
                 onClick={handleDeleteDraftPo}
                 disabled={deletingDraft || loadingLists || !editingPoName}
-                className="po-btn po-btn-outline"
+                className="po-btn po-btn-outline po-btn-danger"
               >
                 {deletingDraft ? "Deleting..." : "Delete Draft PO"}
               </button>
+
             </div>
           </div>
         </form>
@@ -867,8 +916,8 @@ function SupplierSearchDropdown({
             {filtered.map((sup) => {
               const display = sup.supplier_name || sup.name;
               const sub = `${sup.name}${sup.supplier_email || sup.email_id
-                  ? ` · ${sup.supplier_email || sup.email_id}`
-                  : ""
+                ? ` · ${sup.supplier_email || sup.email_id}`
+                : ""
                 }`;
 
               return (
@@ -916,11 +965,11 @@ function POItemSearchDropdown({ items, value, onSelect, placeholder, disabled })
     const base = !s
       ? items
       : items.filter((it) => {
-          const code = (it.name || "").toLowerCase();
-          const name = (it.item_name || "").toLowerCase();
-          const grp = (it.item_group || "").toLowerCase();
-          return code.includes(s) || name.includes(s) || grp.includes(s);
-        });
+        const code = (it.name || "").toLowerCase();
+        const name = (it.item_name || "").toLowerCase();
+        const grp = (it.item_group || "").toLowerCase();
+        return code.includes(s) || name.includes(s) || grp.includes(s);
+      });
 
     return base.slice(0, 80);
   }, [items, q]);

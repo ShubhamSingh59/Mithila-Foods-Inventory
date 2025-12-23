@@ -3,10 +3,14 @@ const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const multer = require("multer");
+const FormData = require("form-data");
+
 
 dotenv.config();
 
 const app = express();
+
 
 app.use(
   cors({
@@ -16,6 +20,8 @@ app.use(
 );
 
 app.use(express.json());
+const upload = multer(); // memory storage
+
 
 const {
   ERP_BASE_URL,
@@ -275,6 +281,51 @@ app.post("/api/report/run", async (req, res) => {
     res.status(err.response?.status || 500).json({
       error: err.response?.data || err.message,
     });
+  }
+});
+
+
+app.post("/api/upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "file is required" });
+
+    const { doctype, docname, is_private = "1" } = req.body;
+
+    if (!doctype || !docname) {
+      return res.status(400).json({ error: "doctype and docname are required" });
+    }
+
+    const form = new FormData();
+
+    // ERPNext expects field name "file"
+    form.append("file", req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype,
+    });
+
+    // Attach to document
+    form.append("doctype", doctype);
+    form.append("docname", docname);
+    form.append("is_private", String(is_private)); // "1" = private
+    form.append("file_name", req.file.originalname);
+
+    const url = `${ERP_BASE_URL}/api/method/upload_file`;
+
+    const r = await axios.post(url, form, {
+      headers: {
+        Authorization: `token ${ERP_API_KEY}:${ERP_API_SECRET}`,
+        ...form.getHeaders(),
+      },
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
+    });
+
+    res.json(r.data);
+  } catch (err) {
+    console.error("Upload error:", err.response?.data || err.message);
+    res
+      .status(err.response?.status || 500)
+      .json({ error: err.response?.data || err.message });
   }
 });
 

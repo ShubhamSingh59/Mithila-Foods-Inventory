@@ -43,7 +43,7 @@ export async function submitDoc(doctype, name) {
     emitStockChanged();
   }
 
-    // ✅ MF Status auto-update for Purchase Order
+  // ✅ MF Status auto-update for Purchase Order
   if (doctype === "Purchase Order") {
     try {
       await setPurchaseOrderMfStatus(name, "PO Confirmed");
@@ -1245,4 +1245,234 @@ export async function setPurchaseOrderMfStatus(poName, mfStatus, { stockPercent 
     patch[MF_PO_FIELDS.stockPercent] = Number(stockPercent);
   }
   return updateDoc("Purchase Order", poName, patch);
+}
+
+
+export async function uploadFileToDoc({ doctype, docname, file, is_private = 1 }) {
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("doctype", doctype);
+  fd.append("docname", docname);
+  fd.append("is_private", String(is_private)); // 1 = private (logged-in users)
+  fd.append("file_name", file.name);
+
+  const res = await axios.post(`${BACKEND_URL}/api/upload`, fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return res.data;
+}
+
+export async function closePurchaseOrder(poName) {
+  const res = await axios.post(
+    `${BACKEND_URL}/api/method/erpnext.buying.doctype.purchase_order.purchase_order.close_or_unclose_purchase_orders`,
+    { names: [poName], status: "Closed" }
+  );
+  return res.data;
+}
+// ✅ ADD in erpBackendApi.js
+
+// helper: list Sales Invoice with filters
+export async function listSalesInvoices({ filters = [], fields, order_by, limit = 20 }) {
+  const res = await api.get(`/api/resource/Sales%20Invoice`, {
+    params: {
+      fields: JSON.stringify(
+        fields || [
+          "name",
+          "customer",
+          "company",
+          "posting_date",
+          "grand_total",
+          "outstanding_amount",
+          "status",
+          "docstatus",
+          "modified",
+        ]
+      ),
+      filters: JSON.stringify(filters),
+      order_by: order_by || "modified desc",
+      limit_page_length: limit,
+    },
+  });
+
+  return res?.data?.data || [];
+}
+
+// ✅ Returns list = (ALL drafts) + (last 10 submitted)
+export async function getSalesReturnsRecentAndDrafts({
+  draftLimit = 200,
+  recentSubmittedLimit = 10,
+} = {}) {
+  const [drafts, submitted] = await Promise.all([
+    listSalesInvoices({
+      filters: [
+        ["is_return", "=", 1],
+        ["docstatus", "=", 0],
+      ],
+      order_by: "modified desc",
+      limit: draftLimit,
+    }),
+    listSalesInvoices({
+      filters: [
+        ["is_return", "=", 1],
+        ["docstatus", "=", 1],
+      ],
+      order_by: "modified desc",
+      limit: recentSubmittedLimit,
+    }),
+  ]);
+
+  // drafts first, then submitted (unique by name)
+  const map = new Map();
+  (drafts || []).forEach((d) => map.set(d.name, d));
+  (submitted || []).forEach((s) => {
+    if (!map.has(s.name)) map.set(s.name, s);
+  });
+
+  return Array.from(map.values());
+}
+
+// ✅ Returns list = (ALL drafts) + (last 10 submitted)
+export async function getSalesInvoicesRecentAndDrafts({
+  draftLimit = 200,
+  recentSubmittedLimit = 10,
+} = {}) {
+  const [drafts, submitted] = await Promise.all([
+    listSalesInvoices({
+      filters: [
+        ["is_return", "=", 0],
+        ["docstatus", "=", 0],
+      ],
+      order_by: "modified desc",
+      limit: draftLimit,
+    }),
+    listSalesInvoices({
+      filters: [
+        ["is_return", "=", 0],
+        ["docstatus", "=", 1],
+      ],
+      order_by: "modified desc",
+      limit: recentSubmittedLimit,
+    }),
+  ]);
+
+  const map = new Map();
+  (drafts || []).forEach((d) => map.set(d.name, d));
+  (submitted || []).forEach((s) => {
+    if (!map.has(s.name)) map.set(s.name, s);
+  });
+
+  return Array.from(map.values());
+}
+
+// ✅ Save doc (used for updating draft with child table)
+export async function saveDoc(doc) {
+  // frappe.client.save expects: { doc: {...} }
+  const res = await axios.post(
+    `${BASE_URL}/api/method/frappe.client.save`,
+    { doc },
+    { headers: authHeaders() }
+  );
+  // returns {message: { ...saved_doc }}
+  return res.data?.message;
+}
+
+// ===== MF FLOW HELPERS (only for MF workflow tracker) =====
+
+function chunkArray(arr, size = 150) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
+// ✅ list Stock Entries created by our MF flow (FILTER BY custom_mf_track)
+// list Stock Entries created by our MF flow (by remarks tag) + custom_mf_track=1
+export async function listMfFlowStockEntries({ flowTag, limit = 300 } = {}) {
+  if (!flowTag) return [];
+  const like = `%${flowTag}%`;
+
+  return getDoctypeList("Stock Entry", {
+    fields: JSON.stringify([
+      "name",
+      "stock_entry_type",
+      "purpose",
+      "posting_date",
+      "posting_time",
+      "company",
+      "remarks",
+      "docstatus",
+      "modified",
+      "custom_mf_track", // ✅ include field
+    ]),
+    filters: JSON.stringify([
+      ["Stock Entry", "custom_mf_track", "=", 1], // ✅ ONLY our MF process
+      ["Stock Entry", "remarks", "like", like],   // ✅ this flow only
+    ]),
+    order_by: "posting_date desc, posting_time desc, modified desc",
+    limit_page_length: limit,
+  });
+}
+
+
+// ✅ list only Manufacture Stock Entries for this MF flow
+export async function listMfFlowManufactureEntries({ flowTag, limit = 300 } = {}) {
+  const all = await listMfFlowStockEntries({ flowTag, limit });
+  return (all || []).filter((x) => x.docstatus === 1 && x.stock_entry_type === "Manufacture");
+}
+
+// get Stock Ledger entries for given voucher_nos + warehouse
+export async function getMfFlowSleForWarehouse({ voucherNos = [], warehouse }) {
+  if (!voucherNos.length || !warehouse) return [];
+  const chunks = chunkArray(voucherNos, 150);
+
+  const all = [];
+  for (const part of chunks) {
+    const rows = await getDoctypeList("Stock Ledger Entry", {
+      fields: JSON.stringify([
+        "item_code",
+        "warehouse",
+        "actual_qty",
+        "voucher_no",
+        "posting_date",
+        "posting_time",
+      ]),
+      filters: JSON.stringify([
+        ["Stock Ledger Entry", "voucher_type", "=", "Stock Entry"],
+        ["Stock Ledger Entry", "warehouse", "=", warehouse],
+        ["Stock Ledger Entry", "voucher_no", "in", part],
+      ]),
+      order_by: "posting_date asc, posting_time asc, creation asc",
+      limit_page_length: 10000,
+    });
+    all.push(...(rows || []));
+  }
+  return all;
+}
+
+// remaining qty in WIP for this MF flow (net balance)
+export async function getMfFlowWipBalances({ flowTag, wipWarehouse }) {
+  if (!flowTag || !wipWarehouse) return [];
+
+  // ✅ now this only returns Stock Entries where custom_mf_track=1 AND remarks contains flowTag
+  const ses = await listMfFlowStockEntries({ flowTag, limit: 500 });
+
+  const voucherNos = (ses || []).map((x) => x.name).filter(Boolean);
+  if (!voucherNos.length) return [];
+
+  const sle = await getMfFlowSleForWarehouse({
+    voucherNos,
+    warehouse: wipWarehouse,
+  });
+
+  const map = new Map();
+  (sle || []).forEach((r) => {
+    const code = r.item_code;
+    const q = Number(r.actual_qty) || 0; // +in, -out
+    map.set(code, (map.get(code) || 0) + q);
+  });
+
+  return Array.from(map.entries())
+    .map(([item_code, remaining_qty]) => ({ item_code, remaining_qty }))
+    .filter((x) => x.remaining_qty > 0.0000001)
+    .sort((a, b) => a.item_code.localeCompare(b.item_code));
 }

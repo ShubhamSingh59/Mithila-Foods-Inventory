@@ -646,3 +646,39 @@
   font-size: 0.86rem;
   color: #64748b;
 }
+.po-input-error {
+  border: 2px solid red;
+  background-color: #ffecec;
+}
+
+/* ===== Hover intent colors (FIXED) ===== */
+
+/* Create Draft (primary) → green hover */
+.po-btn-primary:hover:not(:disabled) {
+  border-color: #16a34a;
+  background: #16a34a;
+  color: #ffffff;
+  filter: none; /* overrides your earlier brightness hover */
+}
+
+/* Submit button (outline inside actions) → green hover
+   but EXCLUDE danger buttons */
+.po-actions-main .po-btn-outline:not(.po-btn-danger):hover:not(:disabled) {
+  border-color: #16a34a;
+  background: #16a34a;
+  color: #ffffff;
+}
+
+/* Keep normal outline hover elsewhere (download pdf etc.) */
+.po-after-actions .po-btn-outline:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+/* Delete Draft → red hover (more specific than the green rule) */
+.po-actions-main .po-btn-outline.po-btn-danger:hover:not(:disabled) {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #ffffff;
+}

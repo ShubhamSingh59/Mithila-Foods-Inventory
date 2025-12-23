@@ -380,6 +380,7 @@ function StockReconciliation() {
                   <input
                     type="number"
                     value={row.new_qty}
+                    min="0"
                     onChange={(e) => handleRowChange(row.id, "new_qty", e.target.value)}
                     className="input"
                   />

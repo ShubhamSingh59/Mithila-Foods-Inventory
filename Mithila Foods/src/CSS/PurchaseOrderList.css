@@ -1,159 +1,3 @@
-/*
-=========================================
-PURCHASE ORDER LIST – FLOATING CHIP TABLE
-=========================================
-
-.po-list {
-  margin-top: 0.4rem;
-  padding: 1rem 1.2rem 1.2rem;
-  border-radius: var(--radius-lg);
-  background: radial-gradient(
-    circle at top left,
-    #fef9c3,
-    #ffffff 55%,
-    #ecfeff
-  );
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-}
-
-HEADER
-
-.po-list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.po-list-title-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.po-list-title {
-  font-size: 0.96rem;
-  font-weight: 600;
-}
-
-.po-list-subtitle {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-}
-
-.po-list-pill {
-  font-size: 0.78rem;
-  padding: 0.2rem 0.65rem;
-  border-radius: 999px;
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-}
-
-TABLE WRAPPER
-
-.po-list-table-wrapper {
-  overflow-x: auto;
-}
-
-FLOATING ROWS TABLE
-
-.po-list-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 6px;
-  font-size: 0.84rem;
-}
-
-TABLE HEADER
-
-.po-list-table thead tr {
-  background: linear-gradient(
-    135deg,
-    rgba(59, 130, 246, 0.85),
-    rgba(56, 189, 248, 0.9)
-  );
-  color: #f9fafb;
-}
-
-.po-list-table thead th {
-  padding: 0.42rem 0.65rem;
-  font-weight: 600;
-  text-align: left;
-}
-
-.po-list-table thead th:first-child {
-  border-top-left-radius: 999px;
-  border-bottom-left-radius: 999px;
-}
-
-.po-list-table thead th:last-child {
-  border-top-right-radius: 999px;
-  border-bottom-right-radius: 999px;
-}
-
-BODY ROWS AS CHIPS
-
-.po-list-table tbody tr {
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 10px rgba(148, 163, 184, 0.45);
-  border-radius: 999px;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
-}
-
-.po-list-table tbody tr:hover {
-  transform: translateY(-1px);
-  background: #eef2ff;
-  box-shadow: 0 8px 18px rgba(148, 163, 184, 0.75);
-}
-
-.po-list-table td {
-  padding: 0.55rem 0.65rem;
-}
-
-.po-list-table tbody td:first-child {
-  border-top-left-radius: 999px;
-  border-bottom-left-radius: 999px;
-}
-
-.po-list-table tbody td:last-child {
-  border-top-right-radius: 999px;
-  border-bottom-right-radius: 999px;
-}
-
-CELLS
-
-.po-cell-name {
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.po-cell-money {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.po-cell-actions {
-  white-space: nowrap;
-}
-
-PAGINATION
-
-.po-list-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.8rem;
-  font-size: 0.82rem;
-}
-
-.po-list-page-text {
-  color: var(--color-text-muted);
-}
-*/
 /* src/CSS/PurchaseOrderList.css
    BASIC theme (same feel as StockTransfer / PurchaseOrder)
    ✅ small buttons
@@ -181,7 +25,7 @@ PAGINATION
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 0;            /* ✅ no outer padding */
+  padding: 0;
   margin: 0;
   background: transparent;
   border: none;
@@ -278,7 +122,7 @@ PAGINATION
   width: 100%;
   border-collapse: collapse;
   font-size: 0.86rem;
-  min-width: 1100px; /* many columns */
+  min-width: 1100px;
 }
 
 .po-list-table thead {
@@ -287,7 +131,7 @@ PAGINATION
 
 .po-list-table th,
 .po-list-table td {
-  padding: 9px 10px; /* slightly tighter */
+  padding: 9px 10px;
   text-align: left;
   border-bottom: 1px solid #e2e8f0;
   vertical-align: top;
@@ -347,7 +191,7 @@ PAGINATION
 
 .qc-inline-input {
   width: 100%;
-  height: 30px;          /* ✅ smaller */
+  height: 30px;
   border-radius: 10px;
   border: 1px solid #cbd5e1;
   padding: 6px 8px;
@@ -365,7 +209,7 @@ PAGINATION
    -------------------------------- */
 .po-list-table select {
   width: 100%;
-  height: 30px;          /* ✅ smaller */
+  height: 30px;
   border-radius: 10px;
   border: 1px solid #cbd5e1;
   background: #ffffff;
@@ -384,20 +228,23 @@ PAGINATION
    Scoped to this component so it doesn't change other pages.
    -------------------------------- */
 .po-list .btn {
-  height: 30px;          /* ✅ small */
-  padding: 5px 10px;     /* ✅ tight */
+  height: 30px;
+  padding: 5px 10px;
   border-radius: 10px;
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
+
+  /* keeping your current base border */
   border: 1px solid #f73434;
+
   background: #ffffff;
   color: #0f172a;
   box-shadow: none;
 }
 
 .po-list .btn-xs {
-  height: 28px;          /* ✅ even smaller */
+  height: 28px;
   padding: 4px 10px;
   font-size: 0.76rem;
 }
@@ -407,6 +254,7 @@ PAGINATION
   cursor: default;
 }
 
+/* primary + accent */
 .po-list .btn-primary,
 .po-list .btn-accent {
   background: #0f172a;
@@ -414,9 +262,13 @@ PAGINATION
   color: #ffffff;
 }
 
+/* ✅ FIX 1: green hover + NO brightness */
 .po-list .btn-primary:hover:not(:disabled),
 .po-list .btn-accent:hover:not(:disabled) {
-  filter: brightness(1.05);
+  filter: none !important;          /* ✅ remove brightness */
+  background: #16a34a !important;   /* ✅ green */
+  border-color: #16a34a !important;
+  color: #ffffff !important;
 }
 
 .po-list .btn-outline {
@@ -440,14 +292,19 @@ PAGINATION
   border-color: #e2e8f0;
 }
 
+/* QC Fail */
 .po-list .btn-danger {
   background: #fef2f2;
   border-color: #fecaca;
   color: #991b1b;
 }
 
+/* ✅ FIX 2: QC Fail hover should NOT change */
 .po-list .btn-danger:hover:not(:disabled) {
-  background: #100101;
+  filter: none !important;
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #991b1b !important;
 }
 
 /* --------------------------------

@@ -258,7 +258,13 @@ function StockManufactureEntry() {
     setFgQty(value);
     setMessage("");
     setError("");
-
+    if (value < 0) {
+      return;
+    }
+    if (value === "") {
+      setFgQty("");
+      return;
+    }
     const bom = boms.find((b) => b.name === selectedBomName);
     if (!bom) return;
 
@@ -357,8 +363,8 @@ function StockManufactureEntry() {
       console.error(err);
       setError(
         err.response?.data?.error?.message ||
-          err.message ||
-          "Failed to create/submit Stock Entry."
+        err.message ||
+        "Failed to create/submit Stock Entry."
       );
     } finally {
       setSaving(false);
@@ -433,6 +439,7 @@ function StockManufactureEntry() {
             <label className="form-label stock-mfg-field-label">Finished Qty</label>
             <input
               type="number"
+              min={0}
               value={fgQty}
               onChange={handleFgQtyChange}
               className="input"

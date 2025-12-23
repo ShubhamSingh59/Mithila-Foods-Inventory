@@ -441,3 +441,35 @@
   font-weight: 600; /* ✅ less */
   white-space: nowrap;
 }
+
+
+/* ===== FIX: keep controls INSIDE the rounded filter bar ===== */
+.daily-stock-summary-controls {
+  flex-wrap: wrap;          /* ✅ allow wrapping */
+  overflow: visible;        /* ✅ don't clip children / dropdowns */
+  row-gap: 10px;            /* nicer when wrapped */
+}
+
+/* Make fields actually respect their flex cell (no "content width" surprises) */
+.daily-stock-summary-controls .input,
+.daily-stock-summary-controls select,
+.daily-stock-summary-controls input {
+  width: 100% !important;   /* ✅ fill the flex item */
+  flex: 1 1 180px;          /* ✅ can shrink + wrap */
+  min-width: 140px;         /* ✅ smaller so they don't overflow */
+}
+
+/* Search should still be bigger, but not force overflow */
+.daily-stock-summary-search-input {
+  flex: 2 1 260px !important;
+  min-width: 180px;
+}
+
+/* Buttons shouldn't stretch weirdly, and must stay "pill" height */
+.daily-stock-summary-controls .btn {
+  flex: 0 0 auto;           /* ✅ don't stretch full width */
+  white-space: nowrap;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+}

@@ -523,6 +523,7 @@ function OpeningStockEntry() {
                   <td>
                     <input
                       type="number"
+                      min="0"
                       value={row.qty}
                       onChange={(e) =>
                         handleRowFieldChange(row.id, "qty", e.target.value)
@@ -535,6 +536,7 @@ function OpeningStockEntry() {
                   <td>
                     <select
                       value={row.basis}
+                      min="0"
                       onChange={(e) =>
                         handleBasisChange(row.id, e.target.value)
                       }

@@ -440,14 +440,19 @@ SEARCH DROPDOWN (stdrop) — ALL STYLES COMMENTED
   color: #0f172a;
 }
 
+/* ✅ Make Quality column wider */
 .sales-return-row-grid {
   display: grid;
-  grid-template-columns: minmax(240px, 2.2fr) repeat(4, minmax(160px, 1fr));
+  grid-template-columns:
+    minmax(240px, 2.2fr)   /* Item */
+    minmax(140px, 0.9fr)   /* Qty */
+    minmax(140px, 0.9fr)   /* Rate */
+    minmax(320px, 1.6fr);  /* Quality (wider) */
   gap: 10px 12px;
   align-items: end;
-
   overflow: visible;
 }
+
 
 @media (max-width: 1100px) {
   .sales-return-row-grid {
@@ -661,4 +666,8 @@ SEARCH DROPDOWN (stdrop) — ALL STYLES COMMENTED
   padding: 8px 10px;
   font-size: 12px;
   color: #64748b;
+}
+.input-error {
+  border-color: #dc2626;
+  background-color: #fee2e2;
 }
