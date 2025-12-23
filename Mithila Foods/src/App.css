@@ -211,22 +211,31 @@
 }
 
 /* Panels wrapper ONLY (used by App.jsx/MfgTabsView wrappers) */
-.app-panel {
+/*.app-panel {
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-soft);
   padding: 14px;
+}*/
+/* ========= MFG Tabs (Manufacture / Reco / Transfer) ========= */
+
+/* header wrapper (no pill/box) */
+.mfg-tabs-header {
+  margin-bottom: 12px;     /* keeps spacing like before */
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-/* ========= MFG Tabs (Manufacture / Reco / Transfer) ========= */
-/* ✅ Removed “pill/box” around the whole tab bar */
+/* tab row (no pill/box) */
 .mfg-tabs {
   display: flex;
   gap: 10px;
   align-items: center;
+  justify-content: flex-end;  /* keeps tabs on right like your screenshot */
 
-  /* no pill / no border / no background */
   padding: 0;
   border: 0;
   background: transparent;
