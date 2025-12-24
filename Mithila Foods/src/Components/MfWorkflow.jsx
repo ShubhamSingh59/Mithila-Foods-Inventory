@@ -1626,7 +1626,7 @@ function WipWarehouseStockTab() {
             <tr>
               <th>Item</th>
               <th>Name</th>
-              <th>UOM</th>
+              <th>Unit</th>
               <th>Qty in WIP</th>
             </tr>
           </thead>
@@ -1804,7 +1804,7 @@ function IssueToWipTab({ company, flowTag, onCreated }) {
                 </div>
 
                 <div className="stock-transfer-row-field">
-                  <label className="form-label">UOM</label>
+                  <label className="form-label">Unit</label>
                   <input className="input input-readonly" value={r.uom} readOnly />
                 </div>
 
@@ -2099,7 +2099,7 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
               <tr>
                 <th>Item</th>
                 <th>Name</th>
-                <th>UOM</th>
+                <th>Unit</th>
                 <th>Qty</th>
                 <th>Source</th>
                 <th />
@@ -2502,8 +2502,8 @@ function TrackerTab() {
           <thead>
             <tr>
               <th>ITEM</th>
-              <th>RAW Used (Qty + UOM)</th>
-              <th>Wastage (Qty + UOM)</th>
+              <th>RAW Used (Qty + Unit)</th>
+              <th>Wastage (Qty + Unit)</th>
               <th>DATE</th>
             </tr>
           </thead>

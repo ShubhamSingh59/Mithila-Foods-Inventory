@@ -4869,7 +4869,7 @@ const RETURN_TYPES = { ALL: "ALL", GOOD: "GOOD", BAD: "BAD" };
 
 const COLUMNS = [
   { key: "opening_stock", label: "Opening Stock (TOTAL)", noDot: true },
-  { key: "adjustment_qty", label: "Reconciliation" },
+  { key: "adjustment_qty", label: "Adjustment" },
   { key: "sold_qty", label: "Sold Qty" },
   { key: "return_qty", label: "Return Qty" },
   { key: "current_stock", label: "Current Stock (TOTAL)", noDot: true },
