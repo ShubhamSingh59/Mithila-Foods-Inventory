@@ -4856,6 +4856,7 @@ const ALLOWED_GROUP_SET = new Set(ALLOWED_GROUPS);
 const WH_STOCK_INWARD = "Raw Material - MF";
 const WH_PACKING = "Finished Goods - MF";
 const WH_DAMAGED = "Damaged - MF";
+const WH_WASTAGE = "Wastage - MF";
 
 // ✅ Exclude these warehouses completely from Opening/Current calculations
 const EXCLUDED_WAREHOUSES = new Set([
@@ -4868,15 +4869,20 @@ const EXCLUDED_WAREHOUSES = new Set([
 const RETURN_TYPES = { ALL: "ALL", GOOD: "GOOD", BAD: "BAD" };
 
 const COLUMNS = [
-  { key: "opening_stock", label: "Opening Stock (TOTAL)", noDot: true },
-  { key: "adjustment_qty", label: "Adjustment" },
+  { key: "opening_stock", label: "Opening Stock", noDot: true },
+
+  { key: "stock_inward", label: "Stock Inward" },
+  { key: "packing_activity", label: "Paking Activity" },
+
   { key: "sold_qty", label: "Sold Qty" },
   { key: "return_qty", label: "Return Qty" },
-  { key: "current_stock", label: "Current Stock (TOTAL)", noDot: true },
-  { key: "packing_activity", label: "Paking Activity" },
-  { key: "stock_inward", label: "Stock Inward" },
-  { key: "other_movement", label: "Other Movement" },
+
+  { key: "adjustment_qty", label: "Adjustment" },
+  { key: "wastage_material", label: "Wastage Material" },
+
+  { key: "current_stock", label: "Current Stock", noDot: true },
 ];
+
 
 const GROUP_PAGE_SIZE = 4;
 
@@ -5010,7 +5016,7 @@ function DailyStockSummary() {
       "return_bad_qty",
       "packing_activity",
       "stock_inward",
-      "other_movement",
+      "wastage_material",
     ];
     return parts.reduce((sum, k) => sum + Math.abs(Number(r[k] || 0)), 0);
   };
@@ -5201,6 +5207,7 @@ function DailyStockSummary() {
       const purchaseInwardMap = {}; // ✅ NEW: Purchase Invoice only for Stock Inward
 
       const lastBeforeDay = {};
+      const wastageMaterialMap = {};
 
       (sleToSelected || []).forEach((entry) => {
         const itemCode = entry.item_code;
@@ -5208,6 +5215,19 @@ function DailyStockSummary() {
         if (!itemCode || !warehouse) return;
         if (!allowedSet.has(itemCode)) return;
         if (!jhWarehouses.has(warehouse)) return;
+
+        // excluded warehouses do not participate in opening/current
+        const entryDate = entry.posting_date;
+
+        // ✅ Capture Wastage movement BEFORE excluded-warehouse return
+        if (warehouse === WH_WASTAGE) {
+          if (entryDate === selectedDate) {
+            const key = `${itemCode}||${warehouse}`;
+            const qty = parseFloat(entry.actual_qty) || 0;
+            wastageMaterialMap[key] = (wastageMaterialMap[key] || 0) + qty;
+          }
+          return; // do NOT let wastage affect opening/current logic
+        }
 
         // excluded warehouses do not participate in opening/current
         if (EXCLUDED_WAREHOUSES.has(warehouse)) return;
@@ -5220,10 +5240,9 @@ function DailyStockSummary() {
         const rawVtype = entry.voucher_type || "";
         const vtype = typeof rawVtype === "string" ? rawVtype.trim() : rawVtype;
 
-        const entryDate = entry.posting_date;
         const ts = makeTs(entry);
-
         const isRecon = reconNameSet.has(entry.voucher_no);
+
 
         // opening = last balance before date
         if (entryDate < selectedDate) {
@@ -5277,6 +5296,14 @@ function DailyStockSummary() {
         if (!isRecon) {
           movementMap[key] = (movementMap[key] || 0) + qty;
         }
+
+        //// ✅ NEW: Wastage warehouse activity (we show it, but we don't include it in opening/movement maps)
+        //if (warehouse === WH_WASTAGE) {
+        //  if (entryDate === selectedDate) {
+        //    wastageMaterialMap[key] = (wastageMaterialMap[key] || 0) + qty;
+        //  }
+        //  return; // important: don't let wastage affect opening/current logic below
+        //}
       });
 
       Object.keys(lastBeforeDay).forEach((key) => {
@@ -5313,6 +5340,7 @@ function DailyStockSummary() {
         ...Object.keys(badReturnMap),
         ...Object.keys(packingActMap),
         ...Object.keys(purchaseInwardMap),
+        ...Object.keys(wastageMaterialMap),
       ]);
 
       // Flat rows per item||warehouse
@@ -5334,6 +5362,8 @@ function DailyStockSummary() {
         const packing_act_qty = Number(packingActMap[key] || 0);
 
         const purchase_inward_qty = Number(purchaseInwardMap[key] || 0);
+
+        const wastage_material_qty = Number(wastageMaterialMap[key] || 0);
 
         const current_stock = opening_stock + movement_qty + adjustment_qty + si_qty_total;
 
@@ -5379,7 +5409,7 @@ function DailyStockSummary() {
           packing_act_qty,
           purchase_inward_qty,
 
-          other_movement_qty,
+          wastage_material_qty,
 
           current_stock,
         };
@@ -5407,10 +5437,11 @@ function DailyStockSummary() {
           packing_activity: 0,
           stock_inward: 0,
 
-          other_movement: 0,
+          wastage_material: 0,
+
 
           current_stock: 0,
-          
+
         };
       });
 
@@ -5433,8 +5464,16 @@ function DailyStockSummary() {
         // ✅ Packing activity now sums manufacturing movement from ALL warehouses
         pr.packing_activity += Number(r.packing_act_qty || 0);
 
-        pr.other_movement += Number(r.other_movement_qty || 0); 
-        
+        // ✅ NEW: Wastage Material column (from Wastage - MF)
+        if (r.warehouse === WH_WASTAGE) {
+          const wq = Number(r.wastage_material_qty || 0);
+          pr.wastage_material += wq;
+
+          // ✅ NEW: current stock adds ONLY wastage movement (as you requested)
+          pr.current_stock += wq;
+        }
+
+
         // ✅ Stock inward only Purchase Invoice in Raw Material warehouse
         if (r.warehouse === WH_STOCK_INWARD) {
           pr.stock_inward += Number(r.purchase_inward_qty || 0);
