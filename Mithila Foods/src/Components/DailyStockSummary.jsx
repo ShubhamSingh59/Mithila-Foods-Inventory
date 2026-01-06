@@ -5267,7 +5267,7 @@ function DailyStockSummary() {
         }
 
         // ✅ Stock Inward = ONLY Purchase Invoice movement in Raw Material warehouse
-        if (warehouse === WH_STOCK_INWARD && vtype === "Purchase Invoice") {
+        if (warehouse === WH_STOCK_INWARD && (vtype === "Purchase Invoice" || vtype === "Purchase Receipt") ) {
           purchaseInwardMap[key] = (purchaseInwardMap[key] || 0) + qty;
         }
 
