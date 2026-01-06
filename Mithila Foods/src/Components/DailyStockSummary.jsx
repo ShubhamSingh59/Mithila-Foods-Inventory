@@ -4875,6 +4875,7 @@ const COLUMNS = [
   { key: "current_stock", label: "Current Stock (TOTAL)", noDot: true },
   { key: "packing_activity", label: "Paking Activity" },
   { key: "stock_inward", label: "Stock Inward" },
+  { key: "other_movement", label: "Other Movement" },
 ];
 
 const GROUP_PAGE_SIZE = 4;
@@ -5009,6 +5010,7 @@ function DailyStockSummary() {
       "return_bad_qty",
       "packing_activity",
       "stock_inward",
+      "other_movement",
     ];
     return parts.reduce((sum, k) => sum + Math.abs(Number(r[k] || 0)), 0);
   };
@@ -5267,7 +5269,7 @@ function DailyStockSummary() {
         }
 
         // ✅ Stock Inward = ONLY Purchase Invoice movement in Raw Material warehouse
-        if (warehouse === WH_STOCK_INWARD && (vtype === "Purchase Invoice" || vtype === "Purchase Receipt") ) {
+        if (warehouse === WH_STOCK_INWARD && (vtype === "Purchase Invoice" || vtype === "Purchase Receipt")) {
           purchaseInwardMap[key] = (purchaseInwardMap[key] || 0) + qty;
         }
 
@@ -5340,6 +5342,23 @@ function DailyStockSummary() {
           item_group: "",
           custom_category: "",
         };
+        // ✅ NEW: make displayed movements reconcile with current stock
+        const stock_inward_display = warehouse === WH_STOCK_INWARD ? purchase_inward_qty : 0;
+
+        // what your UI *shows* as movements for THIS warehouse
+        const shown_change =
+          adjustment_qty +
+          sold_qty +
+          good_return_qty +
+          bad_return_qty +
+          packing_act_qty +
+          stock_inward_display;
+
+        // what the stock math *actually uses* for THIS warehouse
+        const total_change = movement_qty + adjustment_qty + si_qty_total;
+
+        // leftover (not covered by your visible movement buckets)
+        const other_movement_qty = total_change - shown_change;
 
         return {
           item_code,
@@ -5359,6 +5378,8 @@ function DailyStockSummary() {
 
           packing_act_qty,
           purchase_inward_qty,
+
+          other_movement_qty,
 
           current_stock,
         };
@@ -5386,7 +5407,10 @@ function DailyStockSummary() {
           packing_activity: 0,
           stock_inward: 0,
 
+          other_movement: 0,
+
           current_stock: 0,
+          
         };
       });
 
@@ -5409,6 +5433,8 @@ function DailyStockSummary() {
         // ✅ Packing activity now sums manufacturing movement from ALL warehouses
         pr.packing_activity += Number(r.packing_act_qty || 0);
 
+        pr.other_movement += Number(r.other_movement_qty || 0); 
+        
         // ✅ Stock inward only Purchase Invoice in Raw Material warehouse
         if (r.warehouse === WH_STOCK_INWARD) {
           pr.stock_inward += Number(r.purchase_inward_qty || 0);
