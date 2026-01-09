@@ -503,6 +503,70 @@ export async function createSalesInvoice({
   return res;
 }
 
+// ✅ Create Sales Order (DRAFT)
+export async function createSalesOrder(payload) {
+  // POST /api/resource/Sales Order
+  return api.post("/api/resource/Sales Order", payload);
+}
+
+// ✅ Recent submitted Sales Orders
+export async function getRecentSalesOrders(limit = 10) {
+  // You already have getDoctypeList(), so we reuse it
+  return getDoctypeList("Sales Order", {
+    fields: JSON.stringify([
+      "name",
+      "customer",
+      "company",
+      "transaction_date",
+      "grand_total",
+      "status",
+      "docstatus",
+      "per_billed",
+      "modified",
+    ]),
+    filters: JSON.stringify([
+      ["Sales Order", "docstatus", "=", 1],
+    ]),
+    order_by: "modified desc",
+    limit_page_length: limit,
+  });
+}
+
+// ✅ Get Sales Order with items
+export async function getSalesOrderWithItems(name) {
+  // You already have getDoc() but keeping a dedicated function is cleaner
+  return getDoc("Sales Order", name);
+}
+
+/**
+ * ✅ Make Sales Invoice from Sales Order (server-side method)
+ * Returns: { siName }
+ *
+ * This uses ERPNext's standard "make_sales_invoice" mapper,
+ * so the Sales Invoice lines will link back to Sales Order lines
+ * and ERPNext will update SO billing/status automatically after submit.
+ */
+export async function createSalesInvoiceFromSalesOrder(salesOrderName) {
+  // 1) map SO -> Sales Invoice draft doc
+  const mapped = await api.post(
+    "/api/method/erpnext.selling.doctype.sales_order.sales_order.make_sales_invoice",
+    { source_name: salesOrderName }
+  );
+
+  const siDoc = mapped?.data?.message;
+  if (!siDoc) throw new Error("make_sales_invoice did not return a Sales Invoice document.");
+
+  // 2) insert Sales Invoice (draft)
+  const inserted = await api.post("/api/method/frappe.client.insert", {
+    doc: siDoc,
+  });
+
+  const insertedDoc = inserted?.data?.message;
+  const siName = insertedDoc?.name || insertedDoc;
+  if (!siName) throw new Error("Inserted Sales Invoice name not returned.");
+
+  return { siName };
+}
 
 
 // Recent submitted invoices (ONLY normal sales, no returns)
@@ -725,6 +789,13 @@ export async function getSuppliersForList() {
       "custom_contact_person",
       "custom_credit_limit",
       "custom_status",
+
+      "pan",
+      "gstin",
+      "gst_category",
+      "supplier_primary_address",
+      "primary_address",
+      "default_bank_account",
     ]),
     limit_page_length: 1000,
     order_by: "modified desc",
@@ -1475,4 +1546,180 @@ export async function getMfFlowWipBalances({ flowTag, wipWarehouse }) {
     .map(([item_code, remaining_qty]) => ({ item_code, remaining_qty }))
     .filter((x) => x.remaining_qty > 0.0000001)
     .sort((a, b) => a.item_code.localeCompare(b.item_code));
+}
+
+// erpBackendApi.js
+
+// 🔧 change this to your custom doctype name in ERPNext
+const TRANSPORTER_DOCTYPE = "Transporter";
+
+export async function getTransportersForList() {
+  return getDoctypeList(TRANSPORTER_DOCTYPE, {
+    fields: JSON.stringify([
+      "name",
+      "transporter_name",
+      "point_of_contact",
+      "contact",
+      "address",
+      "rating",
+      "working_days",
+    ]),
+    limit_page_length: 1000,
+    order_by: "modified desc",
+  });
+}
+//export async function getTransporterStatusOptions() {
+//  // Same logic as getSupplierStatusOptions, but for transporter doctype
+//  return await getSelectOptionsFromMeta(TRANSPORTER_DOCTYPE, "custom_status");
+//}
+// ✅ Stock Reconciliation list (parent) with date filter
+export async function getStockReconciliationEntries({
+  from_date,
+  to_date,
+  includeDrafts = true,
+  limit = 500,
+} = {}) {
+  const filters = [];
+
+  if (from_date) filters.push(["Stock Reconciliation", "posting_date", ">=", from_date]);
+  if (to_date) filters.push(["Stock Reconciliation", "posting_date", "<=", to_date]);
+
+  // ✅ EXCLUDE OPENING STOCK
+  filters.push(["Stock Reconciliation", "purpose", "=", "Stock Reconciliation"]);
+
+  // exclude cancelled by default
+  if (includeDrafts) {
+    filters.push(["Stock Reconciliation", "docstatus", "in", [0, 1]]);
+  } else {
+    filters.push(["Stock Reconciliation", "docstatus", "=", 1]);
+  }
+
+  return getDoctypeList("Stock Reconciliation", {
+    fields: JSON.stringify([
+      "name",
+      "posting_date",
+      "posting_time",
+      "company",
+      "purpose",
+      "docstatus",
+      "modified",
+    ]),
+    filters: JSON.stringify(filters),
+    order_by: "posting_date desc, posting_time desc, modified desc",
+    limit_page_length: limit,
+  });
+}
+
+// ✅ Fetch Stock Reconciliation Item rows for multiple parents (child table)
+// NOTE: `parent: "Stock Reconciliation"` is REQUIRED, otherwise PermissionError happens.
+export async function getStockReconciliationItemsForParents(parentNames = []) {
+  if (!parentNames.length) return [];
+
+  const chunk = (arr, size = 100) => {
+    const out = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+  };
+
+  const all = [];
+  const parts = chunk(parentNames, 100);
+
+  for (const part of parts) {
+    const rows = await getDoctypeList("Stock Reconciliation Item", {
+      parent: "Stock Reconciliation", // ✅ required
+      fields: JSON.stringify(["parent", "item_code", "warehouse", "qty", "current_qty"]),
+      filters: JSON.stringify([["Stock Reconciliation Item", "parent", "in", part]]),
+      limit_page_length: 10000,
+    });
+
+    all.push(...(rows || []));
+  }
+
+  return all;
+}
+
+export async function getStockReconciliationEntriesWithSummary(opts = {}) {
+  const parents = await getStockReconciliationEntries(opts);
+
+  const parentNames = (parents || []).map((p) => p.name).filter(Boolean);
+  if (!parentNames.length) return [];
+
+  let childRows = [];
+  try {
+    childRows = await getStockReconciliationItemsForParents(parentNames);
+  } catch (e) {
+    console.error("Child list failed, fallback to getDoc per parent", e);
+
+    childRows = [];
+    const docs = await mapLimit(parents, 6, async (p) => getDoc("Stock Reconciliation", p.name));
+    docs.forEach((doc) => {
+      (doc.items || []).forEach((it) => {
+        childRows.push({
+          parent: doc.name,
+          item_code: it.item_code,
+          warehouse: it.warehouse,
+          qty: it.qty,
+          current_qty: it.current_qty,
+        });
+      });
+    });
+  }
+
+  // item_code -> item_name
+  const itemCodes = Array.from(new Set(childRows.map((x) => x.item_code).filter(Boolean)));
+  const itemNameMap = new Map();
+
+  if (itemCodes.length) {
+    const chunk = (arr, size = 100) => {
+      const out = [];
+      for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+      return out;
+    };
+
+    for (const part of chunk(itemCodes, 100)) {
+      const items = await getDoctypeList("Item", {
+        fields: JSON.stringify(["name", "item_name"]),
+        filters: JSON.stringify([["Item", "name", "in", part]]),
+        limit_page_length: 1000,
+      });
+
+      (items || []).forEach((it) => itemNameMap.set(it.name, it.item_name || it.name));
+    }
+  }
+
+  const summarize = (arr) => {
+    const uniq = Array.from(new Set(arr.filter(Boolean)));
+    if (!uniq.length) return "—";
+    if (uniq.length === 1) return uniq[0];
+    return `${uniq[0]} +${uniq.length - 1}`;
+  };
+
+  const byParent = new Map();
+  childRows.forEach((r) => {
+    if (!r.parent) return;
+    if (!byParent.has(r.parent)) byParent.set(r.parent, []);
+    byParent.get(r.parent).push(r);
+  });
+
+  return (parents || []).map((p) => {
+    const lines = byParent.get(p.name) || [];
+
+    const itemNames = lines.map((l) => itemNameMap.get(l.item_code) || l.item_code);
+    const warehouses = lines.map((l) => l.warehouse);
+
+    // ✅ Qty Change = qty - current_qty
+    const qtyChange = lines.reduce((sum, l) => {
+      const qty = Number(l.qty) || 0;
+      const currentQty = Number(l.current_qty) || 0;
+      return sum + (qty - currentQty);
+    }, 0);
+
+    return {
+      ...p,
+      _itemsCount: lines.length,
+      _itemDisplay: summarize(itemNames),
+      _warehouseDisplay: summarize(warehouses),
+      _qtyChange: qtyChange, // ✅ THIS IS WHAT UI WILL SHOW
+    };
+  });
 }

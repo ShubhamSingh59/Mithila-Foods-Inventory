@@ -1054,6 +1054,7 @@ import MfWorkflow from "./Components/MfWorkflow";
 import MfgTabsView from "./Components/MfgTabsView";
 
 import "./App.css";
+import StockReconciliationList from "./Components/StockReconciliationList";
 
 const VIEWS = {
   DAILY_STOCK: "DAILY_STOCK",
@@ -1337,6 +1338,7 @@ function App() {
             </div>
           </div>
         )}
+        <StockReconciliationList/>
       </main>
     </div>
   );

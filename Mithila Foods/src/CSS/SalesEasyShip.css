@@ -304,13 +304,18 @@
 }
 
 /* FIX: proper fr values */
-.sales-item-row-grid {
+.sales-item-row-grid{
   display: grid;
-  grid-template-columns: minmax(260px, 2fr) minmax(160px, 1fr) minmax(200px, 1fr);
+  grid-template-columns:
+    minmax(280px, 2fr)   /* Item (big) */
+    120px                /* Qty (small) */
+    140px                /* Available Qty (small) */
+    minmax(180px, 1fr);  /* Rate */
   gap: 10px 12px;
   align-items: end;
   overflow: visible;
 }
+
 
 @media (max-width: 960px) {
   .sales-item-row-grid {
@@ -490,4 +495,9 @@
 
 .sales-easyship .table tbody tr:hover {
   background: #f8fafc;
+}
+.sales-available-qty{
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.8;
 }

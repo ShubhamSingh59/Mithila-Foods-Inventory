@@ -8,6 +8,8 @@ import {
   getFinishedItems,
   getCompanies,
   getItemsForBOM,
+  getBinForItemWarehouse,
+  mapLimit,
 } from "./erpBackendApi";
 import "../CSS/StockManufactureEntry.css";
 
@@ -133,6 +135,8 @@ function StockManufactureEntry() {
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [availMap, setAvailMap] = useState({});
+
 
   function scaleRowsFromBom(items, finishedQty, bomQty, manualRows = []) {
     const fg = parseFloat(finishedQty);
@@ -169,6 +173,44 @@ function StockManufactureEntry() {
       setLoadingItems(false);
     }
   }
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadAvail() {
+      const codes = Array.from(
+        new Set((rows || []).map((r) => r.item_code).filter(Boolean))
+      );
+
+      if (!codes.length) {
+        if (alive) setAvailMap({});
+        return;
+      }
+
+      try {
+        const results = await mapLimit(codes, 6, async (code) => {
+          const bin = await getBinForItemWarehouse(code, SOURCE_WH);
+          const qty = bin ? Number(bin.actual_qty ?? 0) : 0;
+          return { code, qty };
+        });
+
+        const next = {};
+        results.forEach(({ code, qty }) => {
+          next[code] = qty;
+        });
+
+        if (alive) setAvailMap(next);
+      } catch (e) {
+        console.error("Failed to load available qty:", e);
+        // keep old values if any
+      }
+    }
+
+    loadAvail();
+    return () => {
+      alive = false;
+    };
+  }, [rows]);
 
   useEffect(() => {
     async function init() {
@@ -507,6 +549,7 @@ function StockManufactureEntry() {
                   <th>Item Name</th>
                   <th>Unit</th>
                   <th>Qty</th>
+                  <th>Available Qty</th>
                   <th>Source Warehouse</th>
                   <th>Actions</th>
                 </tr>
@@ -536,6 +579,9 @@ function StockManufactureEntry() {
                         onChange={(e) => handleRowQtyChange(r.id, e.target.value)}
                         className="input stock-mfg-qty-input"
                       />
+                    </td>
+                    <td className="stock-mfg-avail-cell">
+                      {r.item_code ? (availMap[r.item_code] ?? "-") : "-"}
                     </td>
                     <td className="stock-mfg-wh-cell">{SOURCE_WH}</td>
                     <td className="stock-mfg-actions-cell">

@@ -590,26 +590,25 @@ Searchable dropdown (combobox)
 /* ==============================
    Table (no funky colors)
    ============================== */
+/* --- TABLE: better alignment + stop per-letter wrapping --- */
+
 .stock-mfg-table-wrapper {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #ffffff;
-
-  /* in case table-container sets overflow:auto */
-  overflow: visible;
+  overflow-x: auto;
+  /* ✅ allow scroll instead of ugly wrapping */
+  overflow-y: visible;
 }
 
-.stock-mfg-table-wrapper.table-container {
-  overflow: visible !important;
-}
-
-/* Make table fit without forced horizontal scroll */
+/* keep fixed layout but with correct widths */
 .stock-mfg-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
   font-size: 0.9rem;
-  min-width: 0; /* remove old min-width */
+  min-width: 920px;
+  /* ✅ helps keep columns stable */
 }
 
 .stock-mfg-table thead {
@@ -621,37 +620,32 @@ Searchable dropdown (combobox)
   padding: 10px 12px;
   border-bottom: 1px solid #e2e8f0;
   text-align: left;
-  vertical-align: top;
-
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: anywhere;
+  vertical-align: middle;
+  /* ✅ center align rows */
+  word-break: normal;
+  /* ✅ stop per-letter breaking */
+  overflow-wrap: normal;
+  /* ✅ stop per-letter breaking */
 }
 
-.stock-mfg-table th {
-  font-weight: 700;
-  color: #0f172a;
-}
-
-/* Zebra + hover (basic) */
-.stock-mfg-table tbody tr:nth-child(even) {
-  background: #fcfcfd;
-}
-
-.stock-mfg-table tbody tr:hover {
-  background: #f1f5f9;
-}
-
-.stock-mfg-item-cell {
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.stock-mfg-itemname-cell,
+/* Keep some columns single-line */
+.stock-mfg-item-cell,
 .stock-mfg-uom-cell,
-.stock-mfg-wh-cell {
-  color: #334155;
-  font-size: 0.88rem;
+.stock-mfg-qty-cell,
+.stock-mfg-avail-cell,
+.stock-mfg-actions-cell {
+  white-space: nowrap;
+}
+
+/* Item name can wrap normally (at spaces) */
+.stock-mfg-itemname-cell {
+  white-space: normal;
+}
+
+/* Align numeric-ish columns */
+.stock-mfg-uom-cell,
+.stock-mfg-avail-cell {
+  text-align: center;
 }
 
 .stock-mfg-qty-cell {
@@ -659,36 +653,71 @@ Searchable dropdown (combobox)
 }
 
 .stock-mfg-qty-input {
-  width: 100%;
-  max-width: 140px;
+  width: 110px;
+  /* ✅ smaller input */
+  max-width: 110px;
   text-align: right;
 }
 
-/* Column widths */
+/* Actions: never wrap button text */
+.stock-mfg-actions-cell {
+  text-align: center;
+}
+
+.stock-mfg-actions-cell .btn {
+  white-space: nowrap;
+}
+
+/* ✅ Column widths for 7 columns (matches your table now) */
 .stock-mfg-table th:nth-child(1),
 .stock-mfg-table td:nth-child(1) {
   width: 20%;
 }
+
+/* Item */
+
 .stock-mfg-table th:nth-child(2),
 .stock-mfg-table td:nth-child(2) {
   width: 28%;
 }
+
+/* Item Name */
+
 .stock-mfg-table th:nth-child(3),
 .stock-mfg-table td:nth-child(3) {
-  width: 10%;
+  width: 8%;
 }
+
+/* Unit */
+
 .stock-mfg-table th:nth-child(4),
 .stock-mfg-table td:nth-child(4) {
-  width: 12%;
-}
-.stock-mfg-table th:nth-child(5),
-.stock-mfg-table td:nth-child(5) {
-  width: 20%;
-}
-.stock-mfg-table th:nth-child(6),
-.stock-mfg-table td:nth-child(6) {
   width: 10%;
 }
+
+/* Qty */
+
+.stock-mfg-table th:nth-child(5),
+.stock-mfg-table td:nth-child(5) {
+  width: 12%;
+}
+
+/* Available Qty */
+
+.stock-mfg-table th:nth-child(6),
+.stock-mfg-table td:nth-child(6) {
+  width: 14%;
+}
+
+/* Source Warehouse */
+
+.stock-mfg-table th:nth-child(7),
+.stock-mfg-table td:nth-child(7) {
+  width: 8%;
+}
+
+/* Actions */
+
 
 /* ==============================
    Submit row

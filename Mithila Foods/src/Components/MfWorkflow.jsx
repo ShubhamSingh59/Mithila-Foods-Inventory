@@ -1358,11 +1358,11 @@ function MfItemSearchDropdown({
     const base = !s
       ? (items || [])
       : (items || []).filter((it) => {
-          const code = (it?.name || "").toLowerCase();
-          const nm = (it?.item_name || "").toLowerCase();
-          const uom = (it?.stock_uom || "").toLowerCase();
-          return code.includes(s) || nm.includes(s) || uom.includes(s);
-        });
+        const code = (it?.name || "").toLowerCase();
+        const nm = (it?.item_name || "").toLowerCase();
+        const uom = (it?.stock_uom || "").toLowerCase();
+        return code.includes(s) || nm.includes(s) || uom.includes(s);
+      });
 
     return base.slice(0, maxResults);
   }, [items, q, maxResults]);
@@ -1729,7 +1729,22 @@ function IssueToWipTab({ company, flowTag, onCreated }) {
         return setErr(`Qty cannot exceed available for ${r.item_code} (available ${avail}).`);
       }
     }
+    const uniqCodes = Array.from(new Set(validRows.map((r) => r.item_code))).filter(Boolean);
+    const latestPairs = await mapLimit(uniqCodes, 6, async (code) => {
+      const bin = await getBinForItemWarehouse(code, WIP_WH);
+      return [code, Number(bin?.actual_qty ?? 0)];
+    });
 
+    const latest = Object.fromEntries(latestPairs);
+    setAvailMap((p) => ({ ...p, ...latest }));
+
+    for (const r of validRows) {
+      const need = Number(r.qty);
+      const have = Number(latest[r.item_code] ?? 0);
+      if (!isNaN(need) && need > have) {
+        return setErr(`Qty cannot exceed available in WIP for ${r.item_code} (available ${have}).`);
+      }
+    }
     const payload = {
       doctype: "Stock Entry",
       stock_entry_type: "Material Transfer",
@@ -1866,6 +1881,38 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
+  const [availMap, setAvailMap] = useState({});      // item_code -> actual_qty (number)
+  const [availLoading, setAvailLoading] = useState(false);
+
+  async function refreshAvailForCodes(codes = []) {
+    const uniq = Array.from(new Set((codes || []).filter(Boolean)));
+    if (!uniq.length) return;
+
+    setAvailLoading(true);
+    try {
+      const pairs = await mapLimit(uniq, 6, async (code) => {
+        try {
+          const bin = await getBinForItemWarehouse(code, WIP_WH);
+          const qty = Number(bin?.actual_qty ?? 0);
+          return [code, qty];
+        } catch {
+          return [code, null];
+        }
+      });
+
+      setAvailMap((prev) => {
+        const next = { ...prev };
+        pairs.forEach(([code, qty]) => {
+          if (qty == null) delete next[code];
+          else next[code] = qty;
+        });
+        return next;
+      });
+    } finally {
+      setAvailLoading(false);
+    }
+  }
+
 
   useEffect(() => {
     (async () => {
@@ -1914,7 +1961,11 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
     const items = bomDoc.items || [];
     const manualRows = rows.filter((r) => !r.fromBom);
     setBomItemsBase(items);
-    setRows(scaleRowsFromBom(items, finishedQty, bomQty, manualRows));
+
+    const scaled = scaleRowsFromBom(items, finishedQty, bomQty, manualRows);
+    setRows(scaled);
+
+    refreshAvailForCodes(scaled.map((r) => r.item_code));
   }
 
   async function handleFinishedItemChange(code) {
@@ -1979,12 +2030,18 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
 
   function changeRowItem(id, code) {
     const it = rawItems.find((x) => x.name === code);
+
     setRows((p) =>
       p.map((r) =>
-        r.id === id ? { ...r, item_code: code, item_name: it?.item_name || "", uom: it?.stock_uom || "" } : r
+        r.id === id
+          ? { ...r, item_code: code, item_name: it?.item_name || "", uom: it?.stock_uom || "" }
+          : r
       )
     );
+
+    if (it?.name) refreshAvailForCodes([it.name]);
   }
+
 
   async function submit(e) {
     e.preventDefault();
@@ -2101,6 +2158,7 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
                 <th>Name</th>
                 <th>Unit</th>
                 <th>Qty</th>
+                <th>Available (WIP){availLoading ? "…" : ""}</th>
                 <th>Source</th>
                 <th />
               </tr>
@@ -2126,6 +2184,9 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
                   <td>
                     <input className="input" type="number" min="0" value={r.qty} onChange={(e) => changeRowQty(r.id, e.target.value)} />
                   </td>
+                  <td className="mf-avail-cell">
+                    {r.item_code ? (availMap[r.item_code] != null ? Number(availMap[r.item_code]).toFixed(3) : "-") : "-"}
+                  </td>
                   <td>{WIP_WH}</td>
                   <td>
                     <button type="button" className="btn btn-ghost btn-sm" onClick={() => removeRow(r.id)}>
@@ -2136,7 +2197,7 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
               ))}
               {!rows.length ? (
                 <tr>
-                  <td colSpan={6} className="text-muted">
+                  <td colSpan={7} className="text-muted">
                     Select BOM to load items.
                   </td>
                 </tr>
@@ -2631,7 +2692,7 @@ export default function MfWorkflow() {
         </button>
       </div>
 
-      {tab === TABS.ISSUE && <IssueToWipTab company={company} flowTag={flowTag} onCreated={() => {}} />}
+      {tab === TABS.ISSUE && <IssueToWipTab company={company} flowTag={flowTag} onCreated={() => { }} />}
 
       {tab === TABS.MFG && (
         <ManufactureFromWipTab

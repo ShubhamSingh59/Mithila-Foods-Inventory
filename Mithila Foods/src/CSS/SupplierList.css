@@ -1,34 +1,58 @@
 /* src/CSS/SupplierList.css */
 
 /* ==============================
-   Remove outer wrapper "pill"
-   (App.jsx wraps SupplierList in .app-panel)
-   ============================== */
-.app-panel:has(.supplier-page) {
-  padding: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.app-panel.app-panel-primary:has(.supplier-page),
-.app-panel.app-panel-secondary:has(.supplier-page) {
-  background: transparent !important;
-}
-
-/* Full width (override max-width from app-main-inner) */
-.app-main-inner:has(.supplier-page) {
-  max-width: none !important;
-  margin: 0 !important;
-}
-
-/* ==============================
    Page
    ============================== */
 .supplier-page {
   padding: 12px 10px 18px;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   width: 100%;
+}
+
+/* ==============================
+   Tabs
+   ============================== */
+.theme-tabs {
+  display: inline-flex;
+  gap: 10px;
+  padding: 6px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  margin-bottom: 10px;
+}
+
+.theme-tab-btn {
+  appearance: none;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  color: #0f172a;
+  cursor: pointer;
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease,
+    border-color 160ms ease, transform 120ms ease;
+}
+
+.theme-tab-btn:hover {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.theme-tab-btn:active {
+  transform: translateY(0.5px);
+}
+
+.theme-tab-btn.active {
+  background: #0b1220;
+  color: #ffffff;
+  border-color: rgba(59, 130, 246, 0.55);
+  box-shadow: 0 10px 22px rgba(11, 18, 32, 0.18),
+    0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.theme-tab-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
 /* ==============================
@@ -156,25 +180,44 @@
 }
 
 /* ==============================
-   Table (NO horizontal scroll)
+   Table wrapper
    ============================== */
 .supplier-table-wrapper {
   margin-top: 8px;
   width: 100%;
-  overflow-x: hidden;            /* ✅ no horizontal scrolling */
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #ffffff;
+  overflow: hidden;
+  /* default (transporters stays clean) */
 }
 
+/* ✅ Supplier table only: allow scroll (horizontal + vertical) */
+.supplier-page.is-suppliers .supplier-table-wrapper {
+  overflow-x: auto;
+  overflow-y: visible;
+  /* no vertical scroll */
+  max-height: none;
+  /* remove fixed height */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ==============================
+   Table
+   ============================== */
 .supplier-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
-  table-layout: fixed;           /* ✅ makes columns obey widths and fit container */
+  table-layout: auto;
+  /* ✅ no fixed squeezing */
 }
 
-/* Basic header */
+/* ✅ Supplier only: force a wider table so columns don’t crush */
+.supplier-page.is-suppliers .supplier-table {
+  min-width: 1600px;
+}
+
 .supplier-table thead {
   background: #f8fafc;
 }
@@ -187,61 +230,25 @@
   vertical-align: middle;
 }
 
-/* ✅ Allow header to wrap at spaces (no "Feature s"), but never break inside words */
-.supplier-table th {
+/* Sticky header works nicely when wrapper scrolls */
+.supplier-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
   font-weight: 700;
   color: #0f172a;
-  white-space: normal;
-  word-break: keep-all;
-  overflow-wrap: normal;
-  line-height: 1.15;
+  white-space: nowrap;
+  /* ✅ prevents “Acti ons” */
 }
 
-/* Body cells wrap nicely */
+/* Default compact rows */
 .supplier-table td {
   color: #0f172a;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
-/* ===== Column sizing (fits without scroll) =====
-   1 ID
-   2 Supplier Name
-   3 Category
-   4 Phone
-   5 Email  (shorter)
-   6 Contact Person
-   7 Credit Limit (stretched - number field)
-   8 Custom Status
-   9 Features (stretched a bit)
-*/
-.supplier-table th:nth-child(1),
-.supplier-table td:nth-child(1) { width: 9%; }
-
-.supplier-table th:nth-child(2),
-.supplier-table td:nth-child(2) { width: 16%; }
-
-.supplier-table th:nth-child(3),
-.supplier-table td:nth-child(3) { width: 10%; }
-
-.supplier-table th:nth-child(4),
-.supplier-table td:nth-child(4) { width: 10%; }
-
-.supplier-table th:nth-child(5),
-.supplier-table td:nth-child(5) { width: 12%; }   /* ✅ email slightly shorter */
-
-.supplier-table th:nth-child(6),
-.supplier-table td:nth-child(6) { width: 12%; }
-
-.supplier-table th:nth-child(7),
-.supplier-table td:nth-child(7) { width: 11%; }   /* ✅ credit limit wider */
-
-.supplier-table th:nth-child(8),
-.supplier-table td:nth-child(8) { width: 10%; }
-
-.supplier-table th:nth-child(9),
-.supplier-table td:nth-child(9) { width: 10%; }   /* ✅ last column wider */
 
 /* Zebra + hover */
 .supplier-table tbody tr:nth-child(even) {
@@ -262,7 +269,9 @@
   box-shadow: inset 3px 0 0 #334155;
 }
 
-/* Column tweaks */
+/* ==============================
+   Cells
+   ============================== */
 .supplier-cell-id {
   font-weight: 700;
 }
@@ -271,12 +280,6 @@
   font-weight: 600;
 }
 
-.supplier-cell-category,
-.supplier-cell-phone {
-  color: #334155;
-}
-
-/* ID button */
 .linkish-btn {
   padding: 0;
   border: none;
@@ -344,6 +347,71 @@
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
   color: #166534;
+}
+
+/* ==============================
+   ✅ Supplier-only column sizing (does NOT affect transporter)
+   ============================== */
+.supplier-page.is-suppliers .col-id {
+  min-width: 110px;
+}
+
+.supplier-page.is-suppliers .col-supplier-name {
+  min-width: 220px;
+}
+
+.supplier-page.is-suppliers .col-category {
+  min-width: 140px;
+}
+
+.supplier-page.is-suppliers .col-pan {
+  min-width: 120px;
+}
+
+.supplier-page.is-suppliers .col-gst {
+  min-width: 140px;
+}
+
+.supplier-page.is-suppliers .col-gstcat {
+  min-width: 160px;
+}
+
+.supplier-page.is-suppliers .col-bank {
+  min-width: 200px;
+}
+
+.supplier-page.is-suppliers .col-phone {
+  min-width: 130px;
+}
+
+.supplier-page.is-suppliers .col-email {
+  min-width: 240px;
+}
+
+.supplier-page.is-suppliers .col-contact {
+  min-width: 180px;
+}
+
+.supplier-page.is-suppliers .col-credit {
+  min-width: 130px;
+}
+
+.supplier-page.is-suppliers .col-status {
+  min-width: 150px;
+}
+
+.supplier-page.is-suppliers .col-features {
+  min-width: 120px;
+}
+
+/* Address columns: allow wrapping instead of cutting */
+.supplier-page.is-suppliers td.col-addr {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  min-width: 240px;
+  max-width: 420px;
+  overflow-wrap: anywhere;
 }
 
 /* Responsive tweaks */
