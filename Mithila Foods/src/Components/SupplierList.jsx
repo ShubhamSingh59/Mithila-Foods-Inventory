@@ -279,6 +279,23 @@ function SupplierEmailCell({ value }) {
     </span>
   );
 }
+// 🔧 Helper: remove HTML but keep spaces + line breaks (ERPNext address)
+function htmlToPlainTextPreserveLines(html) {
+  if (!html) return "";
+
+  // Convert <br> and </p> to new lines
+  const withLineBreaks = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n");
+
+  // Strip remaining HTML safely
+  const temp = document.createElement("div");
+  temp.innerHTML = withLineBreaks;
+
+  return (temp.textContent || temp.innerText || "")
+    .replace(/\n\s*\n/g, "\n") // clean extra blank lines
+    .trim();
+}
 
 function ListPanel({ config }) {
   const [items, setItems] = useState([]);
@@ -590,7 +607,16 @@ const SUPPLIER_CONFIG = {
     { header: "GST Category", key: "gst_category", className: "col-gstcat", render: (s) => s.gst_category || "—" },
 
     { header: "Supplier Primary Address", key: "supplier_primary_address", className: "col-addr", render: (s) => s.supplier_primary_address || "—" },
-    { header: "Primary Address", key: "primary_address", className: "col-addr", render: (s) => s.primary_address || "—" },
+    {
+      header: "Primary Address", key: "primary_address", className: "col-addr", render: (s) =>
+        s.primary_address ? (
+          <pre className="address-pre">
+            {htmlToPlainTextPreserveLines(s.primary_address)}
+          </pre>
+        ) : (
+          "—"
+        ),
+    },
 
     { header: "Default Bank Account", key: "default_bank_account", className: "col-bank", render: (s) => s.default_bank_account || "—" },
 

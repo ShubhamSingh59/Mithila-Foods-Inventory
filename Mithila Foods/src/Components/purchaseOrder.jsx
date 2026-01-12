@@ -518,8 +518,7 @@ function PurchaseOrder() {
           <div>
             <h1 className="po-title">Purchase Order (Raw Material)</h1>
             <p className="po-subtitle">
-              Create ERPNext Purchase Orders for raw materials and send to
-              suppliers.
+              Create ERPNext Purchase Orders for raw materials.
             </p>
           </div>
           {lastPoName && (

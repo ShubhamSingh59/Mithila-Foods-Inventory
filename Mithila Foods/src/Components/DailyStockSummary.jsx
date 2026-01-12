@@ -5909,9 +5909,8 @@ function DailyStockSummary() {
     <div className="daily-stock-summary">
       <div className="daily-stock-summary-header-row">
         <div className="daily-stock-summary-header">
-          <h2 className="daily-stock-summary-title">Daily Stock Summary</h2>
-          <p className="daily-stock-summary-subtitle">Sold/Return filters affect only those expanded columns</p>
-        </div>
+          <h2 className="daily-stock-summary-title">Daily Stock Movement Summary</h2>
+         </div>
 
         <div className="daily-stock-summary-controls">
           <span className="daily-stock-summary-date-label">Date</span>

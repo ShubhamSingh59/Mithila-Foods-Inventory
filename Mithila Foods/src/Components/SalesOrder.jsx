@@ -5653,7 +5653,7 @@ import {
 } from "./erpBackendApi";
 
 import { getBinForItemWarehouse } from "./erpBackendApi"; // ✅ add at top
-import "../CSS/SalesEasyShip.css";
+import "../CSS/SalesOrder.css";
 
 const DEFAULT_COMPANY = "Mithila Foods";
 const DEFAULT_WAREHOUSE = "Finished Goods - MF"; // ✅ FIXED

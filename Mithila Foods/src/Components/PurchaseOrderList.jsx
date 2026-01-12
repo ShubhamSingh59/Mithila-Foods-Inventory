@@ -1295,7 +1295,7 @@ function PurchaseOrderList({ onEditPo }) {
       <div className="po-list-header">
         <div className="po-list-title-block">
           <h3 className="po-list-title">Recent Purchase Orders</h3>
-          <p className="po-list-subtitle">Draft → QC (good &amp; bad) → Receipt → Invoice (Paid)</p>
+          <p className="po-list-subtitle">Process: Draft → QC (good &amp; bad) → Receipt → Invoice (Paid)</p>
         </div>
 
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>

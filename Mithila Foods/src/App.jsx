@@ -1041,7 +1041,7 @@ import React, { useEffect, useState } from "react";
 // Screens
 import DailyStockSummary from "./Components/DailyStockSummary";
 import PurchaseOrder from "./Components/purchaseOrder";
-import SalesEasyShip from "./Components/SalesEasyShip";
+import SalesEasyShip from "./Components/SalesOrder";
 import SalesReturn from "./Components/SalesReturn";
 import SupplierList from "./Components/SupplierList";
 import OpeningStockEntry from "./Components/OpeningStockEntry";
@@ -1065,7 +1065,7 @@ const VIEWS = {
   WORK_ORDER_FLOW: "WORK_ORDER_FLOW",
   WO_TRACKING: "WO_TRACKING",
   ANALYTICS: "ANALYTICS",
-  SALES_EASYSHIP: "SALES_EASYSHIP",
+  SALES: "SALES",
   SALES_RETURN: "SALES_RETURN",
   MF_WORKFLOW: "MF_WORKFLOW",
 };
@@ -1142,11 +1142,11 @@ function App() {
 
             <button
               type="button"
-              className={"app-nav-link" + (isActive(VIEWS.SALES_EASYSHIP) ? " active" : "")}
-              onClick={() => handleViewChange(VIEWS.SALES_EASYSHIP)}
+              className={"app-nav-link" + (isActive(VIEWS.SALES) ? " active" : "")}
+              onClick={() => handleViewChange(VIEWS.SALES)}
             >
               <span className="app-nav-dot app-nav-dot-pink" />
-              EasyShip
+              Sales
             </button>
 
             <button
@@ -1169,7 +1169,7 @@ function App() {
               onClick={() => handleViewChange(VIEWS.MFG)}
             >
               <span className="app-nav-dot app-nav-dot-teal" />
-              Manufacture · Reco · Transfer
+              Packing and Stock Transfer
             </button>
 
             <button
@@ -1211,14 +1211,14 @@ function App() {
 
           {/* 6. Suppliers */}
           <div className="app-nav-group">
-            <div className="app-nav-group-label">Suppliers</div>
+            <div className="app-nav-group-label">Suppliers & Transporters</div>
             <button
               type="button"
               className={"app-nav-link" + (activeView === VIEWS.SUPPLIERS ? " active" : "")}
               onClick={() => handleViewChange(VIEWS.SUPPLIERS)}
             >
               <span className="app-nav-dot app-nav-dot-pink" />
-              Supplier List
+              Supplier & Transporter List
             </button>
           </div>
 
@@ -1261,8 +1261,8 @@ function App() {
         )}
 
         {/* SALES: EASYSHIP */}
-        {isMounted(VIEWS.SALES_EASYSHIP) && (
-          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.SALES_EASYSHIP) ? "block" : "none" }}>
+        {isMounted(VIEWS.SALES) && (
+          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.SALES) ? "block" : "none" }}>
             <div className="app-panel">
               <SalesEasyShip />
             </div>
