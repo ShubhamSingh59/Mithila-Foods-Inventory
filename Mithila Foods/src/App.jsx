@@ -1045,8 +1045,6 @@ import SalesEasyShip from "./Components/SalesOrder";
 import SalesReturn from "./Components/SalesReturn";
 import SupplierList from "./Components/SupplierList";
 import OpeningStockEntry from "./Components/OpeningStockEntry";
-import WorkOrderFlow from "./Components/WorkOrderFlow";
-import WOTracking from "./Components/WOTracking";
 import Analytics from "./Components/Analytics";
 import MfWorkflow from "./Components/MfWorkflow";
 
@@ -1061,7 +1059,7 @@ const VIEWS = {
   PURCHASE: "PURCHASE",
   MFG: "MFG",
   SUPPLIERS: "SUPPLIERS",
-  OPENING_STOCK: "OPENING_STOCK",
+  //OPENING_STOCK: "OPENING_STOCK",
   WORK_ORDER_FLOW: "WORK_ORDER_FLOW",
   WO_TRACKING: "WO_TRACKING",
   ANALYTICS: "ANALYTICS",
@@ -1172,14 +1170,14 @@ function App() {
               Packing and Stock Transfer
             </button>
 
-            <button
+            {/*<button
               type="button"
               className={"app-nav-link" + (activeView === VIEWS.OPENING_STOCK ? " active" : "")}
               onClick={() => handleViewChange(VIEWS.OPENING_STOCK)}
             >
               <span className="app-nav-dot app-nav-dot-amber" />
               Opening Stock
-            </button>
+            </button>*/}
 
             {/*<button
               type="button"
@@ -1313,13 +1311,13 @@ function App() {
         )}
 
         {/* OPENING STOCK */}
-        {isMounted(VIEWS.OPENING_STOCK) && (
+        {/*{isMounted(VIEWS.OPENING_STOCK) && (
           <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.OPENING_STOCK) ? "block" : "none" }}>
             <section className="app-panel app-panel-primary">
               <OpeningStockEntry />
             </section>
           </div>
-        )}
+        )}*/}
 
         {/* SUPPLIERS */}
         {isMounted(VIEWS.SUPPLIERS) && (
@@ -1338,7 +1336,6 @@ function App() {
             </div>
           </div>
         )}
-        <StockReconciliationList/>
       </main>
     </div>
   );

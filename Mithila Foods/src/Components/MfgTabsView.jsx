@@ -3,11 +3,15 @@ import React, { useState } from "react";
 import StockManufactureEntry from "./StockManufactureEntry";
 import StockReconciliation from "./StockReconciliation";
 import StockTransfer from "./StockTransfer";
+import OpeningStockEntry from "./OpeningStockEntry";
+import StockReconciliationList from "./StockReconciliationList";
 
 const MFG_TABS = {
   MANUFACTURE: "MANUFACTURE",
   RECON: "RECON",
   TRANSFER: "TRANSFER",
+  OPENING: "OPENING",
+  RECON_LIST: "RECON_LIST",
 };
 
 export default function MfgTabsView() {
@@ -41,6 +45,20 @@ export default function MfgTabsView() {
           >
             Stock Transfer
           </button>
+           <button
+            type="button"
+            className={`mfg-tab ${mfgTab === MFG_TABS.OPENING ? "active" : ""}`}
+            onClick={() => setMfgTab(MFG_TABS.OPENING)}
+          >
+            Opening Stock
+          </button>
+          <button
+            type="button"
+            className={`mfg-tab ${mfgTab === MFG_TABS.RECON_LIST ? "active" : ""}`}
+            onClick={() => setMfgTab(MFG_TABS.RECON_LIST)}
+          >
+            Stock Reconciliation List
+          </button>
         </div>
       </div>
 
@@ -55,6 +73,12 @@ export default function MfgTabsView() {
 
       <div className="app-panel" style={{ display: mfgTab === MFG_TABS.TRANSFER ? "block" : "none" }}>
         <StockTransfer />
+      </div>
+      <div className="app-panel" style={{ display: mfgTab === MFG_TABS.OPENING ? "block" : "none" }}>
+        <OpeningStockEntry/>
+      </div>
+       <div className="app-panel" style={{ display: mfgTab === MFG_TABS.RECON_LIST ? "block" : "none" }}>
+        <StockReconciliationList />
       </div>
     </>
   );
