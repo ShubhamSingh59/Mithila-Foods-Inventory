@@ -586,6 +586,9 @@ const SUPPLIER_CONFIG = {
     "supplier_primary_address",
     "primary_address",
     "default_bank_account",
+    "custom_fssai",
+    "custom_msme",
+    "custom_udyam",
   ],
 
   columns: [
@@ -605,6 +608,17 @@ const SUPPLIER_CONFIG = {
     { header: "PAN No", key: "pan", className: "col-pan", render: (s) => s.pan || "—" },
     { header: "GST No", key: "gstin", className: "col-gst", render: (s) => s.gstin || "—" },
     { header: "GST Category", key: "gst_category", className: "col-gstcat", render: (s) => s.gst_category || "—" },
+    { header: "FSSAI", key: "custom_fssai", className: "col-fssai", render: (s) => s.custom_fssai || "—" },
+    {
+      header: "MSME",
+      key: "custom_msme",
+      className: "col-msme",
+      render: (s) => {
+        const v = s.custom_msme;
+        return v === 1 || v === true || v === "1" ? "Yes" : "No";
+      },
+    },
+    { header: "UDYAM", key: "custom_udyam", className: "col-udyam", render: (s) => s.custom_udyam || "—" },
 
     { header: "Supplier Primary Address", key: "supplier_primary_address", className: "col-addr", render: (s) => s.supplier_primary_address || "—" },
     {
