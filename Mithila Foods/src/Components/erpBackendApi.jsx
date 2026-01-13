@@ -255,6 +255,8 @@ export async function getItemsForBOM() {
       "name",
       "item_name",
       "stock_uom",
+      "item_group",
+      "item_group",
       "valuation_rate",
       "last_purchase_rate",
     ]),

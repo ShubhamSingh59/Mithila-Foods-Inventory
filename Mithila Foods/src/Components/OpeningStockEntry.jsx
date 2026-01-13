@@ -2,41 +2,57 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  getItemsForBOM,              // 👈 use this instead of getAllItems
+  getItemsForBOM, // 👈 make sure this API includes `item_group`
   getPriceLists,
   getItemRateFromPriceList,
   getItemWarehouseValuationRate,
   getCompanies,
-  getWarehouses,
   createDoc,
   submitDoc,
 } from "./erpBackendApi";
 import "../CSS/OpeningStockEntry.css";
 
-const DEFAULT_WH = "Raw Material - MF";
+const RAW_WH = "Raw Material - MF";
+const FINISHED_WH = "Finished Goods - MF";
+
 // ✅ use the NON-group child account here
 const DEFAULT_DIFFERENCE_ACCOUNT = "Temporary Opening - MF";
 
-const BASIS_OPTIONS = [
-  { value: "valuation", label: "Valuation Rate" },
-  { value: "price_list", label: "Price List" },
-];
+// Price List names (display names you want)
+const PL_SELLING = "Standard Selling";
+const PL_BUYING = "Standard Buying";
 
 function createEmptyRow(id) {
   return {
     id,
     item_code: "",
-    item_name: "",
-    warehouse: DEFAULT_WH,
+    item_group: "",
+    warehouse: RAW_WH, // ✅ auto changes after item select
     uom: "",
     qty: "",
-    basis: "valuation",
-    price_list: "",
+    price_list: "", // ✅ auto changes after item select
     rate: "",
     loadingRate: false,
     rowError: "",
   };
 }
+
+function isFinishedGroup(itemGroup) {
+  const g = String(itemGroup || "").trim().toLowerCase();
+  // supports "Product", "Products", "Finished", etc.
+  return g === "product" || g === "products" || g.includes("finished") || g.includes("product");
+}
+
+function pickPriceListName(target, priceLists) {
+  const t = String(target || "").trim().toLowerCase();
+  const found = (priceLists || []).find(
+    (pl) =>
+      String(pl.name || "").toLowerCase() === t ||
+      String(pl.price_list_name || "").toLowerCase() === t
+  );
+  return found?.name || target || "";
+}
+
 function ItemSearchDropdown({ items, value, onSelect, placeholder, className = "" }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -49,10 +65,10 @@ function ItemSearchDropdown({ items, value, onSelect, placeholder, className = "
     const base = !s
       ? items
       : items.filter((it) => {
-        const code = (it.name || "").toLowerCase();
-        const name = (it.item_name || "").toLowerCase();
-        return code.includes(s) || name.includes(s);
-      });
+          const code = (it.name || "").toLowerCase();
+          const name = (it.item_name || "").toLowerCase();
+          return code.includes(s) || name.includes(s);
+        });
     return base.slice(0, 80);
   }, [items, q]);
 
@@ -134,12 +150,9 @@ function OpeningStockEntry() {
   const [items, setItems] = useState([]);
   const [priceLists, setPriceLists] = useState([]);
   const [companies, setCompanies] = useState([]);
-  const [warehouses, setWarehouses] = useState([]);
 
   const [company, setCompany] = useState("");
-  const [postingDate, setPostingDate] = useState(
-    new Date().toISOString().slice(0, 10)
-  );
+  const [postingDate, setPostingDate] = useState(new Date().toISOString().slice(0, 10));
 
   const [rows, setRows] = useState([createEmptyRow(0)]);
 
@@ -154,37 +167,26 @@ function OpeningStockEntry() {
       setLoadingInit(true);
       setError("");
       try {
-        const [itemData, plData, companyData, warehouseData] = await Promise.all(
-          [
-            getItemsForBOM(),   // returns name, item_name, stock_uom, valuation_rate
-            getPriceLists(),
-            getCompanies(),
-            getWarehouses(),
-          ]
-        );
+        const [itemData, plData, companyData] = await Promise.all([
+          getItemsForBOM(), // ✅ must include item_group
+          getPriceLists(),
+          getCompanies(),
+        ]);
 
         setItems(itemData || []);
         setPriceLists(plData || []);
         setCompanies(companyData || []);
-        setWarehouses(warehouseData || []);
 
-        if (companyData && companyData.length > 0) {
-          setCompany(companyData[0].name);
-        }
+        if (companyData && companyData.length > 0) setCompany(companyData[0].name);
       } catch (err) {
         console.error(err);
-        setError(
-          err.message ||
-          "Failed to load items / price lists / companies / warehouses"
-        );
+        setError(err.message || "Failed to load items / price lists / companies");
       } finally {
         setLoadingInit(false);
       }
     }
     init();
   }, []);
-
-  // row helpers
 
   function addRow() {
     setRows((prev) => [
@@ -194,35 +196,15 @@ function OpeningStockEntry() {
   }
 
   function removeRow(rowId) {
-    setRows((prev) => prev.filter((r) => r.id !== rowId));
+    setRows((prev) => {
+      const next = prev.filter((r) => r.id !== rowId);
+      return next.length ? next : [createEmptyRow(0)];
+    });
   }
 
   function handleRowFieldChange(rowId, field, value) {
     setRows((prev) =>
-      prev.map((r) =>
-        r.id === rowId ? { ...r, [field]: value, rowError: "" } : r
-      )
-    );
-  }
-
-  // When item changes, set item_code, item_name, and UOM from item.stock_uom
-  function handleRowItemChange(rowId, itemCode) {
-    const item = items.find((it) => it.name === itemCode);
-    const uom =
-      item?.stock_uom || item?.uom || item?.default_uom || ""; // extra fallbacks
-
-    setRows((prev) =>
-      prev.map((r) =>
-        r.id === rowId
-          ? {
-            ...r,
-            item_code: itemCode,
-            item_name: item ? item.item_name : "",
-            uom,
-            rowError: "",
-          }
-          : r
-      )
+      prev.map((r) => (r.id === rowId ? { ...r, [field]: value, rowError: "" } : r))
     );
   }
 
@@ -233,33 +215,35 @@ function OpeningStockEntry() {
     const updated = { ...row, loadingRate: true, rowError: "" };
 
     try {
-      if (row.basis === "valuation") {
-        // 1) Item.valuation_rate
-        if (item && item.valuation_rate != null && item.valuation_rate > 0) {
-          updated.rate = String(item.valuation_rate);
+      const finished = isFinishedGroup(item?.item_group || row.item_group);
+      const targetPL = finished ? PL_SELLING : PL_BUYING;
+      const pl = pickPriceListName(updated.price_list || targetPL, priceLists);
+
+      updated.price_list = pl;
+
+      // 1) Try price list rate (auto)
+      if (pl) {
+        const priceRow = await getItemRateFromPriceList(updated.item_code, pl);
+        const pr = Number(priceRow?.price_list_rate);
+
+        if (Number.isFinite(pr) && pr > 0) {
+          updated.rate = String(pr);
         } else {
-          // 2) Bin valuation (per warehouse)
-          const wh = row.warehouse || DEFAULT_WH;
-          const bin = await getItemWarehouseValuationRate(row.item_code, wh);
-          if (bin && bin.valuation_rate != null && bin.valuation_rate > 0) {
-            updated.rate = String(bin.valuation_rate);
+          // 2) Fallback valuation_rate on Item
+          const vr = Number(item?.valuation_rate);
+          if (Number.isFinite(vr) && vr > 0) {
+            updated.rate = String(vr);
           } else {
-            updated.rowError = "No valuation rate on Item or Bin";
+            // 3) Fallback Bin valuation per warehouse
+            const wh = updated.warehouse || RAW_WH;
+            const bin = await getItemWarehouseValuationRate(updated.item_code, wh);
+            const br = Number(bin?.valuation_rate);
+            if (Number.isFinite(br) && br > 0) updated.rate = String(br);
+            else updated.rowError = "No rate in price list / valuation / bin";
           }
         }
-      } else if (row.basis === "price_list") {
-        const pl = row.price_list || (priceLists[0] && priceLists[0].name);
-        if (!pl) {
-          updated.rowError = "No price list selected";
-        } else {
-          updated.price_list = pl;
-          const priceRow = await getItemRateFromPriceList(row.item_code, pl);
-          if (!priceRow || priceRow.price_list_rate == null) {
-            updated.rowError = "No rate in that price list";
-          } else {
-            updated.rate = String(priceRow.price_list_rate);
-          }
-        }
+      } else {
+        updated.rowError = "Price list not found";
       }
     } catch (err) {
       console.error(err);
@@ -270,28 +254,37 @@ function OpeningStockEntry() {
     return updated;
   }
 
-  async function handleBasisChange(rowId, newBasis) {
-    let targetRow;
+  // ✅ When item changes:
+  // - auto set Warehouse (Finished vs Raw)
+  // - auto set Price List (Standard Selling vs Standard Buying)
+  // - auto set UOM
+  // - auto fetch Rate
+  async function handleRowItemChange(rowId, itemCode) {
+    const item = items.find((it) => it.name === itemCode);
+    const uom = item?.stock_uom || item?.uom || item?.default_uom || "";
+    const group = item?.item_group || "";
+
+    const finished = isFinishedGroup(group);
+    const nextWarehouse = finished ? FINISHED_WH : RAW_WH;
+    const nextPL = pickPriceListName(finished ? PL_SELLING : PL_BUYING, priceLists);
+
+    let targetRow = null;
+
     setRows((prev) =>
       prev.map((r) => {
         if (r.id !== rowId) return r;
-        const updated = { ...r, basis: newBasis };
-        targetRow = updated;
-        return updated;
-      })
-    );
 
-    if (!targetRow) return;
-    const updated = await fetchRateForRow(targetRow);
-    setRows((prev) => prev.map((r) => (r.id === rowId ? updated : r)));
-  }
+        const updated = {
+          ...r,
+          item_code: itemCode,
+          item_group: group,
+          uom,
+          warehouse: nextWarehouse, // ✅ auto
+          price_list: nextPL, // ✅ auto
+          rate: "", // reset before refetch
+          rowError: "",
+        };
 
-  async function handlePriceListChange(rowId, plName) {
-    let targetRow;
-    setRows((prev) =>
-      prev.map((r) => {
-        if (r.id !== rowId) return r;
-        const updated = { ...r, price_list: plName };
         targetRow = updated;
         return updated;
       })
@@ -309,21 +302,13 @@ function OpeningStockEntry() {
     setRows((prev) => prev.map((r) => (r.id === rowId ? updated : r)));
   }
 
-  // submit
-
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setMessage("");
 
-    if (!company) {
-      setError("Company is required.");
-      return;
-    }
-    if (!postingDate) {
-      setError("Posting date is required.");
-      return;
-    }
+    if (!company) return setError("Company is required.");
+    if (!postingDate) return setError("Posting date is required.");
 
     const validRows = rows.filter(
       (r) =>
@@ -334,8 +319,7 @@ function OpeningStockEntry() {
     );
 
     if (!validRows.length) {
-      setError("Add at least one row with item, warehouse and quantity.");
-      return;
+      return setError("Add at least one row with item and quantity.");
     }
 
     const itemsPayload = validRows.map((r) => ({
@@ -350,9 +334,8 @@ function OpeningStockEntry() {
       purpose: "Opening Stock",
       company,
       posting_date: postingDate,
-      // ✅ this is the field ERPNext actually uses
       expense_account: DEFAULT_DIFFERENCE_ACCOUNT,
-      is_opening: "Yes", // opening entry
+      is_opening: "Yes",
       items: itemsPayload,
     };
 
@@ -369,11 +352,7 @@ function OpeningStockEntry() {
       }
     } catch (err) {
       console.error(err);
-      setError(
-        err.response?.data?.error?.message ||
-        err.message ||
-        "Failed to create/submit Stock Reconciliation"
-      );
+      setError(err.response?.data?.error?.message || err.message || "Failed to create/submit Stock Reconciliation");
     } finally {
       setSaving(false);
     }
@@ -385,18 +364,17 @@ function OpeningStockEntry() {
         <div className="opening-stock-header">
           <h2 className="opening-stock-title">Opening Stock Entry</h2>
           <p className="opening-stock-subtitle">
-            Create opening stock using Stock Reconciliation (per item & warehouse)
+            Create opening stock using Stock Reconciliation (per item)
           </p>
         </div>
         <div className="opening-stock-pill">
-          {rows.length} line{rows.length !== 1 ? "s" : ""} •{" "}
-          {company || "No company"}
+          {rows.length} line{rows.length !== 1 ? "s" : ""} • {company || "No company"}
         </div>
       </div>
 
       {loadingInit && (
         <p className="text-muted opening-stock-loading">
-          Loading items, price lists & warehouses...
+          Loading items, price lists...
         </p>
       )}
       {error && <p className="alert alert-error">{error}</p>}
@@ -407,11 +385,7 @@ function OpeningStockEntry() {
         <div className="opening-stock-top-grid">
           <div className="field-group">
             <label className="form-label">Company</label>
-            <select
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              className="select"
-            >
+            <select value={company} onChange={(e) => setCompany(e.target.value)} className="select">
               <option value="">-- select company --</option>
               {companies.map((c) => (
                 <option key={c.name} value={c.name}>
@@ -433,35 +407,10 @@ function OpeningStockEntry() {
           </div>
         </div>
 
-        {/* datalists for searchables */}
-        <datalist id="opening-stock-item-list">
-          {items.map((it) => (
-            <option
-              key={it.name}
-              value={it.name}
-              label={`${it.name} - ${it.item_name}`}
-            />
-          ))}
-        </datalist>
-
-        <datalist id="opening-stock-warehouse-list">
-          {warehouses.map((wh) => (
-            <option
-              key={wh.name}
-              value={wh.name}
-              label={wh.warehouse_name || wh.name}
-            />
-          ))}
-        </datalist>
-
         {/* rows header + add button */}
         <div className="opening-stock-rows-header">
           <h3 className="opening-stock-rows-title">Items</h3>
-          <button
-            type="button"
-            onClick={addRow}
-            className="btn btn-accent btn-sm"
-          >
+          <button type="button" onClick={addRow} className="btn btn-accent btn-sm">
             + Add Item
           </button>
         </div>
@@ -472,16 +421,15 @@ function OpeningStockEntry() {
             <thead>
               <tr>
                 <th>Item</th>
-                <th>Item Name</th>
                 <th>Warehouse</th>
                 <th>Unit</th>
                 <th>Qty</th>
-                <th>Rate Based On</th>
                 <th>Price List</th>
                 <th>Rate</th>
                 <th>Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {rows.map((row) => (
                 <tr key={row.id}>
@@ -493,27 +441,11 @@ function OpeningStockEntry() {
                       onSelect={(code) => handleRowItemChange(row.id, code)}
                       placeholder="Search item name / code..."
                     />
-
                   </td>
 
-                  {/* Item name (auto) */}
-                  <td>{row.item_name}</td>
-
-                  {/* Warehouse: searchable */}
+                  {/* Warehouse: auto (not editable) */}
                   <td>
-                    <select
-                      value={row.warehouse}
-                      onChange={(e) => handleRowFieldChange(row.id, "warehouse", e.target.value)}
-                      className="select input opening-stock-warehouse-input"
-                    >
-                      <option value="">{DEFAULT_WH}</option>
-                      {warehouses.map((wh) => (
-                        <option key={wh.name} value={wh.name}>
-                          {wh.name}
-                        </option>
-                      ))}
-                    </select>
-
+                    <span className="text-muted">{row.warehouse || RAW_WH}</span>
                   </td>
 
                   {/* UOM from item */}
@@ -525,51 +457,14 @@ function OpeningStockEntry() {
                       type="number"
                       min="0"
                       value={row.qty}
-                      onChange={(e) =>
-                        handleRowFieldChange(row.id, "qty", e.target.value)
-                      }
+                      onChange={(e) => handleRowFieldChange(row.id, "qty", e.target.value)}
                       className="input"
                     />
                   </td>
 
-                  {/* Rate basis */}
+                  {/* Price list: auto (not editable) */}
                   <td>
-                    <select
-                      value={row.basis}
-                      min="0"
-                      onChange={(e) =>
-                        handleBasisChange(row.id, e.target.value)
-                      }
-                      className="select"
-                    >
-                      {BASIS_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-
-                  {/* Price list (only if basis = price_list) */}
-                  <td>
-                    {row.basis === "price_list" ? (
-                      <select
-                        value={row.price_list}
-                        onChange={(e) =>
-                          handlePriceListChange(row.id, e.target.value)
-                        }
-                        className="select"
-                      >
-                        <option value="">-- select price list --</option>
-                        {priceLists.map((pl) => (
-                          <option key={pl.name} value={pl.name}>
-                            {pl.price_list_name || pl.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className="text-muted">N/A</span>
-                    )}
+                    <span className="text-muted">{row.price_list || "—"}</span>
                   </td>
 
                   {/* Rate + auto button */}
@@ -577,23 +472,21 @@ function OpeningStockEntry() {
                     <div className="opening-stock-rate-cell">
                       <input
                         value={row.loadingRate ? "Loading..." : row.rate}
-                        onChange={(e) =>
-                          handleRowFieldChange(row.id, "rate", e.target.value)
-                        }
+                        onChange={(e) => handleRowFieldChange(row.id, "rate", e.target.value)}
                         className="input"
                       />
                       <button
                         type="button"
                         className="btn btn-outline btn-sm opening-stock-rate-btn"
                         onClick={() => handleRefreshRate(row.id)}
+                        disabled={!row.item_code || row.loadingRate}
                       >
                         Auto
                       </button>
                     </div>
+
                     {row.rowError && (
-                      <div className="opening-stock-row-error">
-                        {row.rowError}
-                      </div>
+                      <div className="opening-stock-row-error">{row.rowError}</div>
                     )}
                   </td>
 
@@ -609,9 +502,10 @@ function OpeningStockEntry() {
                   </td>
                 </tr>
               ))}
+
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="text-muted">
+                  <td colSpan={7} className="text-muted">
                     No rows added yet.
                   </td>
                 </tr>
@@ -621,11 +515,7 @@ function OpeningStockEntry() {
         </div>
 
         <div className="opening-stock-submit-row">
-          <button
-            type="submit"
-            disabled={saving || loadingInit}
-            className="btn btn-primary"
-          >
+          <button type="submit" disabled={saving || loadingInit} className="btn btn-primary">
             {saving ? "Saving..." : "Create Opening Stock"}
           </button>
         </div>

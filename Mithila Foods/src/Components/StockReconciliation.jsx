@@ -10,6 +10,9 @@ import {
 } from "./erpBackendApi";
 import "../CSS/StockReconciliation.css";
 
+const RAW_MATERIAL_WAREHOUSE = "Raw Material - MF";
+const FINISHED_GOODS_WAREHOUSE = "Finished Goods - MF";
+
 function StockReconciliation() {
   const [items, setItems] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
@@ -38,6 +41,17 @@ function StockReconciliation() {
       loadingRow: false,
       rowError: "",
     };
+  }
+  function pickWarehouseForItemGroup(item) {
+    const g = String(item?.item_group || "").toLowerCase();
+
+    if (g.includes("raw material") || g.includes("pouch") || g.includes("sticker")) {
+      return RAW_MATERIAL_WAREHOUSE;
+    }
+    if (g.includes("products") || g.includes("product")) {
+      return FINISHED_GOODS_WAREHOUSE;
+    }
+    return "";
   }
 
   // Load items + warehouses + companies on mount
@@ -100,19 +114,19 @@ function StockReconciliation() {
         prev.map((r) =>
           r.id === rowId
             ? {
-                ...r,
-                current_qty:
-                  bin && bin.actual_qty != null ? String(bin.actual_qty) : "0",
-                // default new_qty to current_qty initially
-                new_qty:
-                  bin && bin.actual_qty != null ? String(bin.actual_qty) : "",
-                valuation_rate:
-                  bin && bin.valuation_rate != null
-                    ? String(bin.valuation_rate)
-                    : r.valuation_rate,
-                loadingRow: false,
-                rowError: !bin ? "No Bin record (no stock yet)" : "",
-              }
+              ...r,
+              current_qty:
+                bin && bin.actual_qty != null ? String(bin.actual_qty) : "0",
+              // default new_qty to current_qty initially
+              new_qty:
+                bin && bin.actual_qty != null ? String(bin.actual_qty) : "",
+              valuation_rate:
+                bin && bin.valuation_rate != null
+                  ? String(bin.valuation_rate)
+                  : r.valuation_rate,
+              loadingRow: false,
+              rowError: !bin ? "No Bin record (no stock yet)" : "",
+            }
             : r
         )
       );
@@ -122,10 +136,10 @@ function StockReconciliation() {
         prev.map((r) =>
           r.id === rowId
             ? {
-                ...r,
-                loadingRow: false,
-                rowError: err.message || "Failed to load current stock",
-              }
+              ...r,
+              loadingRow: false,
+              rowError: err.message || "Failed to load current stock",
+            }
             : r
         )
       );
@@ -141,17 +155,22 @@ function StockReconciliation() {
   }
 
   function handleItemChange(rowId, itemCode) {
+    const item = (items || []).find((x) => x.name === itemCode) || null;
+    const autoWh = pickWarehouseForItemGroup(item);
+
     setRows((prev) =>
       prev.map((r) =>
-        r.id === rowId ? { ...r, item_code: itemCode, rowError: "" } : r
+        r.id === rowId
+          ? { ...r, item_code: itemCode, warehouse: autoWh, rowError: "" }
+          : r
       )
     );
-    const row = rows.find((r) => r.id === rowId);
-    const wh = row ? row.warehouse : "";
-    if (itemCode && wh) {
-      refreshBinForRow(rowId, itemCode, wh);
+
+    if (itemCode && autoWh) {
+      refreshBinForRow(rowId, itemCode, autoWh);
     }
   }
+
 
   function handleWarehouseChange(rowId, wh) {
     setRows((prev) =>
@@ -195,13 +214,13 @@ function StockReconciliation() {
     const validRows = rows.filter(
       (r) =>
         r.item_code &&
-        r.warehouse &&
+        r.warehouse && // ✅ must be auto-filled
         !isNaN(parseFloat(r.new_qty)) &&
         r.new_qty !== ""
     );
 
     if (!validRows.length) {
-      setError("Add at least one row with item, warehouse and new quantity.");
+      setError("Add at least one row with item and new quantity (warehouse auto-fills).");
       return;
     }
 
@@ -238,8 +257,8 @@ function StockReconciliation() {
       console.error(err);
       setError(
         err.response?.data?.error?.message ||
-          err.message ||
-          "Failed to create/submit Stock Reconciliation."
+        err.message ||
+        "Failed to create/submit Stock Reconciliation."
       );
     } finally {
       setSaving(false);
@@ -356,19 +375,13 @@ function StockReconciliation() {
 
                 <div className="stock-recon-row-field">
                   <label className="form-label">Warehouse</label>
-                  <select
-                    value={row.warehouse}
-                    onChange={(e) => handleWarehouseChange(row.id, e.target.value)}
-                    className="select"
-                  >
-                    <option value="">-- select warehouse --</option>
-                    {warehouses.map((wh) => (
-                      <option key={wh.name} value={wh.name}>
-                        {wh.name}
-                      </option>
-                    ))}
-                  </select>
+                  <input
+                    value={row.warehouse || "—"}
+                    readOnly
+                    className="input input-readonly"
+                  />
                 </div>
+
 
                 <div className="stock-recon-row-field">
                   <label className="form-label">Current Qty</label>
@@ -444,10 +457,10 @@ function ItemSearchDropdown({ items, value, onSelect, placeholder }) {
     const base = !s
       ? items
       : items.filter((it) => {
-          const code = (it.name || "").toLowerCase();
-          const name = (it.item_name || "").toLowerCase();
-          return code.includes(s) || name.includes(s);
-        });
+        const code = (it.name || "").toLowerCase();
+        const name = (it.item_name || "").toLowerCase();
+        return code.includes(s) || name.includes(s);
+      });
 
     return base.slice(0, 80);
   }, [items, q]);

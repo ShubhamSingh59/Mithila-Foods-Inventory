@@ -77,45 +77,13 @@ function PurchaseOrder() {
         setItems(itemsData || []);
         setItemSuppliers(itemSupData || []);
 
-        // ---- INITIAL DEFAULTS ----
-        if (suppliersData && suppliersData.length > 0) {
-          const s0 = suppliersData[0];
-          const displayName = s0.supplier_name || s0.name;
-          const email = s0.supplier_email || s0.email_id || "";
+        setSupplier("");
+        setSupplierEmail("");
 
-          let initialItemCode = "";
+        const initQty = qpQty || "1.00";
+        setPoItems([{ item_code: "", qty: initQty, rate: "0.00" }]);
 
-          if (itemsData && itemsData.length > 0) {
-            const rowsForS0 = (itemSupData || []).filter(
-              (row) => row.supplier === s0.name
-            );
-            const allowedSet = new Set(rowsForS0.map((row) => row.parent));
-
-            if (allowedSet.size) {
-              const firstAllowedItem = itemsData.find((it) =>
-                allowedSet.has(it.name)
-              );
-              if (firstAllowedItem) initialItemCode = firstAllowedItem.name;
-            }
-
-            if (!initialItemCode) initialItemCode = itemsData[0].name;
-          }
-
-          setSupplier(displayName);
-          setSupplierEmail(email);
-
-          const initItem = qpItemCode || initialItemCode || "";
-          const initQty = qpQty || "1.00";
-          setPoItems([{ item_code: initItem, qty: initQty, rate: "0.00" }]);
-
-          if (qpWarehouse) setWarehouse(qpWarehouse);
-        } else if (itemsData && itemsData.length > 0) {
-          const initItem = qpItemCode || itemsData[0].name || "";
-          const initQty = qpQty || "1.00";
-          setPoItems([{ item_code: initItem, qty: initQty, rate: "0.00" }]);
-
-          if (qpWarehouse) setWarehouse(qpWarehouse);
-        }
+        if (qpWarehouse) setWarehouse(qpWarehouse);
       } catch (err) {
         console.error(err);
         setError("Failed to load suppliers/items");
@@ -220,6 +188,19 @@ function PurchaseOrder() {
   }, [suppliersForSelectedItems, suppliers, supplier]);
 
   // ✅ Supplier select
+  //function handleSupplierValueChange(displayValue, supplierObj = null) {
+  //  setSupplier(displayValue);
+
+  //  const s =
+  //    supplierObj ||
+  //    suppliers.find(
+  //      (sup) => sup.supplier_name === displayValue || sup.name === displayValue
+  //    );
+
+  //  if (s) setSupplierEmail(s.supplier_email || s.email_id || "");
+  //  else setSupplierEmail("");
+  //}
+
   function handleSupplierValueChange(displayValue, supplierObj = null) {
     setSupplier(displayValue);
 
@@ -231,7 +212,25 @@ function PurchaseOrder() {
 
     if (s) setSupplierEmail(s.supplier_email || s.email_id || "");
     else setSupplierEmail("");
+
+    // ✅ If supplier selected, clear ONLY those item rows that are not supplied by this supplier
+    const supplierId = s?.name || "";
+    if (!supplierId) return;
+
+    const allowedItemsSet = supplierToItemNames.get(supplierId);
+
+    // If mapping missing/empty -> don't force-clear (same behavior as your filtering logic)
+    if (!allowedItemsSet || !allowedItemsSet.size) return;
+
+    setPoItems((prev) =>
+      prev.map((row) => {
+        if (!row.item_code) return row;
+        if (allowedItemsSet.has(row.item_code)) return row;
+        return { ...row, item_code: "" }; // ✅ clear only invalid item
+      })
+    );
   }
+
 
   // ✅ MULTI ITEMS helpers
   function updatePoItem(idx, patch) {
@@ -254,8 +253,41 @@ function PurchaseOrder() {
     });
   }
 
+  //function handleItemValueChange(idx, code) {
+  //  updatePoItem(idx, { item_code: code });
+  //}
+
   function handleItemValueChange(idx, code) {
-    updatePoItem(idx, { item_code: code });
+    // compute next items list (so we can validate with latest selection)
+    const nextPoItems = poItems.map((r, i) =>
+      i === idx ? { ...r, item_code: code } : r
+    );
+
+    setPoItems(nextPoItems);
+
+    // ✅ If supplier is selected, verify it still supplies ALL selected items.
+    if (!selectedSupplierId) return;
+
+    const codes = nextPoItems.map((r) => r.item_code).filter(Boolean);
+    if (!codes.length) return;
+
+    let allowed = null;
+
+    for (const c of codes) {
+      const set = itemToSupplierNames.get(c);
+
+      // If item has no mapping -> do NOT restrict / do NOT clear supplier (matches your existing logic)
+      if (!set || !set.size) return;
+
+      if (allowed === null) allowed = new Set(set);
+      else allowed = new Set([...allowed].filter((x) => set.has(x)));
+    }
+
+    // if selected supplier is not in allowed intersection -> clear supplier
+    if (!allowed || !allowed.has(selectedSupplierId)) {
+      setSupplier("");
+      setSupplierEmail("");
+    }
   }
 
   // keep selected item visible even if supplier filtering changes

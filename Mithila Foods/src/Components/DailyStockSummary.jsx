@@ -4926,7 +4926,6 @@ function DailyStockSummary() {
   // expandable metrics (only Sold + Return)
   const [expandedMetrics, setExpandedMetrics] = useState({
     sold_qty: false,
-    return_qty: false,
   });
 
   const toggleMetric = (key) => {
@@ -5000,7 +4999,7 @@ function DailyStockSummary() {
 
   // collapsed totals
   const getSoldValue = (r) => Number(r.sold_qty || 0);
-  const getReturnValue = (r) => Number(r.return_good_qty || 0) + Number(r.return_bad_qty || 0);
+  const getReturnValue = (r) => Number(r.return_good_qty || 0);
 
   const getCellValue = (r, key) => {
     if (key === "sold_qty") return getSoldValue(r);
@@ -5449,9 +5448,11 @@ function DailyStockSummary() {
         const pr = pivotByItem[r.item_code];
         if (!pr) return;
 
-        pr.opening_stock += Number(r.opening_stock || 0);
-        pr.adjustment_qty += Number(r.adjustment_qty || 0);
-        pr.current_stock += Number(r.current_stock || 0);
+        if (r.warehouse !== WH_DAMAGED) {
+          pr.opening_stock += Number(r.opening_stock || 0);
+          pr.adjustment_qty += Number(r.adjustment_qty || 0);
+          pr.current_stock += Number(r.current_stock || 0);
+        }
 
         pr.sold_qty += Number(r.sold_qty || 0);
         Object.entries(r.sold_by_customer || {}).forEach(([cust, qty]) => {
@@ -5667,14 +5668,11 @@ function DailyStockSummary() {
         out.push({ type: "group", key: "sold_qty", label: "Sold Qty", subcols: soldSubcols });
         return;
       }
-      if (c.key === "return_qty" && expandedMetrics.return_qty) {
-        out.push({ type: "group", key: "return_qty", label: "Return Qty", subcols: returnSubcols });
-        return;
-      }
+
       out.push({ type: "col", ...c });
     });
     return out;
-  }, [displayedColumns, expandedMetrics, soldSubcols, returnSubcols]);
+  }, [displayedColumns, expandedMetrics, soldSubcols]);
 
   const leafColumnCount = useMemo(() => {
     return effectiveColumns.reduce((sum, c) => {
@@ -5910,7 +5908,7 @@ function DailyStockSummary() {
       <div className="daily-stock-summary-header-row">
         <div className="daily-stock-summary-header">
           <h2 className="daily-stock-summary-title">Daily Stock Movement Summary</h2>
-         </div>
+        </div>
 
         <div className="daily-stock-summary-controls">
           <span className="daily-stock-summary-date-label">Date</span>
@@ -6007,7 +6005,7 @@ function DailyStockSummary() {
                 <th rowSpan={2}>Item</th>
 
                 {effectiveColumns.map((c) => {
-                  const isExpandable = c.key === "sold_qty" || c.key === "return_qty";
+                  const isExpandable = c.key === "sold_qty";
                   const isOpen = !!expandedMetrics[c.key];
 
                   if (c.type === "group") {
@@ -6122,17 +6120,6 @@ function DailyStockSummary() {
                           </td>
                         ));
                       }
-
-                      if (c.type === "group" && c.key === "return_qty") {
-                        return c.subcols.map((sc) => (
-                          <td key={`${r.item_code}-ret-${sc.key}`} className="daily-stock-summary-num">
-                            <DotCell
-                              value={sc.key === "GOOD" ? Number(r.return_good_qty || 0) : Number(r.return_bad_qty || 0)}
-                            />
-                          </td>
-                        ));
-                      }
-
                       return (
                         <td key={`${r.item_code}-${c.key}`} className="daily-stock-summary-num">
                           {renderColumnCell(r, c)}

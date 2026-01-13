@@ -1050,12 +1050,15 @@ import MfWorkflow from "./Components/MfWorkflow";
 
 // ✅ NEW: MFG tabs view extracted from App.jsx
 import MfgTabsView from "./Components/MfgTabsView";
+import StockSummaryTabsView from "./Components/StockSummaryTabsView";
+import StockReorder from "./Components/StockReorder";
 
 import "./App.css";
 import StockReconciliationList from "./Components/StockReconciliationList";
 
 const VIEWS = {
   DAILY_STOCK: "DAILY_STOCK",
+  STOCK_REORDER: "STOCK_REORDER",
   PURCHASE: "PURCHASE",
   MFG: "MFG",
   SUPPLIERS: "SUPPLIERS",
@@ -1118,6 +1121,14 @@ function App() {
             >
               <span className="app-nav-dot app-nav-dot-blue" />
               Daily Stock Summary
+            </button>
+            <button
+              type="button"
+              className={"app-nav-link" + (activeView === VIEWS.STOCK_REORDER ? " active" : "")}
+              onClick={() => handleViewChange(VIEWS.STOCK_REORDER)}
+            >
+              <span className="app-nav-dot app-nav-dot-amber" />
+              Stock Reorder
             </button>
           </div>
 
@@ -1245,7 +1256,14 @@ function App() {
         {/* DAILY STOCK */}
         {isMounted(VIEWS.DAILY_STOCK) && (
           <div className="app-main-inner" style={{ display: isActive(VIEWS.DAILY_STOCK) ? "block" : "none" }}>
-            <DailyStockSummary />
+            <StockSummaryTabsView />
+          </div>
+        )}
+
+        {/* ✅ STOCK REORDER */}
+        {isMounted(VIEWS.STOCK_REORDER) && (
+          <div className="app-main-inner" style={{ display: isActive(VIEWS.STOCK_REORDER) ? "block" : "none" }}>
+            <StockReorder />
           </div>
         )}
 
@@ -1342,4 +1360,3 @@ function App() {
 }
 
 export default App;
-  
