@@ -1334,6 +1334,17 @@ function getWarehouseForQuality(quality) {
   return quality === "damaged" ? DAMAGED_WH : GOOD_WH;
 }
 
+function toSortTs(v) {
+  if (!v) return 0;
+  const s = String(v).trim();
+  if (!s) return 0;
+
+  const isoLike = s.includes(" ") ? s.replace(" ", "T") : s;
+  const d = new Date(isoLike);
+  const t = d.getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
 function toYMD(input) {
   if (input == null) return "";
   if (input instanceof Date && !isNaN(input.getTime())) return input.toISOString().slice(0, 10);
@@ -1425,6 +1436,33 @@ function SalesReturn() {
   const [submittingDraft, setSubmittingDraft] = useState(""); // submit from list
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  // ✅ Sorting (Posting Date)
+  const [postingDateSort, setPostingDateSort] = useState("desc"); // desc = Newest → Oldest
+
+  const postingDateSortLabel =
+    postingDateSort === "asc"
+      ? "Posting Date: Oldest → Newest"
+      : "Posting Date: Newest → Oldest";
+
+  // ✅ drafts first, then submitted; ✅ only last 10 total
+  const displayReturns = useMemo(() => {
+    const drafts = (draftReturns || []).map((d) => ({ ...d, __isDraft: true }));
+    const submitted = (returns || []).map((r) => ({ ...r, __isDraft: false }));
+    return [...drafts, ...submitted].slice(0, LIST_LIMIT);
+  }, [draftReturns, returns]);
+
+  // ✅ Apply sorting to the combined list (drafts + submitted)
+  const sortedDisplayReturns = useMemo(() => {
+    const dirMul = postingDateSort === "asc" ? 1 : -1;
+
+    return [...(displayReturns || [])].sort((a, b) => {
+      const ta = toSortTs(a?.posting_date);
+      const tb = toSortTs(b?.posting_date);
+
+      if (ta !== tb) return (ta - tb) * dirMul;
+      return String(a?.name || "").localeCompare(String(b?.name || ""));
+    });
+  }, [displayReturns, postingDateSort]);
 
   useEffect(() => {
     async function load() {
@@ -1525,22 +1563,22 @@ function SalesReturn() {
       const mapped =
         its.length > 0
           ? its.map((it, idx) => {
-              const wh = it.warehouse || GOOD_WH;
-              const quality = wh === DAMAGED_WH ? "damaged" : "good";
+            const wh = it.warehouse || GOOD_WH;
+            const quality = wh === DAMAGED_WH ? "damaged" : "good";
 
-              // returns have negative qty, show absolute qty in UI
-              const qtyNum = Number(it.qty || 0);
-              const rateNum = Number(it.rate || 0);
+            // returns have negative qty, show absolute qty in UI
+            const qtyNum = Number(it.qty || 0);
+            const rateNum = Number(it.rate || 0);
 
-              return {
-                id: idx,
-                _rowName: it.name || "",
-                item_code: it.item_code || "",
-                qty: String(Math.abs(qtyNum) || 1),
-                rate: String(isNaN(rateNum) ? 0 : rateNum),
-                quality,
-              };
-            })
+            return {
+              id: idx,
+              _rowName: it.name || "",
+              item_code: it.item_code || "",
+              qty: String(Math.abs(qtyNum) || 1),
+              rate: String(isNaN(rateNum) ? 0 : rateNum),
+              quality,
+            };
+          })
           : [createEmptyRow(0)];
 
       setRows(mapped);
@@ -1551,9 +1589,9 @@ function SalesReturn() {
       console.error(err);
       setError(
         err?.response?.data?.error?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
-          "Failed to load draft for edit"
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to load draft for edit"
       );
     } finally {
       setEditDraftLoading("");
@@ -1656,8 +1694,7 @@ function SalesReturn() {
 
         const siName = siDoc?.data?.name || siDoc?.message?.name || siDoc?.name || "";
         setMessage(
-          `Draft Sales Return created: ${
-            siName || "(name not returned)"
+          `Draft Sales Return created: ${siName || "(name not returned)"
           }. Scroll down and click "Create Sales Return" in the list to submit.`
         );
       }
@@ -1668,9 +1705,9 @@ function SalesReturn() {
       console.error(err);
       setError(
         err?.response?.data?.error?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
-          "Failed to save draft"
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to save draft"
       );
     } finally {
       setSavingDraft(false);
@@ -1695,21 +1732,15 @@ function SalesReturn() {
       console.error(err);
       setError(
         err?.response?.data?.error?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
-          "Failed to submit Sales Return"
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to submit Sales Return"
       );
     } finally {
       setSubmittingDraft("");
     }
   }
 
-  // ✅ drafts first, then submitted; ✅ only last 10 total
-  const displayReturns = useMemo(() => {
-    const drafts = (draftReturns || []).map((d) => ({ ...d, __isDraft: true }));
-    const submitted = (returns || []).map((r) => ({ ...r, __isDraft: false }));
-    return [...drafts, ...submitted].slice(0, LIST_LIMIT);
-  }, [draftReturns, returns]);
 
   return (
     <div className="sales-return">
@@ -1892,8 +1923,8 @@ function SalesReturn() {
                 ? "Updating Draft..."
                 : "Creating Draft..."
               : editingDraftName
-              ? "Update Draft"
-              : "Create Return Draft"}
+                ? "Update Draft"
+                : "Create Return Draft"}
           </button>
 
           {editingDraftName ? (
@@ -1925,6 +1956,16 @@ function SalesReturn() {
             </h3>
             <div style={{ fontSize: 12, opacity: 0.7 }}>Showing latest {LIST_LIMIT}</div>
           </div>
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <button
+            type="button"
+            className="btn btn-outline btn-xs"
+            onClick={() => setPostingDateSort((p) => (p === "asc" ? "desc" : "asc"))}
+            disabled={loadingReturns}
+          >
+            {postingDateSortLabel}
+          </button>
 
           <button
             type="button"
@@ -1959,7 +2000,7 @@ function SalesReturn() {
               </thead>
 
               <tbody>
-                {displayReturns.map((r) => {
+                {sortedDisplayReturns.map((r) => {
                   const isDraft = !!r.__isDraft;
                   const isSubmitting = submittingDraft === r.name;
                   const isEditingThis = editingDraftName === r.name;
@@ -2032,10 +2073,10 @@ function ItemSearchDropdown({ items, value, onSelect, placeholder }) {
     const base = !s
       ? items
       : items.filter((it) => {
-          const code = (it.name || "").toLowerCase();
-          const name = (it.item_name || "").toLowerCase();
-          return code.includes(s) || name.includes(s);
-        });
+        const code = (it.name || "").toLowerCase();
+        const name = (it.item_name || "").toLowerCase();
+        return code.includes(s) || name.includes(s);
+      });
     return base.slice(0, 80);
   }, [items, q]);
 

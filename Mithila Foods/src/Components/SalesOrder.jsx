@@ -5662,6 +5662,21 @@ const TRY_SINGLE_LINE_FALLBACK = true;
 
 const LIST_LIMIT = 10; // show only last 10 (draft + submitted)
 
+
+
+function toSortTs(v) {
+  if (!v) return 0;
+  const s = String(v).trim();
+  if (!s) return 0;
+
+  const isoLike = s.includes(" ") ? s.replace(" ", "T") : s;
+  const d = new Date(isoLike);
+  const t = d.getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
+
+
 /**
  * ISO datetime OR DD-MM-YYYY OR YYYY-MM-DD -> YYYY-MM-DD
  */
@@ -5815,7 +5830,7 @@ async function getRecentDraftSalesInvoices(limit = LIST_LIMIT) {
 
 export default function SalesEasyShip() {
   const FIXED_WAREHOUSE = DEFAULT_WAREHOUSE;
-
+  const [createdSort, setCreatedSort] = useState("desc");
   const [customers, setCustomers] = useState([]);
   const [items, setItems] = useState([]); // MUST include custom_asin/custom_* fields
   const [companies, setCompanies] = useState([]);
@@ -5866,6 +5881,25 @@ export default function SalesEasyShip() {
     if (!invoiceCustomerFilter) return recentInvoices;
     return (recentInvoices || []).filter((inv) => inv.customer === invoiceCustomerFilter);
   }, [recentInvoices, invoiceCustomerFilter]);
+
+  const [postingDateSort, setPostingDateSort] = useState("desc"); // desc = Newest → Oldest
+
+  const postingDateSortLabel =
+    postingDateSort === "asc"
+      ? "Posting Date: Oldest → Newest"
+      : "Posting Date: Newest → Oldest";
+
+  const sortedRecentInvoices = useMemo(() => {
+    const dirMul = postingDateSort === "asc" ? 1 : -1;
+
+    return [...(filteredRecentInvoices || [])].sort((a, b) => {
+      const ta = toSortTs(a?.posting_date);
+      const tb = toSortTs(b?.posting_date);
+
+      if (ta !== tb) return (ta - tb) * dirMul;
+      return String(a?.name || "").localeCompare(String(b?.name || ""));
+    });
+  }, [filteredRecentInvoices, postingDateSort]);
 
   // Bulk state
   const fileRef = useRef(null);
@@ -7009,6 +7043,14 @@ export default function SalesEasyShip() {
               Showing <b>{filteredRecentInvoices.length}</b> / <b>{recentInvoices.length}</b>
             </div>
           </div>
+          <button
+            type="button"
+            className="btn btn-outline btn-xs"
+            onClick={() => setPostingDateSort((p) => (p === "asc" ? "desc" : "asc"))}
+            disabled={loadingInvoices}
+          >
+            {postingDateSortLabel}
+          </button>
 
 
           {loadingInvoices && <div className="sales-recent-loading text-muted">Loading recent invoices...</div>}
@@ -7033,7 +7075,7 @@ export default function SalesEasyShip() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRecentInvoices.map((inv) => {
+                  {sortedRecentInvoices.map((inv) => {
                     const isDraft = !!inv.__isDraft;
                     const isPaid = !isDraft && (inv.status === "Paid" || (inv.outstanding_amount || 0) <= 0);
 

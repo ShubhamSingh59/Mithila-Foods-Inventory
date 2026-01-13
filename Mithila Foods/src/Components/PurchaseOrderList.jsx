@@ -749,6 +749,46 @@ function PurchaseOrderList({ onEditPo }) {
   const [draftPiByPo, setDraftPiByPo] = useState({}); // { [poName]: piName }
   const [submitInvLoading, setSubmitInvLoading] = useState("");
 
+
+  const [createdSort, setCreatedSort] = useState("asc"); // asc = Oldest → Newest
+
+  const createdSortLabel =
+    createdSort === "asc"
+      ? "Sort by Created: Oldest → Newest"
+      : "Sort by Created: Newest → Oldest";
+
+  const sortedOrders = useMemo(() => {
+    const dirMul = createdSort === "asc" ? 1 : -1;
+
+    return [...orders].sort((a, b) => {
+      const ta = toSortTs(a?.creation);
+      const tb = toSortTs(b?.creation);
+
+      if (ta !== tb) return (ta - tb) * dirMul;
+
+      // stable tie-break
+      return String(a?.name || "").localeCompare(String(b?.name || ""));
+    });
+  }, [orders, createdSort]);
+
+  function toggleCreatedSort() {
+    setCreatedSort((prev) => (prev === "asc" ? "desc" : "asc"));
+  }
+
+
+  function toSortTs(v) {
+    if (!v) return 0;
+    const s = String(v).trim();
+    if (!s) return 0;
+
+    // "YYYY-MM-DD HH:MM:SS" -> "YYYY-MM-DDTHH:MM:SS"
+    const isoLike = s.includes(" ") ? s.replace(" ", "T") : s;
+
+    const d = new Date(isoLike);
+    const t = d.getTime();
+    return Number.isFinite(t) ? t : 0;
+  }
+
   async function handleMfStatusChange(po, newStatus) {
     if (!newStatus) return;
     setError("");
@@ -1281,6 +1321,11 @@ function PurchaseOrderList({ onEditPo }) {
     loadOrders(page + 1, mfFilter);
   }
 
+  async function reloadOrders() {
+    await loadOrders(page, mfFilter);
+  }
+
+
   return (
     <div className="po-list">
       {/* Hidden PDF input */}
@@ -1313,6 +1358,25 @@ function PurchaseOrderList({ onEditPo }) {
               ))}
             </select>
           </div>
+          <div className="po-list-pill" style={{ padding: "6px 10px" }}>
+            <button
+              type="button"
+              className="btn btn-outline btn-xs"
+              onClick={toggleCreatedSort}
+              disabled={loading}
+            >
+              {createdSortLabel}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={reloadOrders}
+            disabled={loading}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
 
           <div className="po-list-pill">
             Page {page + 1} · {orders.length} open PO{orders.length !== 1 ? "s" : ""}
@@ -1335,7 +1399,7 @@ function PurchaseOrderList({ onEditPo }) {
                   <tr>
                     <th>Name</th>
                     <th>Supplier</th>
-                    <th>Items</th> {/* ✅ NEW */}
+                    <th>Items</th>
                     <th>Company</th>
                     <th>Date</th>
                     <th>Status</th>
@@ -1347,7 +1411,7 @@ function PurchaseOrderList({ onEditPo }) {
                 </thead>
 
                 <tbody>
-                  {orders.map((po) => {
+                  {sortedOrders.map((po) => {
                     const perReceived = Number(po.per_received || 0);
                     const receivedFromErp = perReceived > 0;
 
