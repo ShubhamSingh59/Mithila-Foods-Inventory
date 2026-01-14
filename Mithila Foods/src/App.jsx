@@ -1055,6 +1055,7 @@ import StockReorder from "./Components/StockReorder";
 
 import "./App.css";
 import StockReconciliationList from "./Components/StockReconciliationList";
+import SalesReturnTabsView from "./Components/SalesReturnTabsView";
 
 const VIEWS = {
   DAILY_STOCK: "DAILY_STOCK",
@@ -1074,7 +1075,6 @@ const VIEWS = {
 function App() {
   const [activeView, setActiveView] = useState(VIEWS.DAILY_STOCK);
 
-  // 👇 keep track which views are already mounted
   const [mountedViews, setMountedViews] = useState([VIEWS.DAILY_STOCK]);
 
   const handleViewChange = (view) => {
@@ -1289,7 +1289,7 @@ function App() {
         {isMounted(VIEWS.SALES_RETURN) && (
           <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.SALES_RETURN) ? "block" : "none" }}>
             <div className="app-panel app-panel-secondary">
-              <SalesReturn />
+              <SalesReturnTabsView/>
             </div>
           </div>
         )}

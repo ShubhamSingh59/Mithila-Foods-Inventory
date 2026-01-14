@@ -716,3 +716,37 @@ Responsive tweaks
     font-size: 0.86rem;
   }
 }
+/* Tabs container */
+.opening-stock-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* Tab button base */
+.opening-stock-tab {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+/* Hover */
+.opening-stock-tab:hover {
+  border-color: rgba(0,0,0,0.25);
+}
+
+/* ✅ Active tab (this is what makes it visible) */
+.opening-stock-tab.is-active {
+  border-color: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.06);
+}
+
+/* Optional: focus ring */
+.opening-stock-tab:focus-visible {
+  outline: 2px solid rgba(0,0,0,0.25);
+  outline-offset: 2px;
+}
