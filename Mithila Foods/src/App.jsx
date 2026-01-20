@@ -1,1062 +1,34 @@
-//////// src/App.jsx
-//////import React, { useState } from "react";
-
-//////// Screens
-//////import DailyStockSummary from "./Components/DailyStockSummary";
-//////import ItemTable from "./Components/ItemTable";
-//////import BomCreateForm from "./Components/BomCreateForm";
-//////import BomList from "./Components/BomList";
-//////import PurchaseOrder from "./Components/purchaseOrder";
-//////import PurchaseOrderList from "./Components/PurchaseOrderList";
-//////import SalesEasyShip from "./Components/SalesEasyShip";
-//////import SalesReturn from "./Components/SalesReturn";
-//////import StockManufactureEntry from "./Components/StockManufactureEntry";
-//////import StockReconciliation from "./Components/StockReconciliation";
-//////import StockTransfer from "./Components/StockTransfer";
-//////import SupplierList from "./Components/SupplierList"; 
-
-//////import "./App.css";
-//////import OpeningStockEntry from "./Components/OpeningStockEntry";
-
-//////const VIEWS = {
-//////  DAILY_STOCK: "DAILY_STOCK",
-//////  ITEMS: "ITEMS",
-//////  BOM: "BOM",
-//////  PURCHASE: "PURCHASE",
-//////  SALES: "SALES",
-//////  MFG: "MFG",
-//////  SUPPLIERS: "SUPPLIERS",
-//////};
-
-//////function App() {
-//////  const [activeView, setActiveView] = useState(VIEWS.DAILY_STOCK);
-
-//////  function renderMain() {
-//////    switch (activeView) {
-//////      case VIEWS.DAILY_STOCK:
-//////        return (
-//////          <div className="app-main-inner">
-//////            <DailyStockSummary />
-//////          </div>
-//////        );
-
-//////      case VIEWS.ITEMS:
-//////        return (
-//////          <div className="app-main-inner">
-//////            <ItemTable />
-//////          </div>
-//////        );
-
-//////      case VIEWS.BOM:
-//////  return (
-//////    <div className="app-main-inner app-main-stack">
-//////      {/* Create BOM – full width top card */}
-//////      <section className="app-panel app-panel-primary">
-//////        <BomCreateForm />
-//////      </section>
-
-//////      {/* BOM List – full width card below */}
-//////      <section className="app-panel app-panel-secondary">
-//////        <BomList />
-//////      </section>
-//////    </div>
-//////  );
-
-
-//////      case VIEWS.PURCHASE:
-//////        return (
-//////          <div className="app-main-inner app-main-stack">
-//////            <div className="app-panel">
-//////              <PurchaseOrder />
-//////            </div>
-//////          </div>
-//////        );
-
-//////      case VIEWS.SALES:
-//////        return (
-//////          <div className="app-main-inner app-main-stack">
-//////            <div className="app-panel">
-//////              <SalesEasyShip />
-//////            </div>
-//////            <div className="app-panel app-panel-secondary">
-//////              <SalesReturn />
-//////            </div>
-//////          </div>
-//////        );
-
-//////      case VIEWS.MFG:
-//////        return (
-//////          <div className="app-main-inner app-main-stack">
-//////            <div className="app-panel">
-//////              <StockManufactureEntry />
-//////            </div>
-//////            <div className="app-panel">
-//////              <StockReconciliation />
-//////            </div>
-//////            <div className="app-panel">
-//////              <StockTransfer />
-//////            </div>
-//////          </div>
-//////        );
-//////        case VIEWS.SUPPLIERS:    
-//////        return (
-//////          <div className="app-main-inner app-main-stack">
-//////            <section className="app-panel app-panel-primary">
-//////              <SupplierList />
-//////            </section>
-//////          </div>
-//////        );
-//////      default:
-//////        return null;
-//////    }
-//////  }
-
-//////  return (
-//////    <div className="app-shell">
-//////      {/* LEFT SIDEBAR */}
-//////      <aside className="app-sidebar">
-//////        <div className="app-sidebar-header">
-//////          <div className="app-logo-circle">S</div>
-//////          <div className="app-logo-text">
-//////            <div className="app-logo-title">Stock & Supplier</div>
-//////            <div className="app-logo-subtitle">ERPNext Console</div>
-//////          </div>
-//////        </div>
-
-//////        <nav className="app-nav">
-//////          {/* 1. Stock tracker */}
-//////          <div className="app-nav-group">
-//////            <div className="app-nav-group-label">Stock tracker</div>
-//////            <button
-//////              type="button"
-//////              className={
-//////                "app-nav-link" +
-//////                (activeView === VIEWS.DAILY_STOCK ? " active" : "")
-//////              }
-//////              onClick={() => setActiveView(VIEWS.DAILY_STOCK)}
-//////            >
-//////              <span className="app-nav-dot app-nav-dot-blue" />
-//////              Daily Stock Summary
-//////            </button>
-
-//////            <button
-//////              type="button"
-//////              className={
-//////                "app-nav-link" +
-//////                (activeView === VIEWS.ITEMS ? " active" : "")
-//////              }
-//////              onClick={() => setActiveView(VIEWS.ITEMS)}
-//////            >
-//////              <span className="app-nav-dot app-nav-dot-purple" />
-//////              Item Master
-//////            </button>
-//////          </div>
-
-//////          {/* 2. BOM */}
-//////          <div className="app-nav-group">
-//////            <div className="app-nav-group-label">Bill of Materials</div>
-//////            <button
-//////              type="button"
-//////              className={
-//////                "app-nav-link" +
-//////                (activeView === VIEWS.BOM ? " active" : "")
-//////              }
-//////              onClick={() => setActiveView(VIEWS.BOM)}
-//////            >
-//////              <span className="app-nav-dot app-nav-dot-amber" />
-//////              BOM Create & List
-//////            </button>
-//////          </div>
-
-//////          {/* 3. Purchase */}
-//////          <div className="app-nav-group">
-//////            <div className="app-nav-group-label">Purchase</div>
-//////            <button
-//////              type="button"
-//////              className={
-//////                "app-nav-link" +
-//////                (activeView === VIEWS.PURCHASE ? " active" : "")
-//////              }
-//////              onClick={() => setActiveView(VIEWS.PURCHASE)}
-//////            >
-//////              <span className="app-nav-dot app-nav-dot-green" />
-//////              Purchase Orders
-//////            </button>
-//////          </div>
-
-//////          {/* 4. Sales */}
-//////          <div className="app-nav-group">
-//////            <div className="app-nav-group-label">Sales</div>
-//////            <button
-//////              type="button"
-//////              className={
-//////                "app-nav-link" +
-//////                (activeView === VIEWS.SALES ? " active" : "")
-//////              }
-//////              onClick={() => setActiveView(VIEWS.SALES)}
-//////            >
-//////              <span className="app-nav-dot app-nav-dot-pink" />
-//////              EasyShip & Returns
-//////            </button>
-//////          </div>
-
-//////          {/* 5. Manufacturing & Adjustments */}
-//////          <div className="app-nav-group">
-//////            <div className="app-nav-group-label">
-//////              Manufacturing & Adjustments
-//////            </div>
-//////            <button
-//////              type="button"
-//////              className={
-//////                "app-nav-link" +
-//////                (activeView === VIEWS.MFG ? " active" : "")
-//////              }
-//////              onClick={() => setActiveView(VIEWS.MFG)}
-//////            >
-//////              <span className="app-nav-dot app-nav-dot-teal" />
-//////              Manufacture · Reco · Transfer
-//////            </button>
-//////          </div>
-//////          {/* 4. Suppliers – NEW GROUP */}
-//////          <div className="app-nav-group">
-//////            <div className="app-nav-group-label">Suppliers</div>
-//////            <button
-//////              type="button"
-//////              className={
-//////                "app-nav-link" +
-//////                (activeView === VIEWS.SUPPLIERS ? " active" : "")
-//////              }
-//////              onClick={() => setActiveView(VIEWS.SUPPLIERS)}
-//////            >
-//////              <span className="app-nav-dot app-nav-dot-pink" />
-//////              Supplier List
-//////            </button>
-//////          </div>
-//////        </nav>
-
-//////        <div className="app-sidebar-footer">
-//////          <div className="app-sidebar-footer-label">Today</div>
-//////          <div className="app-sidebar-footer-badge">
-//////            Stock & Supplier tracker
-//////          </div>
-//////        </div>
-//////      </aside>
-
-//////      {/* MAIN CONTENT */}
-//////      <main className="app-main">
-//////        {renderMain()}
-//////        <OpeningStockEntry/>
-//////      </main>
-
-//////    </div>
-//////  );
-//////}
-
-//////export default App;
-////// src/App.jsx
-////import React, { useState } from "react";
-
-////// Screens
-////import DailyStockSummary from "./Components/DailyStockSummary";
-////import ItemTable from "./Components/ItemTable";
-////import BomCreateForm from "./Components/BomCreateForm";
-////import BomList from "./Components/BomList";
-////import PurchaseOrder from "./Components/purchaseOrder";
-////import PurchaseOrderList from "./Components/PurchaseOrderList";
-////import SalesEasyShip from "./Components/SalesEasyShip";
-////import SalesReturn from "./Components/SalesReturn";
-////import StockManufactureEntry from "./Components/StockManufactureEntry";
-////import StockReconciliation from "./Components/StockReconciliation";
-////import StockTransfer from "./Components/StockTransfer";
-////import SupplierList from "./Components/SupplierList";
-////import OpeningStockEntry from "./Components/OpeningStockEntry";
-
-////import "./App.css";
-
-////const VIEWS = {
-////  DAILY_STOCK: "DAILY_STOCK",
-////  ITEMS: "ITEMS",
-////  BOM: "BOM",
-////  PURCHASE: "PURCHASE",
-////  SALES: "SALES",
-////  MFG: "MFG",
-////  SUPPLIERS: "SUPPLIERS",
-////  OPENING_STOCK: "OPENING_STOCK",
-////};
-
-////function App() {
-////  const [activeView, setActiveView] = useState(VIEWS.DAILY_STOCK);
-
-////  function renderMain() {
-////    switch (activeView) {
-////      case VIEWS.DAILY_STOCK:
-////        return (
-////          <div className="app-main-inner">
-////            <DailyStockSummary />
-////          </div>
-////        );
-
-////      case VIEWS.ITEMS:
-////        return (
-////          <div className="app-main-inner">
-////            <ItemTable />
-////          </div>
-////        );
-
-////      case VIEWS.BOM:
-////        return (
-////          <div className="app-main-inner app-main-stack">
-////            {/* Create BOM – full width top card */}
-////            <section className="app-panel app-panel-primary">
-////              <BomCreateForm />
-////            </section>
-
-////            {/* BOM List – full width card below */}
-////            <section className="app-panel app-panel-secondary">
-////              <BomList />
-////            </section>
-////          </div>
-////        );
-
-////      case VIEWS.PURCHASE:
-////        return (
-////          <div className="app-main-inner app-main-stack">
-////            <div className="app-panel">
-////              <PurchaseOrder />
-////            </div>
-////          </div>
-////        );
-
-////      case VIEWS.SALES:
-////        return (
-////          <div className="app-main-inner app-main-stack">
-////            <div className="app-panel">
-////              <SalesEasyShip />
-////            </div>
-////            <div className="app-panel app-panel-secondary">
-////              <SalesReturn />
-////            </div>
-////          </div>
-////        );
-
-////      case VIEWS.MFG:
-////        return (
-////          <div className="app-main-inner app-main-stack">
-////            <div className="app-panel">
-////              <StockManufactureEntry />
-////            </div>
-////            <div className="app-panel">
-////              <StockReconciliation />
-////            </div>
-////            <div className="app-panel">
-////              <StockTransfer />
-////            </div>
-////          </div>
-////        );
-
-////      case VIEWS.OPENING_STOCK:
-////        return (
-////          <div className="app-main-inner app-main-stack">
-////            <section className="app-panel app-panel-primary">
-////              <OpeningStockEntry />
-////            </section>
-////          </div>
-////        );
-
-////      case VIEWS.SUPPLIERS:
-////        return (
-////          <div className="app-main-inner app-main-stack">
-////            <section className="app-panel app-panel-primary">
-////              <SupplierList />
-////            </section>
-////          </div>
-////        );
-
-////      default:
-////        return null;
-////    }
-////  }
-
-////  return (
-////    <div className="app-shell">
-////      {/* LEFT SIDEBAR */}
-////      <aside className="app-sidebar">
-////        <div className="app-sidebar-header">
-////          <div className="app-logo-circle">S</div>
-////          <div className="app-logo-text">
-////            <div className="app-logo-title">Stock & Supplier</div>
-////            <div className="app-logo-subtitle">ERPNext Console</div>
-////          </div>
-////        </div>
-
-////        <nav className="app-nav">
-////          {/* 1. Stock tracker */}
-////          <div className="app-nav-group">
-////            <div className="app-nav-group-label">Stock tracker</div>
-////            <button
-////              type="button"
-////              className={
-////                "app-nav-link" +
-////                (activeView === VIEWS.DAILY_STOCK ? " active" : "")
-////              }
-////              onClick={() => setActiveView(VIEWS.DAILY_STOCK)}
-////            >
-////              <span className="app-nav-dot app-nav-dot-blue" />
-////              Daily Stock Summary
-////            </button>
-
-////            <button
-////              type="button"
-////              className={
-////                "app-nav-link" +
-////                (activeView === VIEWS.ITEMS ? " active" : "")
-////              }
-////              onClick={() => setActiveView(VIEWS.ITEMS)}
-////            >
-////              <span className="app-nav-dot app-nav-dot-purple" />
-////              Item Master
-////            </button>
-////          </div>
-
-////          {/* 2. BOM */}
-////          <div className="app-nav-group">
-////            <div className="app-nav-group-label">Material List</div>
-////            <button
-////              type="button"
-////              className={
-////                "app-nav-link" +
-////                (activeView === VIEWS.BOM ? " active" : "")
-////              }
-////              onClick={() => setActiveView(VIEWS.BOM)}
-////            >
-////              <span className="app-nav-dot app-nav-dot-amber" />
-////              Create Material List
-////            </button>
-////          </div>
-
-////          {/* 3. Purchase */}
-////          <div className="app-nav-group">
-////            <div className="app-nav-group-label">Purchase</div>
-////            <button
-////              type="button"
-////              className={
-////                "app-nav-link" +
-////                (activeView === VIEWS.PURCHASE ? " active" : "")
-////              }
-////              onClick={() => setActiveView(VIEWS.PURCHASE)}
-////            >
-////              <span className="app-nav-dot app-nav-dot-green" />
-////              Purchase Orders
-////            </button>
-////          </div>
-
-////          {/* 4. Sales */}
-////          <div className="app-nav-group">
-////            <div className="app-nav-group-label">Sales</div>
-////            <button
-////              type="button"
-////              className={
-////                "app-nav-link" +
-////                (activeView === VIEWS.SALES ? " active" : "")
-////              }
-////              onClick={() => setActiveView(VIEWS.SALES)}
-////            >
-////              <span className="app-nav-dot app-nav-dot-pink" />
-////              EasyShip & Returns
-////            </button>
-////          </div>
-
-////          {/* 5. Manufacturing & Adjustments */}
-////          <div className="app-nav-group">
-////            <div className="app-nav-group-label">
-////              Manufacturing & Adjustments
-////            </div>
-////            <button
-////              type="button"
-////              className={
-////                "app-nav-link" +
-////                (activeView === VIEWS.MFG ? " active" : "")
-////              }
-////              onClick={() => setActiveView(VIEWS.MFG)}
-////            >
-////              <span className="app-nav-dot app-nav-dot-teal" />
-////              Manufacture · Reco · Transfer
-////            </button>
-
-////            {/* Opening Stock – funky dot here */}
-////            <button
-////              type="button"
-////              className={
-////                "app-nav-link" +
-////                (activeView === VIEWS.OPENING_STOCK ? " active" : "")
-////              }
-////              onClick={() => setActiveView(VIEWS.OPENING_STOCK)}
-////            >
-////              <span className="app-nav-dot app-nav-dot-amber" />
-////              Opening Stock
-////            </button>
-////          </div>
-
-////          {/* 6. Suppliers */}
-////          <div className="app-nav-group">
-////            <div className="app-nav-group-label">Suppliers</div>
-////            <button
-////              type="button"
-////              className={
-////                "app-nav-link" +
-////                (activeView === VIEWS.SUPPLIERS ? " active" : "")
-////              }
-////              onClick={() => setActiveView(VIEWS.SUPPLIERS)}
-////            >
-////              <span className="app-nav-dot app-nav-dot-pink" />
-////              Supplier List
-////            </button>
-////          </div>
-////        </nav>
-
-////        <div className="app-sidebar-footer">
-////          <div className="app-sidebar-footer-label">Today</div>
-////          <div className="app-sidebar-footer-badge">
-////            Stock & Supplier tracker
-////          </div>
-////        </div>
-////      </aside>
-
-////      {/* MAIN CONTENT */}
-////      <main className="app-main">{renderMain()}</main>
-////    </div>
-////  );
-////}
-
-////export default App;
-
-
-//// src/App.jsx
-//import React, { useEffect, useState } from "react";
-
-//// Screens
-//import DailyStockSummary from "./Components/DailyStockSummary";
-//import ItemTable from "./Components/ItemTable";
-//import BomCreateForm from "./Components/BomCreateForm";
-//import BomList from "./Components/BomList";
-//import PurchaseOrder from "./Components/purchaseOrder";
-//import PurchaseOrderList from "./Components/PurchaseOrderList";
-//import SalesEasyShip from "./Components/SalesEasyShip";
-//import SalesReturn from "./Components/SalesReturn";
-//import StockManufactureEntry from "./Components/StockManufactureEntry";
-//import StockReconciliation from "./Components/StockReconciliation";
-//import StockTransfer from "./Components/StockTransfer";
-//import SupplierList from "./Components/SupplierList";
-//import OpeningStockEntry from "./Components/OpeningStockEntry";
-//import WorkOrderFlow from "./Components/WorkOrderFlow";
-//import WOTracking from "./Components/WOTracking";
-//import Analytics from "./Components/Analytics";
-//import MfTracker from "./Components/MfTracker";
-//import MfWorkflow from "./Components/MfWorkflow";
-
-
-//import "./App.css";
-
-//const VIEWS = {
-//  DAILY_STOCK: "DAILY_STOCK",
-//  PURCHASE: "PURCHASE",
-//  MFG: "MFG",
-//  SUPPLIERS: "SUPPLIERS",
-//  OPENING_STOCK: "OPENING_STOCK",
-//  WORK_ORDER_FLOW: "WORK_ORDER_FLOW",
-//  WO_TRACKING: "WO_TRACKING",
-//  ANALYTICS: "ANALYTICS",
-//  SALES_EASYSHIP: "SALES_EASYSHIP",
-//  SALES_RETURN: "SALES_RETURN",
-
-//  // ✅ NEW views
-//  MF_BATCH: "MF_BATCH",
-//  MF_TRACKER: "MF_TRACKER",
-//  MF_WORKFLOW: "MF_WORKFLOW",
-
-//};
-
-
-
-//const MFG_TABS = {
-//  MANUFACTURE: "MANUFACTURE",
-//  RECON: "RECON",
-//  TRANSFER: "TRANSFER",
-//};
-
-
-//function App() {
-//  const [activeView, setActiveView] = useState(VIEWS.DAILY_STOCK);
-//  const [mfgTab, setMfgTab] = useState(MFG_TABS.MANUFACTURE);
-//  // 👇 keep track which views are already mounted
-//  const [mountedViews, setMountedViews] = useState([VIEWS.DAILY_STOCK]);
-
-//  const handleViewChange = (view) => {
-//    setActiveView(view);
-//    setMountedViews((prev) =>
-//      prev.includes(view) ? prev : [...prev, view]
-//    );
-//  };
-
-//  const isMounted = (view) => mountedViews.includes(view);
-//  const isActive = (view) => activeView === view;
-//  useEffect(() => {
-//    const params = new URLSearchParams(window.location.search);
-
-//    // If user clicked email link, we’ll get either view=PURCHASE
-//    // OR at least itemCode present
-//    const viewParam = params.get("view");
-//    const hasPOParams = params.get("itemCode") || params.get("qty") || params.get("warehouse");
-
-//    if (viewParam === "PURCHASE" || hasPOParams) {
-//      handleViewChange(VIEWS.PURCHASE);
-//    }
-//  }, []);
-
-
-//  return (
-//    <div className="app-shell">
-//      {/* LEFT SIDEBAR */}
-//      <aside className="app-sidebar">
-//        <div className="app-sidebar-header">
-//          <div className="app-logo-circle">S</div>
-//          <div className="app-logo-text">
-//            <div className="app-logo-title">Stock & Supplier</div>
-//            <div className="app-logo-subtitle">ERPNext Console</div>
-//          </div>
-//        </div>
-
-//        <nav className="app-nav">
-//          {/* 1. Stock tracker */}
-//          <div className="app-nav-group">
-//            <div className="app-nav-group-label">Stock tracker</div>
-
-//            <button
-//              type="button"
-//              className={
-//                "app-nav-link" +
-//                (activeView === VIEWS.DAILY_STOCK ? " active" : "")
-//              }
-//              onClick={() => handleViewChange(VIEWS.DAILY_STOCK)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-blue" />
-//              Daily Stock Summary
-//            </button>
-
-//            {/*<button
-//              type="button"
-//              className={
-//                "app-nav-link" +
-//                (activeView === VIEWS.ITEMS ? " active" : "")
-//              }
-//              onClick={() => handleViewChange(VIEWS.ITEMS)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-purple" />
-//              Item Master
-//            </button>*/}
-//          </div>
-
-//          {/*2. BOM
-//          <div className="app-nav-group">
-//            <div className="app-nav-group-label">Material List</div>
-//            <button
-//              type="button"
-//              className={
-//                "app-nav-link" + (activeView === VIEWS.BOM ? " active" : "")
-//              }
-//              onClick={() => handleViewChange(VIEWS.BOM)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-amber" />
-//              Create Material List
-//            </button>
-//          </div>*/}
-
-//          {/* 3. Purchase */}
-//          <div className="app-nav-group">
-//            <div className="app-nav-group-label">Purchase</div>
-//            <button
-//              type="button"
-//              className={
-//                "app-nav-link" +
-//                (activeView === VIEWS.PURCHASE ? " active" : "")
-//              }
-//              onClick={() => handleViewChange(VIEWS.PURCHASE)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-green" />
-//              Purchase Orders
-//            </button>
-//          </div>
-
-//          {/* 4. Sales */}
-//          {/* 4. Sales */}
-//          <div className="app-nav-group">
-//            <div className="app-nav-group-label">Sales</div>
-
-//            <button
-//              type="button"
-//              className={"app-nav-link" + (isActive(VIEWS.SALES_EASYSHIP) ? " active" : "")}
-//              onClick={() => handleViewChange(VIEWS.SALES_EASYSHIP)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-pink" />
-//              EasyShip
-//            </button>
-
-//            <button
-//              type="button"
-//              className={"app-nav-link" + (isActive(VIEWS.SALES_RETURN) ? " active" : "")}
-//              onClick={() => handleViewChange(VIEWS.SALES_RETURN)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-amber" />
-//              Sales Return
-//            </button>
-//          </div>
-
-
-//          {/* 5. Manufacturing & Adjustments */}
-//          <div className="app-nav-group">
-//            <div className="app-nav-group-label">
-//              Manufacturing & Adjustments
-//            </div>
-//            <button
-//              type="button"
-//              className={
-//                "app-nav-link" + (activeView === VIEWS.MFG ? " active" : "")
-//              }
-//              onClick={() => handleViewChange(VIEWS.MFG)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-teal" />
-//              Manufacture · Reco · Transfer
-//            </button>
-
-//            <button
-//              type="button"
-//              className={
-//                "app-nav-link" +
-//                (activeView === VIEWS.OPENING_STOCK ? " active" : "")
-//              }
-//              onClick={() => handleViewChange(VIEWS.OPENING_STOCK)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-amber" />
-//              Opening Stock
-//            </button>
-//            {/* ✅ NEW: Work Order Flow */}
-//            <button
-//              type="button"
-//              className={"app-nav-link" + (isActive(VIEWS.WORK_ORDER_FLOW) ? " active" : "")}
-//              onClick={() => handleViewChange(VIEWS.WORK_ORDER_FLOW)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-teal" />
-//              Work Order Flow
-//            </button>
-
-//            {/* ✅ NEW: WO Tracking */}
-//            <button
-//              type="button"
-//              className={"app-nav-link" + (isActive(VIEWS.WO_TRACKING) ? " active" : "")}
-//              onClick={() => handleViewChange(VIEWS.WO_TRACKING)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-blue" />
-//              WO Tracking
-//            </button>
-//            <button
-//              type="button"
-//              className={"app-nav-link" + (isActive(VIEWS.MF_WORKFLOW) ? " active" : "")}
-//              onClick={() => handleViewChange(VIEWS.MF_WORKFLOW)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-purple" />
-//              MF Workflow
-//            </button>
-
-
-
-
-//          </div>
-
-//          {/* 6. Suppliers */}
-//          <div className="app-nav-group">
-//            <div className="app-nav-group-label">Suppliers</div>
-//            <button
-//              type="button"
-//              className={
-//                "app-nav-link" +
-//                (activeView === VIEWS.SUPPLIERS ? " active" : "")
-//              }
-//              onClick={() => handleViewChange(VIEWS.SUPPLIERS)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-pink" />
-//              Supplier List
-//            </button>
-//          </div>
-//          {/* 7. Analytics */}
-//          <div className="app-nav-group">
-//            <div className="app-nav-group-label">Analytics</div>
-
-//            <button
-//              type="button"
-//              className={
-//                "app-nav-link" +
-//                (activeView === VIEWS.ANALYTICS ? " active" : "")
-//              }
-//              onClick={() => handleViewChange(VIEWS.ANALYTICS)}
-//            >
-//              <span className="app-nav-dot app-nav-dot-purple" />
-//              Company Analytics
-//            </button>
-//          </div>
-
-//        </nav>
-
-//        <div className="app-sidebar-footer">
-//          <div className="app-sidebar-footer-label">Today</div>
-//          <div className="app-sidebar-footer-badge">
-//            Stock & Supplier tracker
-//          </div>
-//        </div>
-//      </aside>
-
-//      {/* MAIN CONTENT */}
-//      <main className="app-main">
-//        {/* DAILY STOCK */}
-//        {isMounted(VIEWS.DAILY_STOCK) && (
-//          <div
-//            className="app-main-inner"
-//            style={{
-//              display: isActive(VIEWS.DAILY_STOCK) ? "block" : "none",
-//            }}
-//          >
-//            <DailyStockSummary />
-//          </div>
-//        )}
-
-//        {/*ITEMS
-//        {isMounted(VIEWS.ITEMS) && (
-//          <div
-//            className="app-main-inner"
-//            style={{
-//              display: isActive(VIEWS.ITEMS) ? "block" : "none",
-//            }}
-//          >
-//            <ItemTable />
-//          </div>
-//        )}*/}
-
-//        {/* BOM */}
-//        {/*{isMounted(VIEWS.BOM) && (
-//          <div
-//            className="app-main-inner app-main-stack"
-//            style={{
-//              display: isActive(VIEWS.BOM) ? "block" : "none",
-//            }}
-//          >
-//            <section className="app-panel app-panel-primary">
-//              <BomCreateForm />
-//            </section>
-//            <section className="app-panel app-panel-secondary">
-//              <BomList />
-//            </section>
-//          </div>
-//        )}*/}
-
-//        {/* PURCHASE */}
-//        {isMounted(VIEWS.PURCHASE) && (
-//          <div
-//            className="app-main-inner app-main-stack"
-//            style={{
-//              display: isActive(VIEWS.PURCHASE) ? "block" : "none",
-//            }}
-//          >
-//            <div className="app-panel">
-//              <PurchaseOrder />
-//            </div>
-//          </div>
-//        )}
-
-//        {/* SALES */}
-//        {/* ✅ SALES: EASYSHIP */}
-//        {isMounted(VIEWS.SALES_EASYSHIP) && (
-//          <div
-//            className="app-main-inner app-main-stack"
-//            style={{ display: isActive(VIEWS.SALES_EASYSHIP) ? "block" : "none" }}
-//          >
-//            <div className="app-panel">
-//              <SalesEasyShip />
-//            </div>
-//          </div>
-//        )}
-
-//        {/* ✅ SALES: RETURN */}
-//        {isMounted(VIEWS.SALES_RETURN) && (
-//          <div
-//            className="app-main-inner app-main-stack"
-//            style={{ display: isActive(VIEWS.SALES_RETURN) ? "block" : "none" }}
-//          >
-//            <div className="app-panel app-panel-secondary">
-//              <SalesReturn />
-//            </div>
-//          </div>
-//        )}
-
-
-//        {/* MFG */}
-//        {/* ✅ MFG (now with tabs) */}
-//        {isMounted(VIEWS.MFG) && (
-//          <div
-//            className="app-main-inner app-main-stack"
-//            style={{ display: isActive(VIEWS.MFG) ? "block" : "none" }}
-//          >
-//            {/* Tabs header */}
-//            {/* Tabs header */}
-//            <div className="app-panel" style={{ paddingBottom: 12 }}>
-//              <div className="mfg-tabs">
-//                <button
-//                  type="button"
-//                  className={`mfg-tab ${mfgTab === MFG_TABS.MANUFACTURE ? "active" : ""}`}
-//                  onClick={() => setMfgTab(MFG_TABS.MANUFACTURE)}
-//                >
-//                  Manufacture Entry
-//                </button>
-
-//                <button
-//                  type="button"
-//                  className={`mfg-tab ${mfgTab === MFG_TABS.RECON ? "active" : ""}`}
-//                  onClick={() => setMfgTab(MFG_TABS.RECON)}
-//                >
-//                  Stock Reconciliation
-//                </button>
-
-//                <button
-//                  type="button"
-//                  className={`mfg-tab ${mfgTab === MFG_TABS.TRANSFER ? "active" : ""}`}
-//                  onClick={() => setMfgTab(MFG_TABS.TRANSFER)}
-//                >
-//                  Stock Transfer
-//                </button>
-//              </div>
-//            </div>
-
-
-//            {/* Content (only one visible at a time) */}
-//            <div
-//              className="app-panel"
-//              style={{ display: mfgTab === MFG_TABS.MANUFACTURE ? "block" : "none" }}
-//            >
-//              <StockManufactureEntry />
-//            </div>
-
-//            <div
-//              className="app-panel"
-//              style={{ display: mfgTab === MFG_TABS.RECON ? "block" : "none" }}
-//            >
-//              <StockReconciliation />
-//            </div>
-
-//            <div
-//              className="app-panel"
-//              style={{ display: mfgTab === MFG_TABS.TRANSFER ? "block" : "none" }}
-//            >
-//              <StockTransfer />
-//            </div>
-//          </div>
-//        )}
-
-//        {/* ✅ NEW: WORK ORDER FLOW */}
-//        {isMounted(VIEWS.WORK_ORDER_FLOW) && (
-//          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.WORK_ORDER_FLOW) ? "block" : "none" }}>
-//            <div className="app-panel">
-//              <WorkOrderFlow />
-//            </div>
-//          </div>
-//        )}
-
-//        {/* ✅ NEW: WO TRACKING */}
-//        {isMounted(VIEWS.WO_TRACKING) && (
-//          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.WO_TRACKING) ? "block" : "none" }}>
-//            <div className="app-panel">
-//              <WOTracking />
-//            </div>
-//          </div>
-//        )}
-
-//        {/* ✅ MF BATCH */}
-//        {isMounted(VIEWS.MF_WORKFLOW) && (
-//          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.MF_WORKFLOW) ? "block" : "none" }}>
-//            <div className="app-panel">
-//              <MfWorkflow />
-//            </div>
-//          </div>
-//        )}
-
-//        {/* OPENING STOCK */}
-//        {isMounted(VIEWS.OPENING_STOCK) && (
-//          <div
-//            className="app-main-inner app-main-stack"
-//            style={{
-//              display: isActive(VIEWS.OPENING_STOCK) ? "block" : "none",
-//            }}
-//          >
-//            <section className="app-panel app-panel-primary">
-//              <OpeningStockEntry />
-//            </section>
-//          </div>
-//        )}
-
-//        {/* SUPPLIERS */}
-//        {isMounted(VIEWS.SUPPLIERS) && (
-//          <div
-//            className="app-main-inner app-main-stack"
-//            style={{
-//              display: isActive(VIEWS.SUPPLIERS) ? "block" : "none",
-//            }}
-//          >
-//            <section className="app-panel app-panel-primary">
-//              <SupplierList />
-//            </section>
-//          </div>
-//        )}
-//        {/* ✅ ANALYTICS */}
-//        {isMounted(VIEWS.ANALYTICS) && (
-//          <div
-//            className="app-main-inner app-main-stack"
-//            style={{
-//              display: isActive(VIEWS.ANALYTICS) ? "block" : "none",
-//            }}
-//          >
-//            <div className="app-panel app-panel-primary">
-//              <Analytics />
-//            </div>
-//          </div>
-//        )}
-
-//      </main>
-//    </div>
-//  );
-//}
-
-//export default App;
-
-
 // src/App.jsx
 import React, { useEffect, useState } from "react";
 
-// Screens
-import DailyStockSummary from "./Components/DailyStockSummary";
-import PurchaseOrder from "./Components/purchaseOrder";
-import SalesEasyShip from "./Components/SalesOrder";
-import SalesReturn from "./Components/SalesReturn";
-import SupplierList from "./Components/SupplierList";
-import OpeningStockEntry from "./Components/OpeningStockEntry";
+// ------------------------------
+// Screens (main pages shown inside the layout)
+// ------------------------------
+import PurchaseOrderView from "./views/PurchaseOrderView";
 import Analytics from "./Components/Analytics";
-import MfWorkflow from "./Components/MfWorkflow";
+import MfWorkflow from "./Components/MfWorkflow/MfWorkflow";
 
-// ✅ NEW: MFG tabs view extracted from App.jsx
-import MfgTabsView from "./Components/MfgTabsView";
-import StockSummaryTabsView from "./Components/StockSummaryTabsView";
-import StockReorder from "./Components/StockReorder";
+// MFG and Stock views (tabs based screens)
+import MfgTabsView from "./views/MfgTabsView";
+import StockSummaryTabsView from "./views/StockSummaryTabsView";
+import StockReorder from "./Components/StockReorder/StockReorder";
 
+// Sales views
+import SalesReturnTabsView from "./views/SalesReturnTabsView";
+import SalesOrderView from "./views/SalesOrderView";
+
+// Supplier view
+import SupplierTabView from "./views/SupplierTabView";
+
+// ------------------------------
+// CSS for overall shell layout and tabs styling
+// ------------------------------
 import "./App.css";
-import StockReconciliationList from "./Components/StockReconciliationList";
-import SalesReturnTabsView from "./Components/SalesReturnTabsView";
 
+// ------------------------------
+// App view keys
+// These values decide which screen is active in the main area.
+// ------------------------------
 const VIEWS = {
   DAILY_STOCK: "DAILY_STOCK",
   STOCK_REORDER: "STOCK_REORDER",
@@ -1073,23 +45,46 @@ const VIEWS = {
 };
 
 function App() {
+  // ------------------------------
+  // activeView decides what is currently visible in main content
+  // ------------------------------
   const [activeView, setActiveView] = useState(VIEWS.DAILY_STOCK);
 
+  // ------------------------------
+  // mountedViews keeps track of views already opened once.
+  // This is used so screens stay mounted in memory
+  // and we just hide them using display:none.
+  // ------------------------------
   const [mountedViews, setMountedViews] = useState([VIEWS.DAILY_STOCK]);
 
+  // ------------------------------
+  // When user clicks sidebar option:
+  // 1) set activeView
+  // 2) if this view was never opened before, add to mountedViews
+  // ------------------------------
   const handleViewChange = (view) => {
     setActiveView(view);
     setMountedViews((prev) => (prev.includes(view) ? prev : [...prev, view]));
   };
 
+  // Helpers for readability in JSX
   const isMounted = (view) => mountedViews.includes(view);
   const isActive = (view) => activeView === view;
 
+  // ------------------------------
+  // On first load:
+  // If URL contains ?view=PURCHASE or PO quick-create params,
+  // automatically open Purchase view.
+  // Example URL:
+  //   ?view=PURCHASE
+  //   ?itemCode=...&qty=...&warehouse=...
+  // ------------------------------
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
     const viewParam = params.get("view");
-    const hasPOParams = params.get("itemCode") || params.get("qty") || params.get("warehouse");
+    const hasPOParams =
+      params.get("itemCode") || params.get("qty") || params.get("warehouse");
 
     if (viewParam === "PURCHASE" || hasPOParams) {
       handleViewChange(VIEWS.PURCHASE);
@@ -1099,8 +94,11 @@ function App() {
 
   return (
     <div className="app-shell">
-      {/* LEFT SIDEBAR */}
+      {/* ==============================
+          LEFT SIDEBAR
+         ============================== */}
       <aside className="app-sidebar">
+        {/* Sidebar header / branding */}
         <div className="app-sidebar-header">
           <div className="app-logo-circle">S</div>
           <div className="app-logo-text">
@@ -1109,22 +107,28 @@ function App() {
           </div>
         </div>
 
+        {/* Sidebar navigation groups */}
         <nav className="app-nav">
-          {/* 1. Stock tracker */}
+          {/* 1) Stock tracker group */}
           <div className="app-nav-group">
             <div className="app-nav-group-label">Stock tracker</div>
 
             <button
               type="button"
-              className={"app-nav-link" + (activeView === VIEWS.DAILY_STOCK ? " active" : "")}
+              className={
+                "app-nav-link" + (activeView === VIEWS.DAILY_STOCK ? " active" : "")
+              }
               onClick={() => handleViewChange(VIEWS.DAILY_STOCK)}
             >
               <span className="app-nav-dot app-nav-dot-blue" />
               Daily Stock Summary
             </button>
+
             <button
               type="button"
-              className={"app-nav-link" + (activeView === VIEWS.STOCK_REORDER ? " active" : "")}
+              className={
+                "app-nav-link" + (activeView === VIEWS.STOCK_REORDER ? " active" : "")
+              }
               onClick={() => handleViewChange(VIEWS.STOCK_REORDER)}
             >
               <span className="app-nav-dot app-nav-dot-amber" />
@@ -1132,12 +136,15 @@ function App() {
             </button>
           </div>
 
-          {/* 3. Purchase */}
+          {/* 2) Purchase group */}
           <div className="app-nav-group">
             <div className="app-nav-group-label">Purchase</div>
+
             <button
               type="button"
-              className={"app-nav-link" + (activeView === VIEWS.PURCHASE ? " active" : "")}
+              className={
+                "app-nav-link" + (activeView === VIEWS.PURCHASE ? " active" : "")
+              }
               onClick={() => handleViewChange(VIEWS.PURCHASE)}
             >
               <span className="app-nav-dot app-nav-dot-green" />
@@ -1145,7 +152,7 @@ function App() {
             </button>
           </div>
 
-          {/* 4. Sales */}
+          {/* 3) Sales group */}
           <div className="app-nav-group">
             <div className="app-nav-group-label">Sales</div>
 
@@ -1160,7 +167,9 @@ function App() {
 
             <button
               type="button"
-              className={"app-nav-link" + (isActive(VIEWS.SALES_RETURN) ? " active" : "")}
+              className={
+                "app-nav-link" + (isActive(VIEWS.SALES_RETURN) ? " active" : "")
+              }
               onClick={() => handleViewChange(VIEWS.SALES_RETURN)}
             >
               <span className="app-nav-dot app-nav-dot-amber" />
@@ -1168,7 +177,7 @@ function App() {
             </button>
           </div>
 
-          {/* 5. Manufacturing & Adjustments */}
+          {/* 4) Manufacturing & Adjustments group */}
           <div className="app-nav-group">
             <div className="app-nav-group-label">Manufacturing & Adjustments</div>
 
@@ -1181,15 +190,7 @@ function App() {
               Packing and Stock Transfer
             </button>
 
-            {/*<button
-              type="button"
-              className={"app-nav-link" + (activeView === VIEWS.OPENING_STOCK ? " active" : "")}
-              onClick={() => handleViewChange(VIEWS.OPENING_STOCK)}
-            >
-              <span className="app-nav-dot app-nav-dot-amber" />
-              Opening Stock
-            </button>*/}
-
+            {/* Work Order Flow and WO Tracking are currently disabled */}
             {/*<button
               type="button"
               className={"app-nav-link" + (isActive(VIEWS.WORK_ORDER_FLOW) ? " active" : "")}
@@ -1210,7 +211,9 @@ function App() {
 
             <button
               type="button"
-              className={"app-nav-link" + (isActive(VIEWS.MF_WORKFLOW) ? " active" : "")}
+              className={
+                "app-nav-link" + (isActive(VIEWS.MF_WORKFLOW) ? " active" : "")
+              }
               onClick={() => handleViewChange(VIEWS.MF_WORKFLOW)}
             >
               <span className="app-nav-dot app-nav-dot-purple" />
@@ -1218,12 +221,15 @@ function App() {
             </button>
           </div>
 
-          {/* 6. Suppliers */}
+          {/* 5) Suppliers group */}
           <div className="app-nav-group">
             <div className="app-nav-group-label">Suppliers & Transporters</div>
+
             <button
               type="button"
-              className={"app-nav-link" + (activeView === VIEWS.SUPPLIERS ? " active" : "")}
+              className={
+                "app-nav-link" + (activeView === VIEWS.SUPPLIERS ? " active" : "")
+              }
               onClick={() => handleViewChange(VIEWS.SUPPLIERS)}
             >
               <span className="app-nav-dot app-nav-dot-pink" />
@@ -1231,12 +237,15 @@ function App() {
             </button>
           </div>
 
-          {/* 7. Analytics */}
+          {/* 6) Analytics group */}
           <div className="app-nav-group">
             <div className="app-nav-group-label">Analytics</div>
+
             <button
               type="button"
-              className={"app-nav-link" + (activeView === VIEWS.ANALYTICS ? " active" : "")}
+              className={
+                "app-nav-link" + (activeView === VIEWS.ANALYTICS ? " active" : "")
+              }
               onClick={() => handleViewChange(VIEWS.ANALYTICS)}
             >
               <span className="app-nav-dot app-nav-dot-purple" />
@@ -1245,63 +254,84 @@ function App() {
           </div>
         </nav>
 
+        {/* Sidebar footer */}
         <div className="app-sidebar-footer">
           <div className="app-sidebar-footer-label">Today</div>
           <div className="app-sidebar-footer-badge">Stock & Supplier tracker</div>
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
+      {/* ==============================
+          MAIN CONTENT
+         ============================== */}
       <main className="app-main">
-        {/* DAILY STOCK */}
+        {/* Daily Stock Summary view */}
         {isMounted(VIEWS.DAILY_STOCK) && (
-          <div className="app-main-inner" style={{ display: isActive(VIEWS.DAILY_STOCK) ? "block" : "none" }}>
+          <div
+            className="app-main-inner"
+            style={{ display: isActive(VIEWS.DAILY_STOCK) ? "block" : "none" }}
+          >
             <StockSummaryTabsView />
           </div>
         )}
 
-        {/* ✅ STOCK REORDER */}
+        {/* Stock Reorder view */}
         {isMounted(VIEWS.STOCK_REORDER) && (
-          <div className="app-main-inner" style={{ display: isActive(VIEWS.STOCK_REORDER) ? "block" : "none" }}>
+          <div
+            className="app-main-inner"
+            style={{ display: isActive(VIEWS.STOCK_REORDER) ? "block" : "none" }}
+          >
             <StockReorder />
           </div>
         )}
 
-        {/* PURCHASE */}
+        {/* Purchase Orders view */}
         {isMounted(VIEWS.PURCHASE) && (
-          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.PURCHASE) ? "block" : "none" }}>
+          <div
+            className="app-main-inner app-main-stack"
+            style={{ display: isActive(VIEWS.PURCHASE) ? "block" : "none" }}
+          >
             <div className="app-panel">
-              <PurchaseOrder />
+              <PurchaseOrderView />
             </div>
           </div>
         )}
 
-        {/* SALES: EASYSHIP */}
+        {/* Sales view */}
         {isMounted(VIEWS.SALES) && (
-          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.SALES) ? "block" : "none" }}>
+          <div
+            className="app-main-inner app-main-stack"
+            style={{ display: isActive(VIEWS.SALES) ? "block" : "none" }}
+          >
             <div className="app-panel">
-              <SalesEasyShip />
+              <SalesOrderView />
             </div>
           </div>
         )}
 
-        {/* SALES: RETURN */}
+        {/* Sales Return view */}
         {isMounted(VIEWS.SALES_RETURN) && (
-          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.SALES_RETURN) ? "block" : "none" }}>
+          <div
+            className="app-main-inner app-main-stack"
+            style={{ display: isActive(VIEWS.SALES_RETURN) ? "block" : "none" }}
+          >
             <div className="app-panel app-panel-secondary">
-              <SalesReturnTabsView/>
+              <SalesReturnTabsView />
             </div>
           </div>
         )}
 
-        {/* ✅ MFG (tabs moved to new file) */}
+        {/* Manufacturing tabs view */}
         {isMounted(VIEWS.MFG) && (
-          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.MFG) ? "block" : "none" }}>
+          <div
+            className="app-main-inner app-main-stack"
+            style={{ display: isActive(VIEWS.MFG) ? "block" : "none" }}
+          >
             <MfgTabsView />
           </div>
         )}
 
-        {/* WORK ORDER FLOW */}
+        {/* Work Order Flow view is currently disabled */}
         {/*{isMounted(VIEWS.WORK_ORDER_FLOW) && (
           <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.WORK_ORDER_FLOW) ? "block" : "none" }}>
             <div className="app-panel">
@@ -1310,7 +340,7 @@ function App() {
           </div>
         )}*/}
 
-        {/* WO TRACKING */}
+        {/* WO Tracking view is currently disabled */}
         {/*{isMounted(VIEWS.WO_TRACKING) && (
           <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.WO_TRACKING) ? "block" : "none" }}>
             <div className="app-panel">
@@ -1319,16 +349,19 @@ function App() {
           </div>
         )}*/}
 
-        {/* MF WORKFLOW */}
+        {/* MF Workflow view */}
         {isMounted(VIEWS.MF_WORKFLOW) && (
-          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.MF_WORKFLOW) ? "block" : "none" }}>
+          <div
+            className="app-main-inner app-main-stack"
+            style={{ display: isActive(VIEWS.MF_WORKFLOW) ? "block" : "none" }}
+          >
             <div className="app-panel">
               <MfWorkflow />
             </div>
           </div>
         )}
 
-        {/* OPENING STOCK */}
+        {/* Opening Stock view is currently disabled */}
         {/*{isMounted(VIEWS.OPENING_STOCK) && (
           <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.OPENING_STOCK) ? "block" : "none" }}>
             <section className="app-panel app-panel-primary">
@@ -1337,18 +370,24 @@ function App() {
           </div>
         )}*/}
 
-        {/* SUPPLIERS */}
+        {/* Supplier view */}
         {isMounted(VIEWS.SUPPLIERS) && (
-          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.SUPPLIERS) ? "block" : "none" }}>
+          <div
+            className="app-main-inner app-main-stack"
+            style={{ display: isActive(VIEWS.SUPPLIERS) ? "block" : "none" }}
+          >
             <section className="app-panel app-panel-primary">
-              <SupplierList />
+              <SupplierTabView />
             </section>
           </div>
         )}
 
-        {/* ANALYTICS */}
+        {/* Analytics view */}
         {isMounted(VIEWS.ANALYTICS) && (
-          <div className="app-main-inner app-main-stack" style={{ display: isActive(VIEWS.ANALYTICS) ? "block" : "none" }}>
+          <div
+            className="app-main-inner app-main-stack"
+            style={{ display: isActive(VIEWS.ANALYTICS) ? "block" : "none" }}
+          >
             <div className="app-panel app-panel-primary">
               <Analytics />
             </div>

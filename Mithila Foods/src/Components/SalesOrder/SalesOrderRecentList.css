@@ -1,0 +1,292 @@
+/* src/CSS/SalesOrderRecentList.css
+   --------------------------------
+   Styling for the "Recent Sales" panel (right side).
+   Goal: Same clean look like your Sales Return screens:
+   - Simple header
+   - Good spacing
+   - Clear filter row
+   - Nice status pills
+   - No heavy shadows
+*/
+
+/* ==============================
+   Remove outer wrapper "pill"
+   ============================== */
+.app-panel:has(.sales-order) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.app-main-inner:has(.sales-order) {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* ==============================
+   Main panel container
+   ============================== */
+.sales-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+  overflow: visible;
+  box-shadow: none; /* keep it flat like other screens */
+}
+
+/* If you have 2 panels side-by-side, second one can be slightly tinted */
+.sales-panel + .sales-panel {
+  background: #f8fafc;
+}
+
+/* ==============================
+   Header
+   ============================== */
+.sales-recent-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sales-recent-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 750;
+  color: #0f172a;
+}
+
+.sales-recent-subtitle {
+  margin-top: 2px;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.sales-recent-header-actions {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ==============================
+   Filter row
+   ============================== */
+.sales-recent-filter-row {
+  margin-top: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.sales-recent-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 260px;
+}
+
+.sales-recent-filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.sales-recent-count {
+  font-size: 12px;
+}
+
+/* Muted helper */
+.sales-order .text-muted {
+  color: #64748b;
+}
+
+/* ==============================
+   Inputs / Select
+   ============================== */
+.sales-order .input,
+.sales-order .select {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sales-order .input:focus,
+.sales-order .select:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* ==============================
+   Buttons (match the style system)
+   ============================== */
+.sales-order .btn {
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-weight: 700;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.sales-order .btn.btn-primary {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.sales-order .btn.btn-secondary {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.sales-order .btn.btn-secondary:hover {
+  background: #f8fafc;
+}
+
+.sales-order .btn.btn-outline {
+  background: transparent;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.sales-order .btn.btn-outline:hover {
+  background: #f8fafc;
+}
+
+.sales-order .btn.btn-sm {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+}
+
+.sales-order .btn.btn-xs {
+  min-height: 28px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+}
+
+/* Inline buttons inside Actions cell */
+.sales-actions-inline {
+  display: inline-flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Small muted text after invoice name */
+.muted-inline {
+  opacity: 0.7;
+  margin-left: 6px;
+}
+
+/* ==============================
+   Status pills (Draft / Paid / Unpaid)
+   ============================== */
+.sales-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid #e2e8f0;
+}
+
+/* Draft */
+.sales-status-pill.draft {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Paid */
+.sales-status-pill.paid {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+/* Unpaid */
+.sales-status-pill.unpaid {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+}
+
+/* ==============================
+   Table
+   ============================== */
+.sales-order .table-container,
+.sales-recent-table-wrapper {
+  margin-top: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow-x: auto;
+}
+
+.sales-order .table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  table-layout: fixed;
+}
+
+.sales-order .table thead th {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.sales-order .table th,
+.sales-order .table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.sales-order .table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.sales-recent-name-cell {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sales-recent-amount-cell {
+  text-align: right;
+}
+
+.sales-recent-actions-cell {
+  white-space: normal; /* so buttons can wrap */
+}
+
+/* Loading / empty messages */
+.sales-recent-loading,
+.sales-recent-empty {
+  margin-top: 10px;
+  padding: 10px 0;
+}
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+  .sales-recent-filter {
+    min-width: 0;
+    width: 100%;
+  }
+  .sales-recent-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

@@ -1,0 +1,214 @@
+/* src/CSS/SalesReturnRecentList.css
+   This CSS is meant ONLY for the "recent list" part.
+   Notes:
+   - Outer layout + button system styles are shared from your global app.
+   - We keep a simple clean table card (border + white background).
+*/
+
+/* =========================================================
+   Remove outer wrapper "pill" (panel) where this page renders
+   ========================================================= */
+.app-panel:has(.sales-return) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.app-panel.app-panel-primary:has(.sales-return),
+.app-panel.app-panel-secondary:has(.sales-return) {
+  background: transparent !important;
+}
+
+.app-main-inner:has(.sales-return) {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* =========================================================
+   Page root (shared root - parent wrapper)
+   ========================================================= */
+.sales-return {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 10px 18px;
+  width: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow: visible;
+}
+
+.sales-return .text-muted {
+  color: #64748b;
+}
+
+/* =========================================================
+   Buttons (ensure consistent radius inside this page)
+   ========================================================= */
+.sales-return .btn {
+  border-radius: 10px;
+}
+
+/* Primary / Accent buttons (dark) */
+.sales-return .btn.btn-primary,
+.sales-return .btn.btn-accent {
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.sales-return .btn.btn-primary:hover,
+.sales-return .btn.btn-accent:hover {
+  filter: brightness(1.05);
+}
+
+/* Ghost buttons */
+.sales-return .btn.btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #0f172a;
+}
+
+.sales-return .btn.btn-ghost:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+/* =========================================================
+   Recent Returns section (this component wrapper)
+   ========================================================= */
+.sales-return-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Header row: title + buttons */
+.sales-return-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+/* Left side header content */
+.sales-return-list-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Right side header content (controls) */
+.sales-return-list-header-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sales-return-list-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sales-return-list-subtitle {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* Loading / empty lines */
+.sales-return-list-loading,
+.sales-return-list-empty {
+  padding: 8px 2px;
+}
+
+/* =========================================================
+   Table wrapper (card)
+   ========================================================= */
+.sales-return .table-container,
+.sales-return-table-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+/* =========================================================
+   Table styles
+   ========================================================= */
+.sales-return .table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.88rem;
+}
+
+.sales-return .table thead {
+  background: #f8fafc;
+}
+
+.sales-return .table th,
+.sales-return .table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: top;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sales-return .table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* Name column */
+.sales-return-name-cell {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Small status pills (Draft / Editing) */
+.sales-return-pill {
+  margin-left: 8px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.sales-return-pill-muted {
+  opacity: 0.65;
+}
+
+/* Qty column */
+.sales-return-qty-cell {
+  font-variant-numeric: tabular-nums;
+}
+
+.sales-return-qty-uom {
+  opacity: 0.7;
+}
+
+/* Amount column (right align) */
+.sales-return-amount-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Action column buttons layout */
+.sales-return-action-cell {
+  white-space: normal; /* allow wrapping of buttons */
+}
+
+.sales-return-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

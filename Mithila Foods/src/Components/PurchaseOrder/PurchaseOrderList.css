@@ -1,0 +1,369 @@
+/* src/CSS/PurchaseOrderList.css
+   BASIC theme (same feel as StockTransfer / PurchaseOrder)
+   Notes for new dev:
+   - This file styles ONLY the PurchaseOrderList table section.
+   - We intentionally remove extra "card/pill" styling from the parent page.
+   - Table wrapper is the only visible "card".
+   - Buttons are small and scoped to .po-list so other pages are not affected.
+*/
+.po-card-list .po-list {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* --------------------------------
+   Wrapper
+   - Main list container (no background, no border)
+   -------------------------------- */
+.po-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* --------------------------------
+   Header (simple)
+   - left: title + subtitle
+   - right: filters + sort + refresh + page info
+   -------------------------------- */
+.po-list-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.po-list-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.po-list-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.po-list-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* right info (not chip)
+   This is used for small info blocks on the right side.
+*/
+.po-list-pill {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* common muted text */
+.text-muted {
+  color: #64748b;
+}
+
+/* --------------------------------
+   Alerts (good errors/success)
+   - Uses .alert + .alert-error / .alert-success
+   -------------------------------- */
+.po-list .alert {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.po-list .alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.po-list .alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+/* --------------------------------
+   Table wrapper (THIS is the only "card")
+   - White background + border + rounded corners
+   - Horizontal scroll if table is wide
+   -------------------------------- */
+.po-list-table-wrapper {
+  margin-top: 6px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  overflow-x: auto;
+}
+
+/* --------------------------------
+   Table (basic)
+   - min-width ensures columns don't crush too much
+   -------------------------------- */
+.po-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  min-width: 1100px;
+}
+
+/* Table header background */
+.po-list-table thead {
+  background: #f8fafc;
+}
+
+/* Table cells */
+.po-list-table th,
+.po-list-table td {
+  padding: 9px 10px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+/* Header text style */
+.po-list-table th {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* Row hover effect */
+.po-list-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* cells helpers */
+.po-cell-name {
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.po-cell-money {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.po-cell-actions {
+  white-space: nowrap;
+}
+
+/* --------------------------------
+   Actions stack (tight)
+   - Buttons sit next to each other with small gap
+   -------------------------------- */
+.po-actions-stack {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: stretch;
+  min-width: 150px;
+}
+
+/* --------------------------------
+   QC inline editor (tight + aligned)
+   - Used when user is entering good qty per item
+   -------------------------------- */
+.qc-inline {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  min-width: 200px;
+}
+
+.qc-inline-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+/* Input used for QC good qty */
+.qc-inline-input {
+  width: 100%;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  padding: 6px 8px;
+  font-size: 0.82rem;
+  outline: none;
+}
+
+/* Focus style for QC input */
+.qc-inline-input:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* --------------------------------
+   Select (MF Status)
+   - Styles the dropdown in the MF Status column
+   -------------------------------- */
+.po-list-table select {
+  width: 100%;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 4px 8px;
+  font-size: 0.82rem;
+  outline: none;
+}
+
+/* Focus style for select */
+.po-list-table select:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* --------------------------------
+   Buttons (SMALL like StockTransfer)
+   Scoped to this component so it doesn't change other pages.
+   -------------------------------- */
+.po-list .btn {
+  height: 30px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  /* NOTE: this border is currently set to red in your base */
+  border: 1px solid #f73434;
+
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: none;
+}
+
+/* Extra-small button variant */
+.po-list .btn-xs {
+  height: 28px;
+  padding: 4px 10px;
+  font-size: 0.76rem;
+}
+
+/* Disabled buttons */
+.po-list .btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* primary + accent buttons (dark) */
+.po-list .btn-primary,
+.po-list .btn-accent {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+/* ✅ FIX 1: green hover + NO brightness
+   - Applies to primary and accent buttons
+*/
+.po-list .btn-primary:hover:not(:disabled),
+.po-list .btn-accent:hover:not(:disabled) {
+  filter: none !important;
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #ffffff !important;
+}
+
+/* outline button (white) */
+.po-list .btn-outline {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.po-list .btn-outline:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+/* ghost button (transparent) */
+.po-list .btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: #0f172a;
+}
+
+.po-list .btn-ghost:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+/* QC Fail button (red-ish) */
+.po-list .btn-danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+/* ✅ FIX 2: QC Fail hover should NOT change */
+.po-list .btn-danger:hover:not(:disabled) {
+  filter: none !important;
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #991b1b !important;
+}
+
+/* --------------------------------
+   Pagination (small)
+   -------------------------------- */
+.po-list-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.po-list-page-text {
+  font-size: 0.86rem;
+  color: #64748b;
+  font-weight: 700;
+}
+
+/* Pagination buttons */
+.page-btn {
+  height: 30px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.page-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

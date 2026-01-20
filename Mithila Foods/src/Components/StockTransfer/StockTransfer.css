@@ -1,0 +1,475 @@
+/* src/StockTransfer.css */
+
+/* ==============================
+   App wrapper overrides
+   These rules remove the outer "panel" look because this page already has its own layout.
+   ============================== */
+.app-panel:has(.stock-transfer) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Also force transparent background for primary/secondary panel variants */
+.app-panel.app-panel-primary:has(.stock-transfer),
+.app-panel.app-panel-secondary:has(.stock-transfer) {
+  background: transparent !important;
+}
+
+/* Make sure the main container uses full width on this screen */
+.app-main-inner:has(.stock-transfer) {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* ==============================
+   Page container
+   ============================== */
+.stock-transfer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 10px 18px;
+  width: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* Needed so dropdown popovers are not cut off */
+  overflow: visible;
+}
+
+/* ==============================
+   Header (title + subtitle + count)
+   ============================== */
+.stock-transfer-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  /* No card styling here */
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.stock-transfer-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stock-transfer-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: normal;
+}
+
+.stock-transfer-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* Right side count text */
+.stock-transfer-pill {
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Mobile header alignment */
+@media (max-width: 700px) {
+  .stock-transfer-header {
+    align-items: flex-start;
+  }
+}
+
+/* ==============================
+   Alerts
+   These match the styles used in Supplier pages.
+   ============================== */
+.alert {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.text-muted {
+  color: #64748b;
+}
+
+/* ==============================
+   Form container
+   This is the main white card that holds the whole form.
+   ============================== */
+.stock-transfer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  padding: 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+
+  /* Needed so dropdown popovers are not cut off */
+  overflow: visible;
+}
+
+/* Top form section layout: company/date/from/to */
+.stock-transfer-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: end;
+
+  overflow: visible;
+}
+
+/* Stack the grid into one column on smaller screens */
+@media (max-width: 900px) {
+  .stock-transfer-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stock-transfer-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stock-transfer-field-label {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Input/select styling scoped to this page only */
+.stock-transfer .input,
+.stock-transfer .select {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stock-transfer .input:focus,
+.stock-transfer .select:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* Read-only fields look slightly grey */
+.stock-transfer .input-readonly {
+  background: #f8fafc;
+  cursor: default;
+}
+
+/* ==============================
+   Items section header
+   ============================== */
+.stock-transfer-items-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stock-transfer-items-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* ==============================
+   Buttons (scoped)
+   ============================== */
+.stock-transfer .btn {
+  border-radius: 10px;
+}
+
+/* Primary action buttons */
+.stock-transfer .btn.btn-primary,
+.stock-transfer .btn.btn-accent {
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.stock-transfer .btn.btn-primary:hover,
+.stock-transfer .btn.btn-accent:hover {
+  filter: brightness(1.05);
+}
+
+/* Ghost buttons (like Remove) */
+.stock-transfer .btn.btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #0f172a;
+}
+
+.stock-transfer .btn.btn-ghost:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+/* ==============================
+   Row cards (each line item)
+   ============================== */
+.stock-transfer-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  overflow: visible;
+}
+
+.stock-transfer-row-card {
+  border-radius: 12px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  /* Needed so dropdown popovers are not cut off */
+  overflow: visible;
+}
+
+.stock-transfer-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stock-transfer-row-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Grid inside each row card */
+.stock-transfer-row-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 2.2fr) repeat(3, minmax(160px, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+
+  overflow: visible;
+}
+
+/* Adjust row grid layout on smaller screens */
+@media (max-width: 1100px) {
+  .stock-transfer-row-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 750px) {
+  .stock-transfer-row-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stock-transfer-row-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Row footer area for row loading message or error */
+.stock-transfer-row-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+.stock-transfer-row-loading {
+  color: #64748b;
+}
+
+/* Row error shown as a small pill */
+.stock-transfer-row-error {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+/* ==============================
+   Submit button row
+   ============================== */
+.stock-transfer-submit-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* ==============================
+   Search dropdown (stdrop)
+   Custom dropdown used for item selection.
+   This is scoped to .stock-transfer so it does not affect other pages.
+   ============================== */
+.stock-transfer .stdrop {
+  position: relative;
+}
+
+/* Main dropdown control */
+.stock-transfer .stdrop-control {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+/* Highlight when dropdown is open */
+.stock-transfer .stdrop-control.is-open {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+.stock-transfer .stdrop-value {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+/* Selected item code */
+.stock-transfer .stdrop-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #0f172a;
+}
+
+/* Selected item name + UOM */
+.stock-transfer .stdrop-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stock-transfer .stdrop-placeholder {
+  color: #64748b;
+}
+
+.stock-transfer .stdrop-caret {
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+/* Dropdown panel */
+.stock-transfer .stdrop-popover {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* Search box inside dropdown */
+.stock-transfer .stdrop-search {
+  padding: 10px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+/* Scrollable items list */
+.stock-transfer .stdrop-list {
+  max-height: 280px;
+  overflow: auto;
+  padding: 8px;
+}
+
+/* Each dropdown option */
+.stock-transfer .stdrop-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.stock-transfer .stdrop-item:hover {
+  background: #f1f5f9;
+}
+
+.stock-transfer .stdrop-item-title {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.stock-transfer .stdrop-item-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Empty state when search returns nothing */
+.stock-transfer .stdrop-empty {
+  padding: 14px;
+  color: #64748b;
+}
+
+/* Small hint at the bottom of the list */
+.stock-transfer .stdrop-hint {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #64748b;
+}

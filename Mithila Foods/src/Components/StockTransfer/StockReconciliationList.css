@@ -1,0 +1,91 @@
+/* StockReconciliationList.css */
+
+/* Main page spacing */
+.sr-page {
+  padding: 16px;
+}
+
+/* Header area (title + subtitle) */
+.sr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.sr-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sr-subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+/* Filters container */
+.sr-filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+/* One filter block (label + input) */
+.sr-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sr-label {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+/* Date inputs */
+.sr-input {
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  outline: none;
+}
+
+/* Checkbox row */
+.sr-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 8px;
+  user-select: none;
+}
+
+/* Apply button matches filter row height */
+.sr-apply-btn {
+  height: 38px;
+  border-radius: 10px;
+  padding: 0 14px;
+}
+
+/* Table wrapper spacing */
+.sr-table-wrapper {
+  margin-top: 10px;
+}
+
+/* Optional ID cell styling if you add an ID column later */
+.sr-cell-id {
+  font-weight: 600;
+}
+
+/* Empty state message padding */
+.sr-empty {
+  padding: 12px;
+}

@@ -1,0 +1,503 @@
+/* src/CSS/SalesOrder.css
+   Clean basic theme (like StockTransfer)
+   - NO outer gradient/shadow
+   - Proper grid alignment
+   - Dropdown (stdrop) styled (title + sub)
+   - Fix invalid grid: minmax(240px, fr) -> minmax(240px, 1fr)
+   - Scoped styles only (won’t affect other pages)
+*/
+
+/* ==============================
+   Remove outer wrapper "pill"
+   ============================== */
+.app-panel:has(.sales-order) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.app-main-inner:has(.sales-order) {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* ==============================
+   Page
+   ============================== */
+.sales-order {
+  width: 100%;
+  padding: 12px 10px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow: visible;
+}
+
+/* ==============================
+   Header
+   ============================== */
+.sales-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sales-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sales-title {
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 650; /* less heavy */
+  color: #0f172a;
+}
+
+.sales-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.sales-header-pill {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* ==============================
+   Panels (two shades only)
+   ============================== */
+.sales-panel {
+  background: #ffffff;              /* form panel */
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;             /* less curve */
+  padding: 12px;
+  overflow: visible;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); /* ONE subtle shadow */
+}
+
+.sales-panel + .sales-panel {
+  background: #f8fafc;             /* table/recent panel */
+  box-shadow: none;                /* no extra shadow */
+}
+
+/* ==============================
+   Alerts (scoped)
+   ============================== */
+.sales-order .alert {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.sales-order .alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.sales-order .alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.sales-order .text-muted {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+/* ==============================
+   Tabs
+   ============================== */
+.sales-tabs {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 12px;
+}
+
+.sales-tab {
+  appearance: none;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sales-tab.is-active {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.sales-tab-body {
+  overflow: visible;
+}
+
+/* ==============================
+   Form grid
+   ============================== */
+.sales-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sales-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 12px 12px;
+  align-items: end;
+  overflow: visible;
+}
+
+@media (max-width: 960px) {
+  .sales-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sales-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sales-field-label,
+.sales-order .form-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500; /* less heavy */
+}
+
+/* Inputs/selects scoped */
+.sales-order .input,
+.sales-order .select {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sales-order .input:focus,
+.sales-order .select:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* ==============================
+   Buttons (scoped)
+   ============================== */
+.sales-order .btn {
+  border-radius: 10px; /* less curve */
+  border: 1px solid transparent;
+  font-weight: 600;    /* less heavy */
+  box-shadow: none;
+}
+
+.sales-order .btn.btn-primary,
+.sales-order .btn.btn-accent {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.sales-order .btn.btn-primary:hover,
+.sales-order .btn.btn-accent:hover {
+  filter: brightness(1.05);
+}
+
+.sales-order .btn.btn-secondary {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.sales-order .btn.btn-secondary:hover {
+  background: #f8fafc;
+}
+
+.sales-order .btn.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: #0f172a;
+}
+
+.sales-order .btn.btn-ghost:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+/* optional sizes */
+.sales-order .btn.btn-sm {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+}
+
+/* ==============================
+   Items section
+   ============================== */
+.sales-items-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sales-items-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650; /* less heavy */
+  color: #0f172a;
+}
+
+.sales-items-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sales-item-row-card {
+  border-radius: 10px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  overflow: visible;
+  box-shadow: none; /* no extra shadows */
+}
+
+.sales-item-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sales-item-row-title {
+  font-size: 0.9rem;
+  font-weight: 650; /* less heavy */
+  color: #0f172a;
+}
+
+/* FIX: proper fr values */
+.sales-item-row-grid{
+  display: grid;
+  grid-template-columns:
+    minmax(280px, 2fr)   /* Item (big) */
+    120px                /* Qty (small) */
+    140px                /* Available Qty (small) */
+    minmax(180px, 1fr);  /* Rate */
+  gap: 10px 12px;
+  align-items: end;
+  overflow: visible;
+}
+
+@media (max-width: 960px) {
+  .sales-item-row-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sales-row-error {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #991b1b;
+}
+
+.sales-submit-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.sales-bulk-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ==============================
+   Dropdown (stdrop) scoped (THIS fixes your screenshot)
+   ============================== */
+.sales-order .stdrop {
+  position: relative;
+}
+
+.sales-order .stdrop-control {
+  width: 100%;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.sales-order .stdrop-control.is-open {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+.sales-order .stdrop-value {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.sales-order .stdrop-title {
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 0.9rem;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sales-order .stdrop-sub {
+  font-size: 0.78rem; /* smaller second line */
+  color: #64748b;
+  margin-top: 2px;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sales-order .stdrop-placeholder {
+  color: #64748b;
+}
+
+.sales-order .stdrop-caret {
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+/* popover */
+.sales-order .stdrop-popover {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 9999;
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+}
+
+.sales-order .stdrop-search {
+  padding: 10px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.sales-order .stdrop-list {
+  max-height: 320px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.sales-order .stdrop-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.sales-order .stdrop-item:hover {
+  background: #f1f5f9;
+}
+
+.sales-order .stdrop-item-title {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sales-order .stdrop-item-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.sales-order .stdrop-empty,
+.sales-order .stdrop-hint {
+  padding: 10px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ==============================
+   Tables (scoped)
+   ============================== */
+.sales-order .table-container {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  overflow-x: auto; /* only if needed */
+}
+
+.sales-order .table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.sales-order .table thead th {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.sales-order .table th,
+.sales-order .table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.sales-order .table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.sales-available-qty{
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.8;
+}

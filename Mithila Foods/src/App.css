@@ -1,4 +1,8 @@
 /* ========= APP LAYOUT SHELL ========= */
+/* Main page layout:
+   - Left sidebar fixed width
+   - Right area takes remaining space
+   - Full screen height */
 .app-shell {
   display: grid;
   grid-template-columns: 210px minmax(0, 1fr);
@@ -7,11 +11,15 @@
   color: var(--color-text-main);
 }
 
+/* Responsive layout for smaller screens:
+   - Sidebar column becomes 0 in grid
+   - Sidebar becomes fixed overlay on left */
 @media (max-width: 900px) {
   .app-shell {
     grid-template-columns: 0 minmax(0, 1fr);
   }
 
+  /* Sidebar becomes fixed so it can slide/overlay on mobile */
   .app-sidebar {
     position: fixed;
     inset: 0 auto 0 0;
@@ -20,6 +28,7 @@
     z-index: 20;
   }
 
+  /* Reduce main padding on small screens */
   .app-main {
     padding-left: 12px;
     padding-right: 12px;
@@ -27,6 +36,7 @@
 }
 
 /* ========= SIDEBAR ========= */
+/* Left sidebar container styling */
 .app-sidebar {
   background: #111827;
   color: #f3f4f6;
@@ -37,6 +47,7 @@
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Top section in sidebar that shows app title */
 .app-sidebar-header {
   display: flex;
   align-items: center;
@@ -44,6 +55,7 @@
   padding: 6px 6px 8px;
 }
 
+/* Small square logo container */
 .app-logo-circle {
   width: 30px;
   height: 30px;
@@ -57,24 +69,30 @@
   font-size: 0.9rem;
 }
 
+/* Text area beside the logo */
 .app-logo-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
+/* Main title line */
 .app-logo-title {
   font-size: 0.86rem;
   font-weight: 600;
   letter-spacing: 0;
 }
 
+/* Subtitle line under the main title */
 .app-logo-subtitle {
   font-size: 0.72rem;
   color: rgba(243, 244, 246, 0.6);
 }
 
-/* Nav */
+/* ========= SIDEBAR NAV ========= */
+/* Navigation container:
+   - takes remaining sidebar height
+   - scrolls if items overflow */
 .app-nav {
   flex: 1;
   display: flex;
@@ -84,12 +102,14 @@
   overflow-y: auto;
 }
 
+/* Each section group in sidebar */
 .app-nav-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
+/* Group heading text (uppercase) */
 .app-nav-group-label {
   font-size: 0.7rem;
   text-transform: uppercase;
@@ -98,6 +118,7 @@
   padding: 0 8px;
 }
 
+/* Sidebar button style */
 .app-nav-link {
   width: 100%;
   border: 1px solid transparent;
@@ -115,18 +136,21 @@
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
+/* Hover effect for sidebar buttons */
 .app-nav-link:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Active sidebar button */
 .app-nav-link.active {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.14);
   color: #ffffff;
 }
 
-/* Colored dots */
+/* ========= SIDEBAR COLORED DOTS ========= */
+/* Small dot shown before each nav label */
 .app-nav-dot {
   width: 9px;
   height: 9px;
@@ -135,6 +159,7 @@
   opacity: 0.85;
 }
 
+/* Dot colors used by different menu items */
 .app-nav-dot-blue {
   background: #60a5fa;
 }
@@ -154,7 +179,8 @@
   background: #2dd4bf;
 }
 
-/* Sidebar footer */
+/* ========= SIDEBAR FOOTER ========= */
+/* Footer area at bottom of sidebar */
 .app-sidebar-footer {
   padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -164,12 +190,14 @@
   font-size: 0.78rem;
 }
 
+/* Footer heading label */
 .app-sidebar-footer-label {
   color: rgba(243, 244, 246, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
+/* Footer badge style */
 .app-sidebar-footer-badge {
   display: inline-flex;
   align-items: center;
@@ -181,36 +209,44 @@
 }
 
 /* ========= MAIN AREA ========= */
+/* Right-side content area:
+   - has padding
+   - scrolls vertically */
 .app-main {
   padding: 14px 16px;
   overflow-y: auto;
 }
 
+/* Wrapper around each view */
 .app-main-inner {
   width: 100%;
   max-width: none;
   margin: 0;
 }
 
+/* Used when main content stacks blocks vertically */
 .app-main-stack {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
+/* Split layout option (two columns) */
 .app-main-split {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   gap: 14px;
 }
 
+/* On smaller widths, split becomes single column */
 @media (max-width: 1000px) {
   .app-main-split {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
-/* Panels wrapper ONLY (used by App.jsx/MfgTabsView wrappers) */
+/* Panels wrapper ONLY (used by App.jsx/MfgTabsView wrappers)
+   This block is commented out in your code, so it is not currently active. */
 /*.app-panel {
   border-radius: var(--radius-lg);
   background: var(--color-surface);
@@ -218,23 +254,27 @@
   box-shadow: var(--shadow-soft);
   padding: 14px;
 }*/
+
 /* ========= MFG Tabs (Manufacture / Reco / Transfer) ========= */
 
-/* header wrapper (no pill/box) */
+/* Header wrapper for MFG tabs:
+   No visible box, just spacing */
 .mfg-tabs-header {
-  margin-bottom: 12px;     /* keeps spacing like before */
+  margin-bottom: 12px;
   padding: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
 }
 
-/* tab row (no pill/box) */
+/* Tabs row:
+   - aligned to the right
+   - no pill container background */
 .mfg-tabs {
   display: flex;
   gap: 10px;
   align-items: center;
-  justify-content: flex-end;  /* keeps tabs on right like your screenshot */
+  justify-content: flex-end;
 
   padding: 0;
   border: 0;
@@ -242,7 +282,7 @@
   border-radius: 0;
 }
 
-/* Tab button */
+/* One tab button */
 .mfg-tab {
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: #f7f8fa;
@@ -255,11 +295,13 @@
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
+/* Hover effect for tab button */
 .mfg-tab:hover {
   background: #eef0f3;
   border-color: rgba(0, 0, 0, 0.18);
 }
 
+/* Active tab button */
 .mfg-tab.active {
   background: #0b1220;
   color: #ffffff;

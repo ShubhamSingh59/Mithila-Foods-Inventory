@@ -1,0 +1,395 @@
+/* src/CSS/SalesReturnForm.css
+   Same styling system as your other updated pages:
+   - Clean header (no extra pills)
+   - Card with border + soft radius
+   - Rows as clean cards
+   - stdrop dropdown with solid popover (no transparency)
+*/
+
+/* =========================================================
+   Remove outer wrapper "pill"
+   ========================================================= */
+.app-panel:has(.sales-return) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.app-panel.app-panel-primary:has(.sales-return),
+.app-panel.app-panel-secondary:has(.sales-return) {
+  background: transparent !important;
+}
+
+.app-main-inner:has(.sales-return) {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* =========================================================
+   Page root (shared wrapper)
+   ========================================================= */
+.sales-return {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 10px 18px;
+  width: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow: visible;
+}
+
+.sales-return .text-muted {
+  color: #64748b;
+}
+
+/* =========================================================
+   Card
+   ========================================================= */
+.sales-return-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* Card header */
+.sales-return-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sales-return-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sales-return-card-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* =========================================================
+   Top fields
+   ========================================================= */
+.sales-return-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: end;
+  overflow: visible;
+}
+
+@media (max-width: 900px) {
+  .sales-return-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sales-return-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sales-return .form-label,
+.sales-return-field-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Inputs / selects */
+.sales-return .input,
+.sales-return .select {
+  width: 100%;
+  min-height: 36px;
+
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+
+  padding: 8px 10px;
+  font-size: 0.88rem;
+
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sales-return .input:focus,
+.sales-return .select:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* =========================================================
+   Items header
+   ========================================================= */
+.sales-return-items-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.sales-return-section-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* =========================================================
+   Buttons
+   ========================================================= */
+.sales-return .btn {
+  border-radius: 10px;
+}
+
+.sales-return .btn.btn-primary,
+.sales-return .btn.btn-accent {
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.sales-return .btn.btn-primary:hover,
+.sales-return .btn.btn-accent:hover {
+  filter: brightness(1.05);
+}
+
+.sales-return .btn.btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #0f172a;
+}
+
+.sales-return .btn.btn-ghost:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+/* =========================================================
+   Rows
+   ========================================================= */
+.sales-return-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: visible;
+}
+
+.sales-return-row-card {
+  border-radius: 12px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  overflow: visible;
+}
+
+.sales-return-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sales-return-row-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sales-return-row-code {
+  opacity: 0.7;
+  font-weight: 600;
+}
+
+/* Grid for fields */
+.sales-return-row-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(240px, 2.2fr)
+    minmax(140px, 0.9fr)
+    minmax(140px, 0.9fr)
+    minmax(320px, 1.6fr);
+  gap: 10px 12px;
+  align-items: end;
+  overflow: visible;
+}
+
+@media (max-width: 1100px) {
+  .sales-return-row-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 750px) {
+  .sales-return-row-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sales-return-row-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Submit row */
+.sales-return-submit-row {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* =========================================================
+   stdrop dropdown (solid popover, no transparency)
+   ========================================================= */
+.sales-return .stdrop {
+  position: relative;
+}
+
+.sales-return .stdrop-control {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.sales-return .stdrop-control.is-open {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+.sales-return .stdrop-value {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.sales-return .stdrop-title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #0f172a;
+}
+
+.sales-return .stdrop-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sales-return .stdrop-placeholder {
+  color: #64748b;
+}
+
+.sales-return .stdrop-caret {
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+/* Popover */
+.sales-return .stdrop-popover {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.sales-return .stdrop-search {
+  padding: 10px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.sales-return .stdrop-list {
+  max-height: 280px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.sales-return .stdrop-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.sales-return .stdrop-item:hover {
+  background: #f1f5f9;
+}
+
+.sales-return .stdrop-item-title {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sales-return .stdrop-item-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.sales-return .stdrop-empty {
+  padding: 14px;
+  color: #64748b;
+}
+
+.sales-return .stdrop-hint {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Optional error style */
+.input-error {
+  border-color: #dc2626;
+  background-color: #fee2e2;
+}

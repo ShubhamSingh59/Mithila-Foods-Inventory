@@ -1,0 +1,570 @@
+/* PurchaseOrder.css
+   Notes for new dev:
+   - This page is a single stacked page (not two columns for page layout).
+   - We removed the outer "app panel" styling only for this page.
+   - Main card = white (form)
+   - List card = light gray (history list)
+*/
+
+/* ==============================
+   Remove outer wrapper "pill"
+   (so this page looks clean, no extra borders from app shell)
+   ============================== */
+.app-panel:has(.po-page) {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.app-panel.app-panel-primary:has(.po-page),
+.app-panel.app-panel-secondary:has(.po-page) {
+  background: transparent !important;
+}
+
+.app-main-inner:has(.po-page) {
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* ==============================
+   Page layout (STACKED: top + bottom)
+   - The whole page uses vertical stacking
+   ============================== */
+.po-page {
+  width: 100%;
+  padding: 12px 10px 18px;
+  display: flex;              /* stacked layout */
+  flex-direction: column;     /* stacked layout */
+  gap: 12px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow: visible;
+}
+
+/* Responsive: still stacked on smaller widths */
+@media (max-width: 1050px) {
+  .po-page {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* ==============================
+   Cards
+   - .po-card-main: main form area (white)
+   - .po-card-list: list area (light grey)
+   ============================== */
+.po-card {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* MAIN form area: white background */
+.po-card-main {
+  background: #ffffff;
+  padding: 12px;
+}
+
+/* LIST area: light grey background (inside it list box is white) */
+.po-card-list {
+  background: #f8fafc;
+  padding: 12px;
+}
+
+/* ==============================
+   Header
+   - Title + subtitle left
+   - Last PO / editing PO chip right
+   ============================== */
+.po-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.po-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.po-subtitle {
+  margin: 3px 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* Right-side chip text */
+.po-header-chip {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.po-header-chip span {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* ==============================
+   Messages (errors and success)
+   ============================== */
+.po-info-text {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+/* Error and success messages look like alert boxes */
+.po-error-text,
+.po-message-text {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.po-error-text {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.po-message-text {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+/* ==============================
+   Form grid
+   - Two columns on desktop
+   - One column on small screens
+   ============================== */
+.po-form-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  overflow: visible;
+}
+
+@media (max-width: 980px) {
+  .po-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Each column stacks fields vertically */
+.po-form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: visible;
+}
+
+/* Each field = label + input */
+.po-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: visible;
+}
+
+/* Inline fields = 2 columns inside the field (used for qty/rate, and dates) */
+.po-field-inline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+}
+
+@media (max-width: 750px) {
+  .po-field-inline {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Label style */
+.po-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Small hint in label (like optional) */
+.po-label-hint {
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+/* ==============================
+   Inputs
+   - Same look for input, textarea, and dropdown search input
+   ============================== */
+.po-input {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.po-input:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* Notes field */
+.po-textarea {
+  resize: vertical;
+  padding-top: 8px;
+}
+
+/* ==============================
+   Buttons
+   - Primary = dark button
+   - Outline = white button
+   - Accent = dark button (same as primary here)
+   ============================== */
+.po-btn {
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.po-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.po-btn-primary {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.po-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.po-btn-outline {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.po-btn-outline:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.po-btn-accent {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+/* Main action buttons row */
+.po-actions-main {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+
+/* After-actions row shown only after PO exists (Email + PDF) */
+.po-after-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ==============================
+   Search dropdown (stdrop) scoped to PO
+   - Used by supplier and item dropdowns
+   ============================== */
+.po-page .stdrop {
+  position: relative;
+  width: 100%;
+}
+
+/* The dropdown button that looks like an input */
+.po-page .stdrop-control {
+  width: 100%;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.po-page .stdrop-control:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+/* Focus style when open */
+.po-page .stdrop-control.is-open {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
+}
+
+/* Left text block inside dropdown control */
+.po-page .stdrop-value {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+/* First line: main title */
+.po-page .stdrop-title {
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Second line: helper text */
+.po-page .stdrop-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.po-page .stdrop-placeholder {
+  color: #64748b;
+}
+
+.po-page .stdrop-caret {
+  opacity: 0.6;
+  font-size: 14px;
+}
+
+/* Popover box that contains search + list */
+.po-page .stdrop-popover {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* Search input area at top of dropdown */
+.po-page .stdrop-search {
+  padding: 10px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+/* Scrollable list */
+.po-page .stdrop-list {
+  max-height: 280px;
+  overflow: auto;
+  padding: 8px;
+}
+
+/* Each clickable row */
+.po-page .stdrop-item {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* Hover highlight */
+.po-page .stdrop-item:hover {
+  background: #f1f5f9;
+}
+
+.po-page .stdrop-item-title {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.po-page .stdrop-item-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Empty and hint text */
+.po-page .stdrop-empty,
+.po-page .stdrop-hint {
+  padding: 10px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ==============================
+   PurchaseOrderList inside right panel
+   - Makes list look like a normal table (no card chips)
+   ============================== */
+.po-card-list .po-list {
+  margin: 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Table wrapper for horizontal scroll if needed */
+.po-card-list .po-list-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.po-card-list .po-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: 0.86rem;
+}
+
+/* Table header */
+.po-card-list .po-list-table thead th {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+  border-radius: 0 !important;
+}
+
+/* Remove old "chip" row styling */
+.po-card-list .po-list-table tbody tr {
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Simple hover row */
+.po-card-list .po-list-table tbody tr:hover {
+  background: #f8fafc !important;
+}
+
+.po-card-list .po-list-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef2f7;
+  border-radius: 0 !important;
+}
+
+/* Cell helpers */
+.po-card-list .po-cell-name {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.po-card-list .po-cell-money {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.po-card-list .po-cell-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Pagination row under table */
+.po-card-list .po-list-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding-top: 6px;
+  font-size: 0.86rem;
+  color: #64748b;
+}
+
+/* Input error style (used for negative values) */
+.po-input-error {
+  border: 2px solid red;
+  background-color: #ffecec;
+}
+
+/* ===== Hover intent colors (FIXED) =====
+   - Primary create button turns green on hover
+   - Submit outline turns green on hover
+   - Delete turns red on hover
+*/
+
+/* Create Draft (primary) → green hover */
+.po-btn-primary:hover:not(:disabled) {
+  border-color: #16a34a;
+  background: #16a34a;
+  color: #ffffff;
+  filter: none;
+}
+
+/* Submit button (outline inside actions) → green hover
+   but EXCLUDE danger buttons */
+.po-actions-main .po-btn-outline:not(.po-btn-danger):hover:not(:disabled) {
+  border-color: #16a34a;
+  background: #16a34a;
+  color: #ffffff;
+}
+
+/* Keep normal outline hover elsewhere (download pdf etc.) */
+.po-after-actions .po-btn-outline:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+/* Delete Draft → red hover */
+.po-actions-main .po-btn-outline.po-btn-danger:hover:not(:disabled) {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #ffffff;
+}

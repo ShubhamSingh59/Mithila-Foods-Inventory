@@ -1,0 +1,413 @@
+/* src/CSS/SupplierPanel.css */
+
+/* ==============================
+   PAGE WRAPPER
+   ============================== */
+/* Main container for supplier page */
+.supplier-page {
+  padding: 12px 10px 18px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  width: 100%;
+}
+
+/* ==============================
+   TABS (used if you have supplier/transporter tabs)
+   ============================== */
+/* Tabs row container */
+.theme-tabs {
+  display: inline-flex;
+  gap: 10px;
+  padding: 6px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  margin-bottom: 10px;
+}
+
+/* Single tab button */
+.theme-tab-btn {
+  appearance: none;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  color: #0f172a;
+  cursor: pointer;
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease,
+    border-color 160ms ease, transform 120ms ease;
+}
+
+/* Hover state */
+.theme-tab-btn:hover {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+/* Click press effect */
+.theme-tab-btn:active {
+  transform: translateY(0.5px);
+}
+
+/* Selected tab */
+.theme-tab-btn.active {
+  background: #0b1220;
+  color: #ffffff;
+  border-color: rgba(59, 130, 246, 0.55);
+  box-shadow: 0 10px 22px rgba(11, 18, 32, 0.18),
+    0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+/* Keyboard focus */
+.theme-tab-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+/* ==============================
+   SEARCH + FILTER ROW
+   ============================== */
+/* Row containing search input + dropdown filters + search button */
+.supplier-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+/* Wrapper used to place search icon inside input */
+.supplier-search-input-wrapper {
+  position: relative;
+  flex: 1 1 340px;
+  min-width: 0;
+}
+
+/* Search icon inside the input */
+.supplier-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  opacity: 0.55;
+}
+
+/* Search text input */
+.supplier-search-input {
+  width: 100%;
+  padding: 9px 10px 9px 30px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Search input focus state */
+.supplier-search-input:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25);
+}
+
+/* Dropdown filters (category/status) */
+.supplier-filter-select {
+  min-width: 160px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Dropdown focus state */
+.supplier-filter-select:focus {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25);
+}
+
+/* Search button styling (uses your existing .btn .btn-primary classes too) */
+.supplier-search-btn.btn.btn-primary {
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  box-shadow: none;
+}
+
+/* Search button hover */
+.supplier-search-btn.btn.btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+/* ==============================
+   HEADER (title + counts)
+   ============================== */
+/* Top header row above the table */
+.supplier-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+
+/* Left side title area */
+.supplier-list-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* Main title */
+.supplier-list-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* Subtitle text showing counts */
+.supplier-list-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Right side count pill (here it is styled like simple text) */
+.supplier-count-pill {
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+/* ==============================
+   LOADING / EMPTY TEXT
+   ============================== */
+.supplier-loading,
+.supplier-empty {
+  margin-top: 14px;
+  font-size: 0.9rem;
+}
+
+/* Common muted text color */
+.text-muted {
+  color: #64748b;
+}
+
+/* ==============================
+   TABLE WRAPPER
+   ============================== */
+/* Outer container so table has border and rounded corners */
+.supplier-table-wrapper {
+  margin-top: 8px;
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+/* For supplier page: allow horizontal scroll if table is wide */
+.supplier-page.is-suppliers .supplier-table-wrapper {
+  overflow-x: auto;
+  overflow-y: visible;
+  max-height: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ==============================
+   TABLE
+   ============================== */
+.supplier-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  table-layout: auto;
+}
+
+/* Make supplier table wider so all columns fit without breaking layout */
+.supplier-page.is-suppliers .supplier-table {
+  min-width: 1600px;
+}
+
+/* Header background */
+.supplier-table thead {
+  background: #f8fafc;
+}
+
+/* Cell styling */
+.supplier-table th,
+.supplier-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* Sticky header so column headings stay visible while scrolling */
+.supplier-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+/* Default cell behavior: single line with ellipsis */
+.supplier-table td {
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Zebra rows */
+.supplier-table tbody tr:nth-child(even) {
+  background: #fcfcfd;
+}
+
+/* Row hover and clickable behavior */
+.supplier-row {
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.supplier-row:hover {
+  background: #f1f5f9;
+}
+
+/* Highlight selected row */
+.supplier-row-highlight {
+  background: #eef2ff !important;
+  box-shadow: inset 3px 0 0 #334155;
+}
+
+/* ==============================
+   CELLS / SMALL UI PARTS
+   ============================== */
+/* ID column bold */
+.supplier-cell-id {
+  font-weight: 700;
+}
+
+/* Button that looks like a link */
+.linkish-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.linkish-btn:hover {
+  text-decoration: underline;
+}
+
+/* Email badge */
+.supplier-email-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  font-size: 0.82rem;
+  max-width: 100%;
+}
+
+/* Small icon inside email badge */
+.supplier-email-icon {
+  opacity: 0.7;
+}
+
+/* Text shown when email is missing */
+.supplier-email-none {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+/* Features badge */
+.supplier-feature-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+/* ==============================
+   ALERTS
+   ============================== */
+.alert {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+/* ==============================
+   SUPPLIER COLUMN WIDTHS
+   These are applied only when supplier page adds "is-suppliers" class
+   ============================== */
+.supplier-page.is-suppliers .col-id { min-width: 110px; }
+.supplier-page.is-suppliers .col-supplier-name { min-width: 220px; }
+.supplier-page.is-suppliers .col-category { min-width: 140px; }
+.supplier-page.is-suppliers .col-pan { min-width: 120px; }
+.supplier-page.is-suppliers .col-gst { min-width: 140px; }
+.supplier-page.is-suppliers .col-gstcat { min-width: 160px; }
+.supplier-page.is-suppliers .col-bank { min-width: 200px; }
+.supplier-page.is-suppliers .col-phone { min-width: 130px; }
+.supplier-page.is-suppliers .col-email { min-width: 240px; }
+.supplier-page.is-suppliers .col-contact { min-width: 180px; }
+.supplier-page.is-suppliers .col-credit { min-width: 130px; }
+.supplier-page.is-suppliers .col-status { min-width: 150px; }
+.supplier-page.is-suppliers .col-features { min-width: 120px; }
+
+/* Address columns should wrap because addresses can be long */
+.supplier-page.is-suppliers td.col-addr {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  min-width: 240px;
+  max-width: 420px;
+  overflow-wrap: anywhere;
+}
+
+/* ==============================
+   RESPONSIVE TWEAKS
+   ============================== */
+@media (max-width: 900px) {
+  .supplier-search-row { align-items: stretch; }
+  .supplier-filter-select { flex: 1 1 160px; }
+  .supplier-list-header { flex-direction: column; align-items: flex-start; }
+  .supplier-table { font-size: 0.86rem; }
+  .supplier-table th, .supplier-table td { padding: 8px 9px; }
+}
