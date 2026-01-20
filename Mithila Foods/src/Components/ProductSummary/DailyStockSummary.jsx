@@ -77,14 +77,14 @@ function DailyStockSummary() {
 
   const [columnFilter, setColumnFilter] = useState("ALL");
 
-  // ✅ Category filter (dropdown)
+  //  Category filter (dropdown)
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("ALL");
 
-  // ✅ Movement only button
+  //  Movement only button
   const [movementOnly, setMovementOnly] = useState(false);
 
-  // ✅ customers (for Sold Qty expansion)
+  // customers (for Sold Qty expansion)
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer] = useState("ALL"); // kept for compatibility (not used now, expanded shows all)
 
@@ -156,7 +156,7 @@ function DailyStockSummary() {
     return num;
   }
 
-  // ✅ Sign + color cell
+  // Sign + color cell
   const DotCell = ({ value }) => {
     const n = Number(value || 0);
     if (n === 0) return <span>0</span>;
@@ -346,7 +346,7 @@ function DailyStockSummary() {
         kids.forEach((k) => stack.push(k));
       }
 
-      // ✅ Manufacturing Stock Entry set ONLY (no transfer)
+      //  Manufacturing Stock Entry set ONLY (no transfer)
       const manufacturingSE = new Set();
       (seList || []).forEach((se) => {
         const purpose = String(se.purpose || "").toLowerCase();
@@ -394,7 +394,7 @@ function DailyStockSummary() {
         // excluded warehouses do not participate in opening/current
         const entryDate = entry.posting_date;
 
-        // ✅ Capture Wastage movement BEFORE excluded-warehouse return
+        // Capture Wastage movement BEFORE excluded-warehouse return
         if (warehouse === WH_WASTAGE) {
           if (entryDate === selectedDate) {
             const key = `${itemCode}||${warehouse}`;
@@ -453,7 +453,7 @@ function DailyStockSummary() {
           return; // do not include in movementMap
         }
 
-        // ✅ Packing Activity = Manufacturing Stock Entries (ALL warehouses)
+        // Packing Activity = Manufacturing Stock Entries (ALL warehouses)
         // Raw consumed = -ve, Finished produced = +ve (same column)
         if (vtype === "Stock Entry") {
           const seName = entry.voucher_no;
@@ -462,7 +462,7 @@ function DailyStockSummary() {
           }
         }
 
-        // ✅ Stock Inward = ONLY Purchase Invoice movement in Raw Material warehouse
+        //  Stock Inward = ONLY Purchase Invoice movement in Raw Material warehouse
         if (warehouse === WH_STOCK_INWARD && (vtype === "Purchase Invoice" || vtype === "Purchase Receipt")) {
           purchaseInwardMap[key] = (purchaseInwardMap[key] || 0) + qty;
         }
@@ -472,7 +472,7 @@ function DailyStockSummary() {
           movementMap[key] = (movementMap[key] || 0) + qty;
         }
 
-        //// ✅ NEW: Wastage warehouse activity (we show it, but we don't include it in opening/movement maps)
+        ////  NEW: Wastage warehouse activity (we show it, but we don't include it in opening/movement maps)
         //if (warehouse === WH_WASTAGE) {
         //  if (entryDate === selectedDate) {
         //    wastageMaterialMap[key] = (wastageMaterialMap[key] || 0) + qty;
@@ -547,7 +547,7 @@ function DailyStockSummary() {
           item_group: "",
           custom_category: "",
         };
-        // ✅ NEW: make displayed movements reconcile with current stock
+        // NEW: make displayed movements reconcile with current stock
         const stock_inward_display = warehouse === WH_STOCK_INWARD ? purchase_inward_qty : 0;
 
         // what your UI *shows* as movements for THIS warehouse
@@ -638,20 +638,20 @@ function DailyStockSummary() {
         pr.return_good_qty += Number(r.good_return_qty || 0);
         pr.return_bad_qty += Number(r.bad_return_qty || 0);
 
-        // ✅ Packing activity now sums manufacturing movement from ALL warehouses
+        //  Packing activity now sums manufacturing movement from ALL warehouses
         pr.packing_activity += Number(r.packing_act_qty || 0);
 
-        // ✅ NEW: Wastage Material column (from Wastage - MF)
+        //  NEW: Wastage Material column (from Wastage - MF)
         if (r.warehouse === WH_WASTAGE) {
           const wq = Number(r.wastage_material_qty || 0);
           pr.wastage_material += wq;
 
-          // ✅ NEW: current stock adds ONLY wastage movement (as you requested)
-          pr.current_stock += wq;
+          //// NEW: current stock adds ONLY wastage movement (as you requested)
+          //pr.current_stock += wq;
         }
 
 
-        // ✅ Stock inward only Purchase Invoice in Raw Material warehouse
+        // Stock inward only Purchase Invoice in Raw Material warehouse
         if (r.warehouse === WH_STOCK_INWARD) {
           pr.stock_inward += Number(r.purchase_inward_qty || 0);
         }
@@ -1222,7 +1222,7 @@ function DailyStockSummary() {
 
             <tbody>
               {displayRows.map((r, idx) => {
-                // ✅ Category super header row (click-to-collapse like heading)
+                // Category super header row (click-to-collapse like heading)
                 if (r.is_category_header) {
                   const isOpen = expandedCategories[r.category_key] !== false;
 
