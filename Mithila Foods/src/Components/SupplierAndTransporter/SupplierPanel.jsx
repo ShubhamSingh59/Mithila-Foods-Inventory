@@ -2,6 +2,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { getSuppliersForList, getSupplierStatusOptions } from "../erpBackendApi";
 import "./SupplierPanel.css";
+import SupplierTiles from "../SupplierAndTransporterDashoard/SupplierTiles";
+import { useNavigate } from "react-router-dom";
+import PurchasePayablesWidget from "../Analytics/PurchasePayablesWidget";
+import PurchaseOrderPipelineWidget from "../Analytics/PurchaseOrderPipelineWidget";
+import PurchaseReceiptQualityWidget from "../Analytics/PurchaseReceiptQualityWidget";
+import SuppliersSpendingBarWidget from "../Analytics/SuppliersSpendingBarWidget";
 
 // ------------------------------
 // Small cell component to display supplier email in a clean way
@@ -89,8 +95,8 @@ function ListPanel({ config }) {
         console.error(err);
         setError(
           err.response?.data?.error?.message ||
-            err.message ||
-            `Failed to load ${config.pluralLabel}`
+          err.message ||
+          `Failed to load ${config.pluralLabel}`
         );
       } finally {
         setLoading(false);
@@ -154,12 +160,21 @@ function ListPanel({ config }) {
   }
 
   // When a row is clicked, highlight it
+  //function handleRowClick(row) {
+  //  setHighlightId(row[config.idField]);
+  //}
   function handleRowClick(row) {
-    setHighlightId(row[config.idField]);
+    const id = row[config.idField];
+    setHighlightId(id);
+
+    if (typeof config.onRowOpen === "function") {
+      config.onRowOpen(row);
+    }
   }
 
   return (
     <>
+      <SupplierTiles />
       {/* ==============================
           SEARCH + FILTERS ROW
          ============================== */}
@@ -282,10 +297,14 @@ function ListPanel({ config }) {
                               type="button"
                               className="linkish-btn"
                               onClick={(e) => {
-                                // Prevent row click event, only highlight
                                 e.stopPropagation();
                                 setHighlightId(rowId);
+
+                                if (typeof config.onRowOpen === "function") {
+                                  config.onRowOpen(it);
+                                }
                               }}
+
                             >
                               {rowId}
                             </button>
@@ -444,5 +463,18 @@ const SUPPLIER_CONFIG = {
 // Only job is to pass supplier config into the generic ListPanel
 // ------------------------------
 export default function SupplierPanel() {
-  return <ListPanel config={SUPPLIER_CONFIG} />;
+  const navigate = useNavigate();
+
+  return (
+    <ListPanel
+      config={{
+        ...SUPPLIER_CONFIG,
+        onRowOpen: (row) => {
+          const name = row?.name;
+          if (!name) return;
+          navigate(`/suppliers/list/${encodeURIComponent(row.name)}`);
+        },
+      }}
+    />
+  );
 }

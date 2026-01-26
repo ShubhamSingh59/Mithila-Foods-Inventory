@@ -21,6 +21,9 @@ import {
 
   // ✅ Rate helper (Standard Buying)
   getItemRateFromPriceList,
+
+  getTransporters,
+  setPurchaseOrderTransporter,
 } from "../erpBackendApi";
 import "./PurchaseOrder.css";
 
@@ -29,6 +32,8 @@ function PurchaseOrder() {
   const [suppliers, setSuppliers] = useState([]); // all suppliers
   const [items, setItems] = useState([]); // all items for PO
   const [itemSuppliers, setItemSuppliers] = useState([]); // mapping table: which supplier supplies which item
+  const [transporters, setTransporters] = useState([]);
+  const [transporter, setTransporter] = useState(""); // stores transporter "name" (Link value)
 
   // -------------------- Supplier selection --------------------
   // supplier = what user sees (supplier_name), not the ERP ID
@@ -99,11 +104,20 @@ function PurchaseOrder() {
         setLoadingLists(true);
         setError("");
 
-        const [suppliersData, itemsData, itemSupData] = await Promise.all([
+        //const [suppliersData, itemsData, itemSupData] = await Promise.all([
+        //  getSuppliers(),
+        //  getItemsForPO(),
+        //  getItemSuppliers(),
+        //]);
+        const [suppliersData, itemsData, itemSupData, transporterData] = await Promise.all([
           getSuppliers(),
           getItemsForPO(),
           getItemSuppliers(),
+          getTransporters(),
         ]);
+
+        setTransporters(transporterData || []);
+
 
         setSuppliers(suppliersData || []);
         setItems(itemsData || []);
@@ -112,6 +126,8 @@ function PurchaseOrder() {
         // reset selections
         setSupplier("");
         setSupplierEmail("");
+        setTransporter("");
+
 
         // prefill qty/warehouse if provided in URL
         const initQty = qpQty || "1.00";
@@ -440,6 +456,7 @@ function PurchaseOrder() {
 
       setEditingPoName(po.name);
       setLastPoName(po.name);
+      setTransporter(po.custom_transporter || "");
       setMessage(`Editing draft Purchase Order ${poName}.`);
     } catch (err) {
       console.error(err);
@@ -503,6 +520,7 @@ function PurchaseOrder() {
           transaction_date: poDate,
           schedule_date: receivedByDate,
           notes: notes || "",
+          custom_transporter: transporter || "",
           items: normalizedItems.map((it) => ({
             item_code: it.item_code,
             qty: it.qty,
@@ -510,6 +528,7 @@ function PurchaseOrder() {
             schedule_date: receivedByDate,
             warehouse: warehouse || undefined,
           })),
+
         };
 
         await updatePurchaseOrder(editingPoName, payload);
@@ -518,6 +537,7 @@ function PurchaseOrder() {
           `Purchase Order ${editingPoName} saved as draft. (${normalizedItems.length} items)`
         );
       } else {
+        // ✅ If creating new: backend helper creates PO using first item
         // ✅ If creating new: backend helper creates PO using first item
         const first = normalizedItems[0];
 
@@ -534,13 +554,14 @@ function PurchaseOrder() {
 
         const poName = po.data?.name;
 
-        // ✅ If more items exist: update draft with complete item list
-        if (poName && normalizedItems.length > 1) {
+        // ✅ ALWAYS update after creation (so transporter + all items are saved even for 1 item)
+        if (poName) {
           const payload = {
             supplier: supplierId,
             transaction_date: poDate,
             schedule_date: receivedByDate,
             notes: notes || "",
+            custom_transporter: transporter || "",   // ✅ ADD THIS
             items: normalizedItems.map((it) => ({
               item_code: it.item_code,
               qty: it.qty,
@@ -560,6 +581,7 @@ function PurchaseOrder() {
             ? `Purchase Order created as draft: ${poName} (${normalizedItems.length} items)`
             : "Purchase Order created (draft)"
         );
+
       }
     } catch (err) {
       console.error(err);
@@ -699,6 +721,38 @@ function PurchaseOrder() {
                 placeholder="Search supplier..."
                 disabled={loadingLists || suppliers.length === 0}
               />
+            </div>
+            <div className="po-field">
+              <label className="po-label">
+                Transporter <span className="po-label-hint">(optional, before submit)</span>
+              </label>
+
+              <select
+                className="po-input"
+                value={transporter}
+                onChange={async (e) => {
+                  const t = e.target.value;
+                  setTransporter(t);
+
+                  // ✅ if editing an existing draft, save immediately so user can submit without pressing "Save Draft"
+                  if (editingPoName) {
+                    try {
+                      await setPurchaseOrderTransporter(editingPoName, t);
+                    } catch (err) {
+                      console.error(err);
+                      setError(err.message || "Failed to save transporter");
+                    }
+                  }
+                }}
+                disabled={loadingLists}
+              >
+                <option value="">-- None --</option>
+                {transporters.map((t) => (
+                  <option key={t.name} value={t.name}>
+                    {t.transporter_name || t.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="po-field">

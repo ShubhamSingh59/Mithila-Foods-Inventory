@@ -1,0 +1,226 @@
+/* ==============================
+   Transporter Detail Page (same theme as Supplier detail)
+   ============================== */
+
+#transporter-detail-page.transporter-detail-page {
+  padding: 16px;
+  background: #fafafa;
+  min-height: 100vh;
+}
+
+/* Topbar */
+.tp-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.tp-back-btn {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.tp-back-btn:hover {
+  background: #f3f4f6;
+}
+
+.tp-titleblock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tp-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b1220;
+  margin: 0;
+}
+
+.tp-subtitle {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* Error */
+.tp-error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin: 10px 0 14px 0;
+}
+
+/* Card base (same as supplier detail) */
+.tp-card {
+  border: 1px solid #dbe3ef;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+/* Neutral header strip (same feel as supplier detail header) */
+.tp-card__header {
+  background: #f6f8fb;
+  border-bottom: 1px solid #dbe3ef;
+  padding: 12px 14px;
+  font-weight: 700;
+  color: #0b1220;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tp-card__icon {
+  display: inline-flex;
+  width: 22px;
+  justify-content: center;
+}
+
+.tp-card__body {
+  padding: 14px;
+}
+
+/* IMPORTANT:
+   We keep these classes in markup, but we neutralize them
+   so everything stays consistent like supplier page.
+*/
+.tp-card--green .tp-card__header,
+.tp-card--cyan .tp-card__header,
+.tp-card--blue .tp-card__header,
+.tp-card--gray .tp-card__header,
+.tp-card--yellow .tp-card__header,
+.tp-card--darkgreen .tp-card__header {
+  background: #f6f8fb;
+  color: #0b1220;
+}
+
+/* Grid */
+.tp-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.tp-grid--2 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .tp-grid--2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Fields */
+.tp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tp-field__label {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.tp-field__value {
+  font-size: 15px;
+  color: #0b1220;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* links */
+.tp-link {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.tp-link:hover {
+  text-decoration: underline;
+}
+
+/* pre blocks */
+.tp-pre {
+  margin: 0;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #0b1220;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Chips (same neutral chip style like supplier) */
+.tp-chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tp-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #dbe3ef;
+  background: #f8fafc;
+  color: #0b1220;
+}
+
+/* empty */
+.tp-empty {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Status badges (same neutral pill system as supplier) */
+.tp-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  border: 1px solid #dbe3ef;
+  background: #f8fafc;
+  color: #0b1220;
+}
+
+.tp-badge--active {
+  border-color: #bbf7d0;
+  background: #ecfdf5;
+  color: #166534;
+}
+
+.tp-badge--inactive {
+  border-color: #e2e8f0;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.tp-badge--pending {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.tp-badge--blocked {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}

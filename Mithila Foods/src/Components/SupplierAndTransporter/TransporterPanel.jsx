@@ -2,6 +2,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { getTransportersForList } from "../erpBackendApi";
 import "./TransporterPanel.css";
+import TransporterTiles from "../SupplierAndTransporterDashoard/TransporterTiles";
+import { useNavigate } from "react-router-dom";
+
 
 // ---------------------------------------------
 // Generic ListPanel
@@ -55,8 +58,8 @@ function ListPanel({ config }) {
         console.error(err);
         setError(
           err.response?.data?.error?.message ||
-            err.message ||
-            `Failed to load ${config.pluralLabel}`
+          err.message ||
+          `Failed to load ${config.pluralLabel}`
         );
       } finally {
         setLoading(false);
@@ -120,12 +123,21 @@ function ListPanel({ config }) {
   }
 
   // Highlight the row on click
+  //function handleRowClick(row) {
+  //  setHighlightId(row[config.idField]);
+  //}
   function handleRowClick(row) {
     setHighlightId(row[config.idField]);
+
+    if (typeof config.onRowOpen === "function") {
+      config.onRowOpen(row);
+    }
   }
+
 
   return (
     <>
+      <TransporterTiles />
       {/* Search + filters row */}
       <form className="supplier-search-row" onSubmit={handleSearchSubmit}>
         <div className="supplier-search-input-wrapper">
@@ -332,5 +344,18 @@ const TRANSPORTER_CONFIG = {
 // Only job is to pass transporter config into ListPanel
 // ---------------------------------------------
 export default function TransporterPanel() {
-  return <ListPanel config={TRANSPORTER_CONFIG} />;
+  const navigate = useNavigate();
+
+  return (
+    <ListPanel
+      config={{
+        ...TRANSPORTER_CONFIG,
+        onRowOpen: (row) => {
+          const name = row?.name;
+          if (!name) return;
+          navigate(`/suppliers/transporters/${encodeURIComponent(row.name)}`);
+        },
+      }}
+    />
+  );
 }

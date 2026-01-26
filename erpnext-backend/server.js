@@ -392,7 +392,99 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
       .json({ error: err.response?.data || err.message });
   }
 });
+// server.js (Updated /api/reports/reorder route)
 
+app.get("/api/reports/reorder", async (req, res) => {
+  const { warehouse } = req.query;
+  if (!warehouse) return res.status(400).json({ error: "Warehouse required" });
+
+  try {
+    // 1. Fetch Items that have reorder levels configured
+    // We query the PARENT 'Item' DocType and filter by the child table field 'reorder_levels'
+    // NOTE: This fetches ALL items first. If you have 10k+ items, we might need a different strategy,
+    // but for most setups, fetching the item master list is fast enough.
+    
+    // We fetch key fields plus the child table 'reorder_levels'
+    const itemResponse = await erpClient.get(`/resource/Item`, {
+      params: {
+        fields: JSON.stringify(["name", "item_name", "item_group", "reorder_levels"]),
+        filters: JSON.stringify([
+           // Only items that are NOT disabled
+           ["disabled", "=", 0] 
+        ]),
+        limit_page_length: 5000 // Adjust limit as needed
+      }
+    });
+
+    const allItems = itemResponse.data.data || [];
+    const reportData = [];
+
+    // 2. Filter in Node.js for the specific warehouse
+    // (It is harder to filter child tables inside the main parent query in ERPNext API)
+    const relevantItems = [];
+    const itemCodes = [];
+
+    for (const item of allItems) {
+      if (!item.reorder_levels || !Array.isArray(item.reorder_levels)) continue;
+
+      // Find the rule for THIS warehouse
+      const rule = item.reorder_levels.find(r => r.warehouse === warehouse);
+      
+      // If rule exists and level > 0
+      if (rule && (rule.warehouse_reorder_level > 0 || rule.warehouse_reorder_qty > 0)) {
+         relevantItems.push({
+            item_code: item.name,
+            item_name: item.item_name,
+            item_group: item.item_group,
+            reorder_level: rule.warehouse_reorder_level,
+            reorder_qty: rule.warehouse_reorder_qty
+         });
+         itemCodes.push(item.name);
+      }
+    }
+
+    if (itemCodes.length === 0) return res.json([]);
+
+    // 3. Fetch Bin Levels (Current Stock) for these items
+    // Since we filtered the list down to only items with reorder rules, this list is smaller.
+    const bins = await erpClient.get(`/resource/Bin`, {
+      params: {
+        fields: JSON.stringify(["item_code", "actual_qty"]),
+        filters: JSON.stringify([
+          ["warehouse", "=", warehouse],
+          ["item_code", "in", itemCodes]
+        ]),
+        limit_page_length: 5000
+      }
+    });
+
+    const binMap = {};
+    (bins.data.data || []).forEach(b => {
+      binMap[b.item_code] = b.actual_qty;
+    });
+
+    // 4. Merge Data
+    const finalReport = relevantItems.map(row => {
+       const current = binMap[row.item_code] || 0;
+       return {
+         ...row,
+         warehouse: warehouse,
+         current_qty: current,
+         difference: current - row.reorder_level
+       };
+    });
+
+    res.json(finalReport);
+
+  } catch (err) {
+    console.error("Reorder Report Error:", err.response?.data || err.message);
+    // Send detailed error to frontend for debugging
+    res.status(500).json({ 
+        error: "Failed to generate report",
+        details: err.response?.data || err.message 
+    });
+  }
+});
 // ============================================================================
 // 6) START SERVER
 // ============================================================================

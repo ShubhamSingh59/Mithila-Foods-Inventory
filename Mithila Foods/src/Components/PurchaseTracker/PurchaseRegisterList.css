@@ -1,0 +1,288 @@
+/* PurchaseRegisterList.css */
+
+/* Card container (matches the white panels in your screenshot) */
+.prl-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* If supplier-detail-card already adds padding, we still normalize nicely */
+.prl-card .supplier-detail-card__header.prl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.prl-card .supplier-detail-card__body {
+  padding: 14px 16px 16px;
+}
+
+/* Title */
+.prl-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Header actions (Apply / Reset) */
+.prl-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.prl-btn {
+  border: 1px solid #111827;
+  background: #111827;
+  color: #ffffff;
+
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.prl-btn:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.prl-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.prl-btn-ghost {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+}
+
+.prl-btn-ghost:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+/* Error style (fallback if your global .alert isn't present) */
+.alert {
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.alert-error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+/* Filters block like the form sections in screenshot */
+.prl-filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  margin-bottom: 12px;
+}
+
+@media (min-width: 640px) {
+  .prl-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .prl-filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.prl-filter {
+  min-width: 0;
+}
+
+.prl-label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.prl-input {
+  width: 100%;
+  height: 36px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+
+  padding: 8px 10px;
+  font-size: 16px;
+  color: #111827;
+  background: #ffffff;
+}
+
+.prl-input::placeholder {
+  color: #9ca3af;
+}
+
+.prl-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Checkbox area spans full width */
+.prl-filter.prl-check {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.prl-check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.prl-check-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+/* Summary row */
+.prl-summary {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  border-radius: 14px;
+
+  font-size: 16px;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+/* Table wrapper like the screenshot */
+.prl-table-wrap {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: auto;
+  background: #ffffff;
+}
+
+/* Table */
+.prl-table {
+  width: 100%;
+  min-width: 1200px; /* gives ERPNext-like horizontal scroll when needed */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.prl-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+
+  background: #f9fafb;
+  color: #374151;
+  font-size: 16px;
+  font-weight: 700;
+
+  text-align: left;
+  padding: 10px 12px;
+
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.prl-table tbody td {
+  padding: 10px 12px;
+  font-size: 16px;
+  color: #111827;
+  border-bottom: 1px solid #eef2f7;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.prl-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* Remove last border */
+.prl-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Numeric cells */
+.prl-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Muted text */
+.prl-muted {
+  color: #6b7280;
+}
+
+/* Item display (name + code) */
+.prl-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 220px;
+
+  /* allow description column to wrap if needed */
+  white-space: normal;
+}
+
+.prl-item-name {
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.prl-item-code {
+  font-size: 16px;
+  color: #6b7280;
+}
+
+/* Empty state */
+.prl-empty {
+  padding: 18px 12px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+/* Footnote */
+.prl-footnote {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #6b7280;
+}

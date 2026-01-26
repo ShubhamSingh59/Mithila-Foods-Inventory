@@ -1,0 +1,190 @@
+/* ==============================
+   Supplier Detail Page (ERPNext theme-like)
+   ============================== */
+
+#supplier-detail-page.supplier-detail-page {
+  padding: 16px;
+}
+
+/* top bar */
+.supplier-detail-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.supplier-detail-back {
+  border: 1px solid #dbe3ef;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.supplier-detail-back:hover {
+  background: #f6f8fb;
+}
+
+.supplier-detail-topbar__title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.supplier-detail-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b1220;
+  margin: 0;
+}
+
+.supplier-detail-subtitle {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* generic link */
+.supplier-detail-link {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.supplier-detail-link:hover {
+  text-decoration: underline;
+}
+
+/* cards */
+.supplier-detail-card {
+  border: 1px solid #dbe3ef;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+/* header strip like your sections */
+.supplier-detail-card__header {
+  background: #f6f8fb;
+  border-bottom: 1px solid #dbe3ef;
+  padding: 12px 14px;
+  font-weight: 700;
+  color: #0b1220;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* body */
+.supplier-detail-card__body {
+  padding: 14px;
+}
+
+/* grid */
+.supplier-detail-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.supplier-detail-grid--2 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .supplier-detail-grid--2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* field */
+.supplier-detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.supplier-detail-field__label {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.supplier-detail-field__value {
+  font-size: 15px;
+  color: #0b1220;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* address blocks */
+.supplier-detail-address {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.supplier-detail-address__line {
+  color: #0b1220;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+/* when we show fallback pre text */
+.supplier-detail-address-pre {
+  margin: 0;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #0b1220;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* error alert (if you already have alert classes, this will still work fine) */
+.alert.alert-error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin: 10px 0 14px 0;
+}
+
+/* optional badge style (if you later want status pills) */
+.supplier-detail-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #dbe3ef;
+  background: #f8fafc;
+  color: #0b1220;
+}
+
+/* Example badge variants you can use later */
+.supplier-detail-badge--active {
+  border-color: #bbf7d0;
+  background: #ecfdf5;
+  color: #166534;
+}
+
+.supplier-detail-badge--inactive {
+  border-color: #e2e8f0;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.supplier-detail-badge--blocked {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}

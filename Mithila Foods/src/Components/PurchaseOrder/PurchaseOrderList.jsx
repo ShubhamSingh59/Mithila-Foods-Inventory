@@ -34,6 +34,9 @@ import {
 
   // Map with concurrency limit (avoid too many API calls at once)
   mapLimit,
+
+  getTransporters,
+  setPurchaseOrderTransporter,
 } from "../erpBackendApi";
 
 import "./PurchaseOrderList.css";
@@ -82,6 +85,18 @@ function PurchaseOrderList({ onEditPo }) {
   const [page, setPage] = useState(0);             // current page index (0-based)
   const [hasMore, setHasMore] = useState(false);   // if next page exists
   const [loading, setLoading] = useState(false);   // list loading state
+  const [transporters, setTransporters] = useState([]);
+  const [transporterUpdating, setTransporterUpdating] = useState("");
+
+  // Map: transporter docname -> transporter_name (for display)
+  const transporterNameMap = useMemo(() => {
+    const m = new Map();
+    (transporters || []).forEach((t) => {
+      m.set(t.name, t.transporter_name || t.name);
+    });
+    return m;
+  }, [transporters]);
+
 
   // -------------------- Per-action loading flags --------------------
   // These hold PO name so we can show spinner only for that row
@@ -248,7 +263,8 @@ function PurchaseOrderList({ onEditPo }) {
           "grand_total",
           "per_received",
           "per_billed",
-          "creation", // used for sorting / stable ordering
+          "creation",
+          "custom_transporter",// used for sorting / stable ordering
           MF_PO_FIELDS.status,
           MF_PO_FIELDS.updatedOn,
           MF_PO_FIELDS.stockPercent,
@@ -292,6 +308,9 @@ function PurchaseOrderList({ onEditPo }) {
   useEffect(() => {
     loadOrders(0, mfFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    getTransporters()
+      .then((rows) => setTransporters(rows || []))
+      .catch((e) => console.error("Transporters load failed", e));
   }, []);
 
   //  MF Filter change (reload from page 0)
@@ -861,6 +880,7 @@ function PurchaseOrderList({ onEditPo }) {
                     <th>Status</th>
                     <th>Grand Total</th>
                     <th>Actions</th>
+                    <th>Transporter</th>
                     <th>MF Status</th>
                     <th>% Stock In</th>
                   </tr>
@@ -1050,6 +1070,44 @@ function PurchaseOrderList({ onEditPo }) {
                                 </div>
                               )}
                             </>
+                          )}
+                        </td>
+                        <td>
+                          {isDraft ? (
+                            <select
+                              value={po.custom_transporter || ""}
+                              disabled={transporterUpdating === po.name}
+                              onChange={async (e) => {
+                                const t = e.target.value;
+                                setTransporterUpdating(po.name);
+                                setError("");
+                                setMessage("");
+                                try {
+                                  await setPurchaseOrderTransporter(po.name, t);
+                                  setMessage(`Transporter updated for ${po.name}`);
+                                  await loadOrders(page, mfFilter);
+                                } catch (err) {
+                                  console.error(err);
+                                  setError(err.message || "Failed to update transporter");
+                                } finally {
+                                  setTransporterUpdating("");
+                                }
+                              }}
+                            >
+                              <option value="">-- None --</option>
+                              {transporters.map((t) => (
+                                <option key={t.name} value={t.name}>
+                                  {t.transporter_name || t.name}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span>
+                              {po.custom_transporter
+                                ? (transporterNameMap.get(po.custom_transporter) || po.custom_transporter)
+                                : "—"}
+                            </span>
+
                           )}
                         </td>
 
