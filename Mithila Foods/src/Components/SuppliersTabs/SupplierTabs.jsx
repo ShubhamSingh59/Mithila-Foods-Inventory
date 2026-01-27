@@ -2,7 +2,6 @@
 import React, { useState } from "react"; 
 import SupplierPanel from "../SupplierAndTransporter/SupplierPanel";
 import SupplierAnalytics from "../SupplierAnalytics/SupplierAnalytics";
-
 const TABS = {
   SUPPLIERS: "SUPPLIERS",
   ANALYTICS: "ANALYTICS",
@@ -12,16 +11,17 @@ export default function SupplierTabs() {
   const [tab, setTab] = useState(TABS.SUPPLIERS);
 
   return (
-    <>
-      {/* Tabs header */}
-      <div className="app-panel" style={{ paddingBottom: 12 }}>
+    <div style={{ display: "flex", flexDirection: "column", width: "100%", gap: "20px" }}>
+      
+      {/* Tabs Header Row - Inline CSS for positioning */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", paddingBottom: "10px", borderBottom: "1px solid #e2e8f0" }}>
         <div className="mfg-tabs">
           <button
             type="button"
             className={`mfg-tab ${tab === TABS.SUPPLIERS ? "active" : ""}`}
             onClick={() => setTab(TABS.SUPPLIERS)}
           >
-            Suppliers
+            List And Overview
           </button>
 
           <button
@@ -34,14 +34,17 @@ export default function SupplierTabs() {
         </div>
       </div>
 
-      {/* Keep both mounted */}
-      <div className="app-panel" style={{ display: tab === TABS.SUPPLIERS ? "block" : "none" }}>
-        <SupplierPanel/>
-      </div>
+      {/* Content Area */}
+      <div style={{ flex: 1, width: "100%" }}>
+        {/* Keep both mounted */}
+        <div style={{ display: tab === TABS.SUPPLIERS ? "block" : "none" }}>
+          <SupplierPanel/>
+        </div>
 
-      <div className="app-panel" style={{ display: tab === TABS.ANALYTICS ? "block" : "none" }}>
-        <SupplierAnalytics/>
+        <div style={{ display: tab === TABS.ANALYTICS ? "block" : "none" }}>
+          <SupplierAnalytics/>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

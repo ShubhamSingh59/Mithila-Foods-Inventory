@@ -1,0 +1,56 @@
+/* src/Components/SupplierAnalytics/SupplierAnalytics.css */
+
+/* Main Grid Container */
+.supplier-analytics-grid {
+  display: grid;
+  /* Create 3 equal columns for the top widgets */
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding-bottom: 24px;
+}
+
+/* Widget Wrapper */
+.analytics-widget-wrapper {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 6px; /* Inner spacing */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ensure uniform height in row */
+  min-height: 320px; /* Minimum height for charts */
+  overflow: hidden;
+}
+
+/* Specific styling for the Full Width (Bar Chart) item */
+.analytics-widget-wrapper.full-width {
+  grid-column: 1 / -1; /* Span from first line to last line */
+  min-height: 400px;   /* Give bar chart more vertical room */
+}
+
+/* ==============================
+   RESPONSIVE BREAKPOINTS
+   ============================== */
+
+/* Tablet: Switch to 2 columns */
+@media (max-width: 1100px) {
+  .supplier-analytics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  /* The 3rd item (Quality Widget) usually gets pushed down alone in 2-col grid.
+     We make it span full width to look better, or let it sit left. 
+     Here we let it sit left. */
+}
+
+/* Mobile: Switch to 1 column stack */
+@media (max-width: 768px) {
+  .supplier-analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .analytics-widget-wrapper {
+    min-height: 300px;
+  }
+}

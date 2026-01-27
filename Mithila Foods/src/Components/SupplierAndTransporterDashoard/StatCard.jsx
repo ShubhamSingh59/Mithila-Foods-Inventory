@@ -5,7 +5,7 @@ export default function StatCard({ icon: Icon, value, label, accentClass = "acce
   return (
     <div className={`stat-card ${accentClass}`}>
       <div className="stat-card__icon">
-        <Icon size={34} />
+        <Icon size={20} />
       </div>
 
       <div className="stat-card__value">{value ?? "—"}</div>

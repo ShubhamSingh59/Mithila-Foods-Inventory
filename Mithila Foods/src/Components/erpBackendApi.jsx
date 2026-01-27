@@ -121,6 +121,7 @@ export async function getSuppliersForList() {
       "custom_contact_person",
       "custom_credit_limit",
       "custom_status",
+      "custom_payment_qr",
 
       // Compliance and address/bank details
       "pan",
@@ -2233,8 +2234,388 @@ export async function getSuppliersByPurchaseOrderSpending({
   };
 }
 
+//// ------------------------------
+//// Purchase Register List (PO-first, MF Delivered date priority)
+//// ------------------------------
+//function prDateOnly(input) {
+//  if (!input) return "";
+//  const s = String(input).trim();
+//  if (!s) return "";
+//  return s.slice(0, 10); // YYYY-MM-DD
+//}
+
+//function prChunk(arr, size = 100) {
+//  const out = [];
+//  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+//  return out;
+//}
+
+//export async function getPurchaseRegisterList({
+//  supplier,
+
+//  po_from_date,
+//  po_to_date,
+
+//  goods_from_date,
+//  goods_to_date,
+
+//  mf_status,
+//  po_status,
+
+//  payment_status,
+//  transporter_q,
+
+//  item_q,
+//  invoice_q,
+
+//  min_value,
+//  max_value,
+
+//  includeUninvoiced = true,
+//  includeUnreceived = true,
+
+//  limit = 500,
+//} = {}) {
+//  const pageSize = 1000;
+
+//  // 1) Load Purchase Orders
+//  const poFilters = [["Purchase Order", "docstatus", "=", 1]];
+//  if (supplier) poFilters.push(["Purchase Order", "supplier", "=", supplier]);
+//  if (po_from_date) poFilters.push(["Purchase Order", "transaction_date", ">=", po_from_date]);
+//  if (po_to_date) poFilters.push(["Purchase Order", "transaction_date", "<=", po_to_date]);
+//  if (mf_status) poFilters.push(["Purchase Order", "custom_mf_status", "=", mf_status]);
+//  if (po_status) poFilters.push(["Purchase Order", "status", "=", po_status]);
+
+//  let start = 0;
+//  const poParents = [];
+
+//  while (true) {
+//    const rows = await getDoctypeList("Purchase Order", {
+//      fields: JSON.stringify([
+//        "name",
+//        "supplier",
+//        "supplier_name",
+//        "transaction_date",
+//        "status",
+
+//        // ✅ MF fields
+//        "custom_mf_status",
+//        "custom_mf_status_updated_on",
+
+//        // transporter (use the one you actually have)
+//        "custom_transporter",
+//      ]),
+//      filters: JSON.stringify(poFilters),
+//      order_by: "transaction_date desc, creation desc",
+//      limit_page_length: pageSize,
+//      limit_start: start,
+//    });
+
+//    const list = rows || [];
+//    if (!list.length) break;
+
+//    poParents.push(...list);
+//    if (list.length < pageSize) break;
+//    start += pageSize;
+
+//    if (poParents.length > 5000) break;
+//  }
+
+//  const poByName = new Map();
+//  (poParents || []).forEach((p) => poByName.set(p.name, p));
+
+//  const poNames = Array.from(poByName.keys());
+//  if (!poNames.length) return { totalRows: 0, totalValue: 0, rows: [] };
+
+//  // 2) Load Purchase Order Items (base rows)
+//  const poItems = [];
+//  for (const part of prChunk(poNames, 100)) {
+//    const rows = await getDoctypeList("Purchase Order Item", {
+//      parent: "Purchase Order",
+//      fields: JSON.stringify([
+//        "name",
+//        "parent",
+//        "item_code",
+//        "item_name",
+//        "qty",
+//        "rate",
+//        "amount",
+//        "base_rate",
+//        "base_amount",
+//      ]),
+//      filters: JSON.stringify([["Purchase Order Item", "parent", "in", part]]),
+//      limit_page_length: 10000,
+//    });
+//    poItems.push(...(rows || []));
+//  }
+//  if (!poItems.length) return { totalRows: 0, totalValue: 0, rows: [] };
+
+//  // 3) PR posting_date mapping (try purchase_order_item, fallback to po_detail)
+//  const prItems = [];
+//  for (const part of prChunk(poNames, 100)) {
+//    try {
+//      const rows = await getDoctypeList("Purchase Receipt Item", {
+//        parent: "Purchase Receipt",
+//        fields: JSON.stringify(["parent", "purchase_order", "purchase_order_item"]),
+//        filters: JSON.stringify([["Purchase Receipt Item", "purchase_order", "in", part]]),
+//        limit_page_length: 10000,
+//      });
+//      prItems.push(...(rows || []));
+//    } catch (e) {
+//      // fallback fieldname in many ERPNext versions
+//      const rows2 = await getDoctypeList("Purchase Receipt Item", {
+//        parent: "Purchase Receipt",
+//        fields: JSON.stringify(["parent", "purchase_order", "po_detail"]),
+//        filters: JSON.stringify([["Purchase Receipt Item", "purchase_order", "in", part]]),
+//        limit_page_length: 10000,
+//      });
+
+//      // normalize to purchase_order_item
+//      (rows2 || []).forEach((r) => {
+//        prItems.push({
+//          parent: r.parent,
+//          purchase_order: r.purchase_order,
+//          purchase_order_item: r.po_detail,
+//        });
+//      });
+//    }
+//  }
+
+//  const prNames = Array.from(new Set(prItems.map((x) => x.parent).filter(Boolean)));
+//  const prPostingDateByName = new Map();
+
+//  for (const part of prChunk(prNames, 100)) {
+//    const prs = await getDoctypeList("Purchase Receipt", {
+//      fields: JSON.stringify(["name", "posting_date", "docstatus"]),
+//      filters: JSON.stringify([
+//        ["Purchase Receipt", "name", "in", part],
+//        ["Purchase Receipt", "docstatus", "=", 1],
+//      ]),
+//      limit_page_length: 1000,
+//    });
+
+//    (prs || []).forEach((pr) => prPostingDateByName.set(pr.name, pr.posting_date || ""));
+//  }
+
+//  const prDateByPoItem = new Map();
+//  const prDateByPo = new Map();
+
+//  for (const it of prItems) {
+//    const prDate = prPostingDateByName.get(it.parent) || "";
+//    if (!prDate) continue;
+
+//    const poi = it.purchase_order_item;
+//    const po = it.purchase_order;
+
+//    if (poi) {
+//      const prev = prDateByPoItem.get(poi);
+//      if (!prev || prDate < prev) prDateByPoItem.set(poi, prDate);
+//    }
+//    if (po) {
+//      const prev2 = prDateByPo.get(po);
+//      if (!prev2 || prDate < prev2) prDateByPo.set(po, prDate);
+//    }
+//  }
+
+//  // 4) ✅ Purchase Invoice mapping (NO purchase_order_item in list query)
+//  // 4a) List PI items using only permitted fields
+//  const piItemLinks = [];
+//  for (const part of prChunk(poNames, 100)) {
+//    const rows = await getDoctypeList("Purchase Invoice Item", {
+//      parent: "Purchase Invoice",
+//      fields: JSON.stringify(["parent", "purchase_order"]), // ✅ safe
+//      filters: JSON.stringify([["Purchase Invoice Item", "purchase_order", "in", part]]),
+//      limit_page_length: 10000,
+//    });
+//    piItemLinks.push(...(rows || []));
+//  }
+
+//  const piNames = Array.from(new Set(piItemLinks.map((x) => x.parent).filter(Boolean)));
+
+//  // 4b) Fetch PI meta for display + sorting
+//  const piMetaByName = new Map();
+//  for (const part of prChunk(piNames, 100)) {
+//    const pis = await getDoctypeList("Purchase Invoice", {
+//      fields: JSON.stringify([
+//        "name",
+//        "bill_no",
+//        "status",
+//        "grand_total",
+//        "outstanding_amount",
+//        "posting_date",
+//        "docstatus",
+//      ]),
+//      filters: JSON.stringify([
+//        ["Purchase Invoice", "name", "in", part],
+//        ["Purchase Invoice", "docstatus", "in", [0, 1]],
+//      ]),
+//      limit_page_length: 1000,
+//    });
+
+//    (pis || []).forEach((pi) => piMetaByName.set(pi.name, pi));
+//  }
+
+//  // 4c) Fallback mapping by PO (if item-level link missing)
+//  const piByPo = new Map(); // PO -> PI (latest posting_date)
+//  for (const link of piItemLinks) {
+//    const po = link.purchase_order;
+//    const piName = link.parent;
+//    if (!po || !piName) continue;
+
+//    const pi = piMetaByName.get(piName);
+//    if (!pi) continue;
+
+//    const curr = piByPo.get(po);
+//    if (!curr) {
+//      piByPo.set(po, piName);
+//      continue;
+//    }
+
+//    const currMeta = piMetaByName.get(curr);
+//    const currDate = currMeta?.posting_date || "";
+//    const newDate = pi.posting_date || "";
+//    if (newDate && (!currDate || newDate > currDate)) piByPo.set(po, piName);
+//  }
+
+//  // 4d) Item-level mapping by reading full PI docs (robust across versions)
+//  const piByPoItem = new Map(); // PO Item -> PI Name (latest posting_date)
+
+//  // use your existing concurrency helper
+//  const piDocs = await mapLimit(piNames, 6, async (name) => {
+//    try {
+//      return await getDoc("Purchase Invoice", name);
+//    } catch (e) {
+//      return null;
+//    }
+//  });
+
+//  for (const doc of piDocs || []) {
+//    if (!doc?.name) continue;
+//    const meta = piMetaByName.get(doc.name);
+//    const piDate = meta?.posting_date || doc.posting_date || "";
+
+//    for (const row of doc.items || []) {
+//      const poi = row.purchase_order_item || row.po_detail || ""; // ✅ supports both
+//      if (!poi) continue;
+
+//      const curr = piByPoItem.get(poi);
+//      if (!curr) {
+//        piByPoItem.set(poi, doc.name);
+//        continue;
+//      }
+
+//      const currMeta = piMetaByName.get(curr);
+//      const currDate = currMeta?.posting_date || "";
+//      if (piDate && (!currDate || piDate > currDate)) piByPoItem.set(poi, doc.name);
+//    }
+//  }
+
+//  // 5) Build rows + filters
+//  const qItem = String(item_q || "").trim().toLowerCase();
+//  const qInv = String(invoice_q || "").trim().toLowerCase();
+//  const qTrans = String(transporter_q || "").trim().toLowerCase();
+
+//  const minVal =
+//    min_value !== undefined && min_value !== null && min_value !== "" ? Number(min_value) : null;
+//  const maxVal =
+//    max_value !== undefined && max_value !== null && max_value !== "" ? Number(max_value) : null;
+
+//  const rowsOut = [];
+
+//  for (const it of poItems) {
+//    const po = poByName.get(it.parent);
+//    if (!po) continue;
+
+//    const mf = String(po.custom_mf_status || "").trim();
+
+//    // ✅ Priority: MF Delivered date first, else PR posting_date
+//    const deliveredDate =
+//      mf.toLowerCase() === "delivered" ? prDateOnly(po.custom_mf_status_updated_on) : "";
+
+//    const prDate = prDateByPoItem.get(it.name) || prDateByPo.get(it.parent) || "";
+//    const goodsReceivedDate = deliveredDate || prDate || "";
+
+//    const transporter = String(po.custom_transporter || "").trim();
+
+//    // ✅ PI mapping: item-level first, else PO-level fallback
+//    const piName = piByPoItem.get(it.name) || piByPo.get(it.parent) || "";
+//    const pi = piName ? piMetaByName.get(piName) : null;
+
+//    const invoiceNo = String(pi?.bill_no || "").trim();
+//    const payStatus = String(pi?.status || (piName ? "Unknown" : "Not Invoiced")).trim();
+
+//    const grandTotal = Number(pi?.grand_total) || 0;
+//    const outstanding = Number(pi?.outstanding_amount) || 0;
+//    const amountPaid = pi ? Math.max(0, grandTotal - outstanding) : 0;
+
+//    const qty = Number(it.qty) || 0;
+//    const value =
+//      Number(it.base_amount) ||
+//      Number(it.amount) ||
+//      qty * (Number(it.base_rate) || Number(it.rate) || 0);
+
+//    // filters
+//    if (!includeUnreceived && !goodsReceivedDate) continue;
+//    if (!includeUninvoiced && !piName) continue;
+
+//    if ((goods_from_date || goods_to_date) && !goodsReceivedDate) continue;
+//    if (goods_from_date && goodsReceivedDate < goods_from_date) continue;
+//    if (goods_to_date && goodsReceivedDate > goods_to_date) continue;
+
+//    if (payment_status) {
+//      if (!pi) continue;
+//      if (String(pi.status || "").trim().toLowerCase() !== String(payment_status).trim().toLowerCase())
+//        continue;
+//    }
+
+//    if (qTrans && !transporter.toLowerCase().includes(qTrans)) continue;
+//    if (qInv && !invoiceNo.toLowerCase().includes(qInv)) continue;
+
+//    if (qItem) {
+//      const blob = `${it.item_code || ""} ${it.item_name || ""}`.toLowerCase();
+//      if (!blob.includes(qItem)) continue;
+//    }
+
+//    if (minVal != null && value < minVal) continue;
+//    if (maxVal != null && value > maxVal) continue;
+
+//    rowsOut.push({
+//      goods_received_date: goodsReceivedDate,
+//      goods_received_source: deliveredDate ? "MF Delivered" : prDate ? "Purchase Receipt" : "",
+//      vendor_name: po.supplier_name || po.supplier || "",
+//      po_name: po.name,
+//      po_date: po.transaction_date || "",
+//      invoice_name: piName,
+//      invoice_no: invoiceNo,
+//      item_code: it.item_code || "",
+//      item_name: it.item_name || "",
+//      quantity: qty,
+//      value,
+//      payment_status: payStatus,
+//      amount_paid: amountPaid,
+//      transporter_name: transporter,
+//      po_status: po.status || "",
+//      mf_status: mf,
+//    });
+
+//    if (rowsOut.length >= Number(limit) && Number(limit) > 0) break;
+//  }
+
+//  const totalValue = rowsOut.reduce((sum, r) => sum + (Number(r.value) || 0), 0);
+
+//  return {
+//    totalRows: rowsOut.length,
+//    totalValue,
+//    rows: rowsOut,
+//  };
+//}
+
+// src/erpBackendApi.js
+
+// ... (keep all your existing imports and helper functions above this) ...
+
 // ------------------------------
-// Purchase Register List (PO-first, MF Delivered date priority)
+// Purchase Register List (Updated with new columns & Lookups)
 // ------------------------------
 function prDateOnly(input) {
   if (!input) return "";
@@ -2251,28 +2632,20 @@ function prChunk(arr, size = 100) {
 
 export async function getPurchaseRegisterList({
   supplier,
-
   po_from_date,
   po_to_date,
-
   goods_from_date,
   goods_to_date,
-
   mf_status,
   po_status,
-
   payment_status,
   transporter_q,
-
   item_q,
   invoice_q,
-
   min_value,
   max_value,
-
   includeUninvoiced = true,
   includeUnreceived = true,
-
   limit = 500,
 } = {}) {
   const pageSize = 1000;
@@ -2295,13 +2668,13 @@ export async function getPurchaseRegisterList({
         "supplier",
         "supplier_name",
         "transaction_date",
-        "status",
+        "status", // ERP Standard Status
 
         // ✅ MF fields
         "custom_mf_status",
-        "custom_mf_status_updated_on",
+        "custom_mf_status_updated_on", // ✅ New Field
 
-        // transporter (use the one you actually have)
+        // ✅ Transporter ID
         "custom_transporter",
       ]),
       filters: JSON.stringify(poFilters),
@@ -2326,6 +2699,25 @@ export async function getPurchaseRegisterList({
   const poNames = Array.from(poByName.keys());
   if (!poNames.length) return { totalRows: 0, totalValue: 0, rows: [] };
 
+  // --- ✅ 1.5 Fetch Transporter Names ---
+  // Collect all unique Transporter IDs
+  const transporterIds = [...new Set(poParents.map(p => p.custom_transporter).filter(Boolean))];
+  const transporterMap = new Map(); // ID -> Name
+
+  if (transporterIds.length > 0) {
+    const tBatches = prChunk(transporterIds, 100);
+    for (const batch of tBatches) {
+      const tRows = await getDoctypeList("Transporter", { // Change "Transporter" if your doctype name differs
+        fields: JSON.stringify(["name", "transporter_name"]),
+        filters: JSON.stringify([["name", "in", batch]]),
+        limit_page_length: 1000
+      });
+      (tRows || []).forEach(t => {
+        transporterMap.set(t.name, t.transporter_name || t.name);
+      });
+    }
+  }
+
   // 2) Load Purchase Order Items (base rows)
   const poItems = [];
   for (const part of prChunk(poNames, 100)) {
@@ -2349,7 +2741,7 @@ export async function getPurchaseRegisterList({
   }
   if (!poItems.length) return { totalRows: 0, totalValue: 0, rows: [] };
 
-  // 3) PR posting_date mapping (try purchase_order_item, fallback to po_detail)
+  // 3) PR Link Logic
   const prItems = [];
   for (const part of prChunk(poNames, 100)) {
     try {
@@ -2361,15 +2753,13 @@ export async function getPurchaseRegisterList({
       });
       prItems.push(...(rows || []));
     } catch (e) {
-      // fallback fieldname in many ERPNext versions
+      // Fallback for older ERPNext versions
       const rows2 = await getDoctypeList("Purchase Receipt Item", {
         parent: "Purchase Receipt",
         fields: JSON.stringify(["parent", "purchase_order", "po_detail"]),
         filters: JSON.stringify([["Purchase Receipt Item", "purchase_order", "in", part]]),
         limit_page_length: 10000,
       });
-
-      // normalize to purchase_order_item
       (rows2 || []).forEach((r) => {
         prItems.push({
           parent: r.parent,
@@ -2381,7 +2771,7 @@ export async function getPurchaseRegisterList({
   }
 
   const prNames = Array.from(new Set(prItems.map((x) => x.parent).filter(Boolean)));
-  const prPostingDateByName = new Map();
+  const prMetaByName = new Map(); // Store full PR meta (date + name)
 
   for (const part of prChunk(prNames, 100)) {
     const prs = await getDoctypeList("Purchase Receipt", {
@@ -2393,36 +2783,39 @@ export async function getPurchaseRegisterList({
       limit_page_length: 1000,
     });
 
-    (prs || []).forEach((pr) => prPostingDateByName.set(pr.name, pr.posting_date || ""));
+    (prs || []).forEach((pr) => prMetaByName.set(pr.name, pr));
   }
 
-  const prDateByPoItem = new Map();
-  const prDateByPo = new Map();
+  // Maps to link PO Item -> PR Details
+  const prDetailsByPoItem = new Map(); // POItem -> { date, name }
+  const prDetailsByPo = new Map();     // PO -> { date, name } (fallback)
 
   for (const it of prItems) {
-    const prDate = prPostingDateByName.get(it.parent) || "";
-    if (!prDate) continue;
+    const prMeta = prMetaByName.get(it.parent);
+    if (!prMeta) continue;
 
+    const details = { date: prMeta.posting_date || "", name: prMeta.name };
+    
     const poi = it.purchase_order_item;
     const po = it.purchase_order;
 
     if (poi) {
-      const prev = prDateByPoItem.get(poi);
-      if (!prev || prDate < prev) prDateByPoItem.set(poi, prDate);
+      const prev = prDetailsByPoItem.get(poi);
+      // If multiple PRs, take the latest one
+      if (!prev || details.date > prev.date) prDetailsByPoItem.set(poi, details);
     }
     if (po) {
-      const prev2 = prDateByPo.get(po);
-      if (!prev2 || prDate < prev2) prDateByPo.set(po, prDate);
+      const prev2 = prDetailsByPo.get(po);
+      if (!prev2 || details.date > prev2.date) prDetailsByPo.set(po, details);
     }
   }
 
-  // 4) ✅ Purchase Invoice mapping (NO purchase_order_item in list query)
-  // 4a) List PI items using only permitted fields
+  // 4) Purchase Invoice Mapping
   const piItemLinks = [];
   for (const part of prChunk(poNames, 100)) {
     const rows = await getDoctypeList("Purchase Invoice Item", {
       parent: "Purchase Invoice",
-      fields: JSON.stringify(["parent", "purchase_order"]), // ✅ safe
+      fields: JSON.stringify(["parent", "purchase_order"]),
       filters: JSON.stringify([["Purchase Invoice Item", "purchase_order", "in", part]]),
       limit_page_length: 10000,
     });
@@ -2431,13 +2824,14 @@ export async function getPurchaseRegisterList({
 
   const piNames = Array.from(new Set(piItemLinks.map((x) => x.parent).filter(Boolean)));
 
-  // 4b) Fetch PI meta for display + sorting
+  // Fetch PI Meta
   const piMetaByName = new Map();
   for (const part of prChunk(piNames, 100)) {
     const pis = await getDoctypeList("Purchase Invoice", {
       fields: JSON.stringify([
         "name",
-        "bill_no",
+        "bill_no", // Standard Supplier Invoice No
+        "custom_supplier_invoice", // Custom Supplier Invoice No
         "status",
         "grand_total",
         "outstanding_amount",
@@ -2454,70 +2848,54 @@ export async function getPurchaseRegisterList({
     (pis || []).forEach((pi) => piMetaByName.set(pi.name, pi));
   }
 
-  // 4c) Fallback mapping by PO (if item-level link missing)
-  const piByPo = new Map(); // PO -> PI (latest posting_date)
-  for (const link of piItemLinks) {
-    const po = link.purchase_order;
-    const piName = link.parent;
-    if (!po || !piName) continue;
+  // PI Mapping Logic (Item Level -> PO Level Fallback)
+  const piByPoItem = new Map();
+  const piByPo = new Map();
 
-    const pi = piMetaByName.get(piName);
-    if (!pi) continue;
-
-    const curr = piByPo.get(po);
-    if (!curr) {
-      piByPo.set(po, piName);
-      continue;
-    }
-
-    const currMeta = piMetaByName.get(curr);
-    const currDate = currMeta?.posting_date || "";
-    const newDate = pi.posting_date || "";
-    if (newDate && (!currDate || newDate > currDate)) piByPo.set(po, piName);
-  }
-
-  // 4d) Item-level mapping by reading full PI docs (robust across versions)
-  const piByPoItem = new Map(); // PO Item -> PI Name (latest posting_date)
-
-  // use your existing concurrency helper
+  // Load PI Docs for Item-level precision
   const piDocs = await mapLimit(piNames, 6, async (name) => {
     try {
       return await getDoc("Purchase Invoice", name);
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { return null; }
   });
 
   for (const doc of piDocs || []) {
     if (!doc?.name) continue;
     const meta = piMetaByName.get(doc.name);
-    const piDate = meta?.posting_date || doc.posting_date || "";
+    if (!meta) continue;
 
+    const piDate = meta.posting_date || doc.posting_date || "";
+
+    // 4c. Map by PO (fallback)
+    const poLink = doc.items?.[0]?.purchase_order; // grab from first item
+    if(poLink) {
+        const curr = piByPo.get(poLink);
+        const currMeta = curr ? piMetaByName.get(curr) : null;
+        if (!curr || (piDate && piDate > (currMeta?.posting_date || ""))) {
+            piByPo.set(poLink, doc.name);
+        }
+    }
+
+    // 4d. Map by PO Item
     for (const row of doc.items || []) {
-      const poi = row.purchase_order_item || row.po_detail || ""; // ✅ supports both
+      const poi = row.purchase_order_item || row.po_detail || "";
       if (!poi) continue;
 
       const curr = piByPoItem.get(poi);
-      if (!curr) {
+      const currMeta = curr ? piMetaByName.get(curr) : null;
+      if (!curr || (piDate && piDate > (currMeta?.posting_date || ""))) {
         piByPoItem.set(poi, doc.name);
-        continue;
       }
-
-      const currMeta = piMetaByName.get(curr);
-      const currDate = currMeta?.posting_date || "";
-      if (piDate && (!currDate || piDate > currDate)) piByPoItem.set(poi, doc.name);
     }
   }
 
-  // 5) Build rows + filters
+  // 5) Build Final Rows
   const qItem = String(item_q || "").trim().toLowerCase();
   const qInv = String(invoice_q || "").trim().toLowerCase();
   const qTrans = String(transporter_q || "").trim().toLowerCase();
 
-  const minVal =
-    min_value !== undefined && min_value !== null && min_value !== "" ? Number(min_value) : null;
-  const maxVal =
-    max_value !== undefined && max_value !== null && max_value !== "" ? Number(max_value) : null;
+  const minVal = min_value !== undefined && min_value !== "" ? Number(min_value) : null;
+  const maxVal = max_value !== undefined && max_value !== "" ? Number(max_value) : null;
 
   const rowsOut = [];
 
@@ -2526,49 +2904,58 @@ export async function getPurchaseRegisterList({
     if (!po) continue;
 
     const mf = String(po.custom_mf_status || "").trim();
+    // ✅ Updated On Date
+    const mfDate = po.custom_mf_status_updated_on ? prDateOnly(po.custom_mf_status_updated_on) : "";
 
-    // ✅ Priority: MF Delivered date first, else PR posting_date
-    const deliveredDate =
-      mf.toLowerCase() === "delivered" ? prDateOnly(po.custom_mf_status_updated_on) : "";
+    // ✅ Goods Receipt Data
+    // Delivered date priority: MF Updated On (if Delivered) -> else PR Posting Date
+    const deliveredDate = mf.toLowerCase() === "delivered" ? mfDate : "";
+    
+    const prDetails = prDetailsByPoItem.get(it.name) || prDetailsByPo.get(it.parent);
+    const prDate = prDetails?.date || "";
+    const prName = prDetails?.name || ""; // ✅ Goods Receipt Number
 
-    const prDate = prDateByPoItem.get(it.name) || prDateByPo.get(it.parent) || "";
     const goodsReceivedDate = deliveredDate || prDate || "";
 
-    const transporter = String(po.custom_transporter || "").trim();
+    // ✅ Transporter Name Lookup
+    const tId = po.custom_transporter;
+    const transporterName = transporterMap.get(tId) || tId || "";
 
-    // ✅ PI mapping: item-level first, else PO-level fallback
+    // ✅ Invoice Logic
     const piName = piByPoItem.get(it.name) || piByPo.get(it.parent) || "";
     const pi = piName ? piMetaByName.get(piName) : null;
 
-    const invoiceNo = String(pi?.bill_no || "").trim();
+    const erpInvoiceNo = pi?.name || ""; // Internal ID
+    const supplierInvoiceNo = pi?.custom_supplier_invoice || pi?.bill_no || ""; // External Bill No
+    
+    // Status & Amounts
     const payStatus = String(pi?.status || (piName ? "Unknown" : "Not Invoiced")).trim();
-
     const grandTotal = Number(pi?.grand_total) || 0;
     const outstanding = Number(pi?.outstanding_amount) || 0;
     const amountPaid = pi ? Math.max(0, grandTotal - outstanding) : 0;
 
     const qty = Number(it.qty) || 0;
-    const value =
-      Number(it.base_amount) ||
-      Number(it.amount) ||
-      qty * (Number(it.base_rate) || Number(it.rate) || 0);
+    const value = Number(it.base_amount) || Number(it.amount) || qty * (Number(it.base_rate) || Number(it.rate) || 0);
 
-    // filters
+    // --- Filters ---
     if (!includeUnreceived && !goodsReceivedDate) continue;
     if (!includeUninvoiced && !piName) continue;
 
-    if ((goods_from_date || goods_to_date) && !goodsReceivedDate) continue;
     if (goods_from_date && goodsReceivedDate < goods_from_date) continue;
     if (goods_to_date && goodsReceivedDate > goods_to_date) continue;
 
     if (payment_status) {
       if (!pi) continue;
-      if (String(pi.status || "").trim().toLowerCase() !== String(payment_status).trim().toLowerCase())
-        continue;
+      if (String(pi.status || "").trim().toLowerCase() !== String(payment_status).trim().toLowerCase()) continue;
     }
 
-    if (qTrans && !transporter.toLowerCase().includes(qTrans)) continue;
-    if (qInv && !invoiceNo.toLowerCase().includes(qInv)) continue;
+    if (qTrans && !transporterName.toLowerCase().includes(qTrans)) continue;
+    
+    // Filter by ANY invoice number (internal or external)
+    if (qInv) {
+        const combinedInv = (erpInvoiceNo + " " + supplierInvoiceNo).toLowerCase();
+        if (!combinedInv.includes(qInv)) continue;
+    }
 
     if (qItem) {
       const blob = `${it.item_code || ""} ${it.item_name || ""}`.toLowerCase();
@@ -2581,20 +2968,24 @@ export async function getPurchaseRegisterList({
     rowsOut.push({
       goods_received_date: goodsReceivedDate,
       goods_received_source: deliveredDate ? "MF Delivered" : prDate ? "Purchase Receipt" : "",
+      goods_receipt_no: prName, // ✅ New Column Data
       vendor_name: po.supplier_name || po.supplier || "",
       po_name: po.name,
       po_date: po.transaction_date || "",
-      invoice_name: piName,
-      invoice_no: invoiceNo,
+      po_status: po.status || "", // ✅ New Column Data
+      
+      erp_invoice_no: erpInvoiceNo, // ✅ Renamed
+      supplier_invoice_no: supplierInvoiceNo, // ✅ New Column Data
+      
       item_code: it.item_code || "",
       item_name: it.item_name || "",
       quantity: qty,
       value,
       payment_status: payStatus,
       amount_paid: amountPaid,
-      transporter_name: transporter,
-      po_status: po.status || "",
+      transporter_name: transporterName, // ✅ Human Name
       mf_status: mf,
+      mf_status_date: mfDate, // ✅ New Column Data
     });
 
     if (rowsOut.length >= Number(limit) && Number(limit) > 0) break;
@@ -2607,4 +2998,98 @@ export async function getPurchaseRegisterList({
     totalValue,
     rows: rowsOut,
   };
+}
+// ----------------------------------------------------------------
+// ✅ NEW: Supplier Detail Page Helpers
+// ----------------------------------------------------------------
+
+// src/erpBackendApi.js
+
+export async function getItemsBySupplier(supplierName) {
+  // Step A: Find links in the "Item Supplier" child table
+  const links = await getDoctypeList("Item Supplier", {
+    parent: "Item", // ✅ REQUIRED: Tells ERPNext to check "Item" permissions
+    fields: JSON.stringify(["parent", "supplier_part_no"]),
+    filters: JSON.stringify([["supplier", "=", supplierName]]),
+    limit_page_length: 500
+  });
+
+  if (!links || links.length === 0) return [];
+
+  // Step B: Extract unique Item Codes (the 'parent' field)
+  const itemCodes = [...new Set(links.map(l => l.parent))];
+
+  // Step C: Fetch details for these items
+  const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
+
+  let allItems = [];
+  for (const batch of chunk(itemCodes, 50)) {
+    const items = await getDoctypeList("Item", {
+      fields: JSON.stringify(["name", "item_name", "stock_uom", "image"]),
+      filters: JSON.stringify([["name", "in", batch]]),
+      limit_page_length: 50
+    });
+    allItems = [...allItems, ...items];
+  }
+
+  return allItems;
+}
+
+// 2. Get Recent Purchase Orders for this supplier (Enriched with Item Names)
+export async function getRecentPOsBySupplier(supplierName) {
+  // A. Fetch the main POs (Limit 10)
+  const pos = await getDoctypeList("Purchase Order", {
+    fields: JSON.stringify([
+      "name",
+      "transaction_date",
+      "grand_total",
+      "status",
+      "custom_mf_status"
+    ]),
+    filters: JSON.stringify([["supplier", "=", supplierName]]),
+    order_by: "transaction_date desc",
+    limit_page_length: 5
+  });
+
+  if (!pos || pos.length === 0) return [];
+
+  // B. Extract PO Names to fetch their items
+  const poNames = pos.map(p => p.name);
+
+  // C. Fetch "Purchase Order Item" rows for these POs
+  const items = await getDoctypeList("Purchase Order Item", {
+    parent: "Purchase Order", // ✅ ADD THIS LINE (Fixes Permission Error)
+    fields: JSON.stringify(["parent", "item_name", "item_code"]),
+    filters: JSON.stringify([["parent", "in", poNames]]),
+    limit_page_length: 500
+  });
+
+  // D. Group Items by PO Name
+  const itemsMap = {};
+  items.forEach(item => {
+    if (!itemsMap[item.parent]) itemsMap[item.parent] = [];
+    // Prefer item_name, fallback to item_code
+    itemsMap[item.parent].push(item.item_name || item.item_code);
+  });
+
+  // E. Attach the item display string to the PO objects
+  return pos.map(po => {
+    const poItems = itemsMap[po.name] || [];
+
+    // Format: "Item A, Item B" or "Item A, Item B +2 more"
+    let itemDisplay = "—";
+    if (poItems.length > 0) {
+      const distinct = [...new Set(poItems)]; // Remove duplicates
+      if (distinct.length <= 2) {
+        itemDisplay = distinct.join(", ");
+      } else {
+        itemDisplay = `${distinct.slice(0, 2).join(", ")} +${distinct.length - 2} more`;
+      }
+    }
+
+    return {
+      ...po,
+      _items_display: itemDisplay // ✅ New field we will use in UI
+    };
+  });
 }

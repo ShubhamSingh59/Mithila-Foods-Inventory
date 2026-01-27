@@ -485,6 +485,53 @@ app.get("/api/reports/reorder", async (req, res) => {
     });
   }
 });
+
+// server.js
+
+// ... (your existing code)
+
+// ✅ NEW: Image Proxy Route
+// Usage: /api/proxy-image?path=/private/files/my-image.png
+app.get("/api/proxy-image", async (req, res) => {
+  const { path } = req.query;
+
+  if (!path) {
+    return res.status(400).send("Path is required");
+  }
+
+  try {
+    // 1. Construct the full URL using the Backend's .env
+    // We remove the '/api' from baseURL because file paths are usually at the root
+    const baseUrl = process.env.ERP_BASE_URL; 
+    
+    // Ensure we don't have double slashes
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    const fullUrl = `${baseUrl}${cleanPath}`;
+
+    // 2. Fetch the image as a stream (binary data)
+    const response = await axios({
+      method: "GET",
+      url: fullUrl,
+      responseType: "stream",
+      headers: {
+        // Pass your API keys so we can see Private files too!
+        Authorization: `token ${process.env.ERP_API_KEY}:${process.env.ERP_API_SECRET}`,
+      },
+    });
+
+    // 3. Forward the content-type (png/jpg) to the browser
+    res.set("Content-Type", response.headers["content-type"]);
+
+    // 4. Pipe the image data straight to the frontend
+    response.data.pipe(res);
+
+  } catch (err) {
+    console.error("Image Proxy Error:", err.message);
+    res.status(404).send("Image not found");
+  }
+});
+
+
 // ============================================================================
 // 6) START SERVER
 // ============================================================================

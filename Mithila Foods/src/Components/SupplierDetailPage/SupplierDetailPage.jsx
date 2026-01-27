@@ -1,310 +1,286 @@
+// src/Components/SupplierAndTransporter/SupplierDetailPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getDoc } from "../erpBackendApi";
+import { Paperclip, ExternalLink, QrCode } from "lucide-react";
+import { 
+  getDoc, 
+  getItemsBySupplier,      // ✅ Imported New Function
+  getRecentPOsBySupplier   // ✅ Imported New Function
+} from "../erpBackendApi"; 
 import "./SupplierDetailPage.css";
-import PurchasePayablesWidget from "../Analytics/PurchasePayablesWidget";
-import PurchaseOrderPipelineWidget from "../Analytics/PurchaseOrderPipelineWidget";
-import PurchaseReceiptQualityWidget from "../Analytics/PurchaseReceiptQualityWidget";
 
-// (you already have similar in SupplierPanel)
+// Analytics Widgets
+import PurchasePayablesWidget from "../../Components/Analytics/PurchasePayablesWidget";
+import PurchaseOrderPipelineWidget from "../../Components/Analytics/PurchaseOrderPipelineWidget";
+import PurchaseReceiptQualityWidget from "../../Components/Analytics/PurchaseReceiptQualityWidget";
+
+// --- Helpers ---
+
+// Secure Image Proxy URL generator
+const getProxyUrl = (path) => {
+  if (!path) return "";
+  const BACKEND = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+  return `${BACKEND}/api/proxy-image?path=${encodeURIComponent(path)}`;
+};
+
 function htmlToPlainTextPreserveLines(html) {
-    if (!html) return "";
-    const withLineBreaks = html
-        .replace(/<br\s*\/?>/gi, "\n")
-        .replace(/<\/p>/gi, "\n");
-
-    const temp = document.createElement("div");
-    temp.innerHTML = withLineBreaks;
-
-    return (temp.textContent || temp.innerText || "")
-        .replace(/\n\s*\n/g, "\n")
-        .trim();
+  if (!html) return "";
+  const temp = document.createElement("div");
+  temp.innerHTML = html.replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n");
+  return (temp.textContent || temp.innerText || "").replace(/\n\s*\n/g, "\n").trim();
 }
 
-function Field({ label, value, children }) {
-    return (
-        <div className="supplier-detail-field">
-            <div className="supplier-detail-field__label">{label}</div>
-            <div className="supplier-detail-field__value">{children ?? (value || "—")}</div>
+function Field({ label, value, children, fullWidth }) {
+  return (
+    <div className="supplier-detail-field" style={fullWidth ? { gridColumn: "1 / -1" } : {}}>
+      <div className="supplier-detail-field__label">{label}</div>
+      <div className="supplier-detail-field__value">{children ?? (value || "—")}</div>
+    </div>
+  );
+}
+
+function AttachmentField({ label, fileUrl }) {
+  if (!fileUrl) return <Field label={label} value="Not Attached" />;
+  const proxyLink = getProxyUrl(fileUrl);
+  return (
+    <Field label={label}>
+      <div className="attachment-row">
+        <div className="attachment-name">
+          <Paperclip size={16} />
+          <span>Document Attached</span>
         </div>
-    );
+        <a href={proxyLink} target="_blank" rel="noopener noreferrer" className="attachment-btn">
+          View <ExternalLink size={12} style={{ marginLeft: 4 }}/>
+        </a>
+      </div>
+    </Field>
+  );
 }
 
 export default function SupplierDetailPage() {
-    //const { name } = useParams();
-    //const navigate = useNavigate();
+  const { id } = useParams(); 
+  const navigate = useNavigate();
+  const supplierName = useMemo(() => decodeURIComponent(id || ""), [id]);
 
-    //const supplierName = useMemo(() => {
-    //    try {
-    //        return decodeURIComponent(name || "");
-    //    } catch {
-    //        return name || "";
-    //    }
-    //}, [name]);
+  // --- State ---
+  const [supplier, setSupplier] = useState(null);
+  const [items, setItems] = useState([]);        // ✅ State for Items
+  const [recentPOs, setRecentPOs] = useState([]); // ✅ State for Recent POs
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
 
-    //const [supplier, setSupplier] = useState(null);
-    //const [addressDoc, setAddressDoc] = useState(null);
-    //const [loading, setLoading] = useState(true);
-    //const [err, setErr] = useState("");
+  useEffect(() => {
+    let alive = true;
 
-    //useEffect(() => {
-    //    let alive = true;
+    async function load() {
+      try {
+        setErr("");
+        setLoading(true);
 
-    //    async function load() {
-    //        try {
-    //            setErr("");
-    //            setLoading(true);
+        // 1. Fetch Main Supplier Doc
+        const sup = await getDoc("Supplier", supplierName);
+        if (!alive) return;
+        setSupplier(sup);
 
-    //            // existing API helper
-    //            const sup = await getDoc("Supplier", supplierName);
-    //            if (!alive) return;
-
-    //            setSupplier(sup);
-
-    //            // optional: load Address if supplier_primary_address exists
-    //            const addrName = sup?.supplier_primary_address;
-    //            if (addrName) {
-    //                try {
-    //                    const addr = await getDoc("Address", addrName);
-    //                    if (!alive) return;
-    //                    setAddressDoc(addr);
-    //                } catch {
-    //                    setAddressDoc(null);
-    //                }
-    //            } else {
-    //                setAddressDoc(null);
-    //            }
-    //        } catch (e) {
-    //            console.error(e);
-    //            if (!alive) return;
-    //            setErr(e?.message || "Failed to load supplier details");
-    //        } finally {
-    //            if (!alive) return;
-    //            setLoading(false);
-    //        }
-    //    }
-
-    //    if (supplierName) load();
-
-    //    return () => {
-    //        alive = false;
-    //    };
-    //}, [supplierName]);
-    const { id } = useParams(); // ✅ was { name }
-    const navigate = useNavigate();
-
-    const supplierName = useMemo(() => {
+        // 2. Fetch Items Supplied (Using our new helper)
         try {
-            return decodeURIComponent(id || "");
-        } catch {
-            return id || "";
-        }
-    }, [id]);
-
-    const [supplier, setSupplier] = useState(null);
-    const [addressDoc, setAddressDoc] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [err, setErr] = useState("");
-
-    useEffect(() => {
-        let alive = true;
-
-        async function load() {
-            try {
-                setErr("");
-                setLoading(true);
-
-                const sup = await getDoc("Supplier", supplierName);
-                if (!alive) return;
-
-                setSupplier(sup);
-
-                const addrName = sup?.supplier_primary_address;
-                if (addrName) {
-                    try {
-                        const addr = await getDoc("Address", addrName);
-                        if (!alive) return;
-                        setAddressDoc(addr);
-                    } catch {
-                        setAddressDoc(null);
-                    }
-                } else {
-                    setAddressDoc(null);
-                }
-            } catch (e) {
-                console.error(e);
-                if (!alive) return;
-                setErr(e?.message || "Failed to load supplier details");
-            } finally {
-                if (!alive) return;
-                setLoading(false);
-            }
+          const fetchedItems = await getItemsBySupplier(supplierName);
+          if (alive) setItems(fetchedItems || []);
+        } catch (e) {
+          console.warn("Failed to fetch supplier items", e);
         }
 
-        if (!supplierName) {
-            setErr("Missing supplier id in URL");
-            setLoading(false);
-            return;
+        // 3. Fetch Recent POs (Using our new helper)
+        try {
+          const pos = await getRecentPOsBySupplier(supplierName);
+          if (alive) setRecentPOs(pos || []);
+        } catch (e) {
+          console.warn("Failed to fetch recent POs", e);
         }
 
-        load();
-        return () => {
-            alive = false;
-        };
-    }, [supplierName]);
-    const displayName = supplier?.supplier_name || supplier?.name || supplierName;
+      } catch (e) {
+        console.error(e);
+        if (alive) setErr(e?.message || "Failed to load supplier details");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
 
-    const status = supplier?.custom_status || "—";
-    const contactPerson = supplier?.custom_contact_person || "—";
-    const category = supplier?.supplier_group || supplier?.supplier_type || "—";
-    const creditLimit = supplier?.custom_credit_limit ?? "—";
+    if (supplierName) load();
+    return () => { alive = false; };
+  }, [supplierName]);
 
-    const phone = supplier?.mobile_no || "—";
-    const email = supplier?.email_id || "—";
+  const displayName = supplier?.supplier_name || supplier?.name || supplierName;
+  const status = supplier?.custom_status || "—";
+  const primaryAddress = supplier?.primary_address ? htmlToPlainTextPreserveLines(supplier.primary_address) : "—";
 
-    const primaryAddressText = supplier?.primary_address
-        ? htmlToPlainTextPreserveLines(supplier.primary_address)
-        : "";
+  return (
+    <div className="supplier-detail-page">
+      
+      {/* --- ANALYTICS --- */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+         <PurchasePayablesWidget supplierName={supplierName} />
+         <PurchaseOrderPipelineWidget supplierName={supplierName} />
+         <PurchaseReceiptQualityWidget supplierName={supplierName} />
+      </div>
 
-    const addressLines = useMemo(() => {
-        if (!addressDoc) return [];
-        const out = [];
-        if (addressDoc.address_line1) out.push(addressDoc.address_line1);
-        if (addressDoc.address_line2) out.push(addressDoc.address_line2);
-
-        const cityStatePin = [addressDoc.city, addressDoc.state, addressDoc.pincode]
-            .filter(Boolean)
-            .join(", ");
-        if (cityStatePin) out.push(cityStatePin);
-
-        if (addressDoc.country) out.push(addressDoc.country);
-        return out;
-    }, [addressDoc]);
-
-    return (
-        <div id="supplier-detail-page" className="supplier-detail-page">
-            <PurchasePayablesWidget supplierName={supplier?.name || supplierName} />
-            <PurchaseOrderPipelineWidget supplierName={supplier?.name || supplierName}/>
-            <PurchaseReceiptQualityWidget supplierName={supplier?.name || supplierName}/>
-            <div className="supplier-detail-topbar">
-                <button className="btn supplier-detail-back" onClick={() => navigate(-1)}>
-                    ← Back
-                </button>
-
-                <div className="supplier-detail-topbar__title">
-                    <div className="supplier-detail-title">{loading ? "Loading..." : displayName}</div>
-                    <div className="supplier-detail-subtitle">{supplier?.name || supplierName}</div>
-                </div>
-            </div>
-
-            {err ? <div className="alert alert-error">{err}</div> : null}
-
-            {/* BASIC INFORMATION */}
-            <section className="supplier-detail-card" id="supplier-basic-info">
-                <div className="supplier-detail-card__header">Basic Information</div>
-
-                <div className="supplier-detail-card__body supplier-detail-grid supplier-detail-grid--2">
-                    <Field label="Supplier Name" value={loading ? "…" : displayName} />
-                    <Field label="Rating" value={loading ? "…" : (supplier?.rating || supplier?.custom_rating || "—")} />
-
-                    <Field label="Contact Person" value={loading ? "…" : contactPerson} />
-                    <Field
-                        label="Payment Terms"
-                        value={loading ? "…" : (supplier?.payment_terms || supplier?.payment_terms_template || "—")}
-                    />
-
-                    <Field label="Category" value={loading ? "…" : category} />
-                    <Field label="Credit Limit" value={loading ? "…" : String(creditLimit)} />
-
-                    {/*<Field label="Status" value={loading ? "…" : status} />*/}
-                    <Field label="Status">
-                        {loading ? (
-                            "…"
-                        ) : (
-                            <span
-                                className={
-                                    "supplier-detail-badge " +
-                                    (String(status).toLowerCase().includes("active")
-                                        ? "supplier-detail-badge--active"
-                                        : String(status).toLowerCase().includes("inactive")
-                                            ? "supplier-detail-badge--inactive"
-                                            : String(status).toLowerCase().includes("black") ||
-                                                String(status).toLowerCase().includes("block")
-                                                ? "supplier-detail-badge--blocked"
-                                                : "")
-                                }
-                            >
-                                {status}
-                            </span>
-                        )}
-                    </Field>
-
-                </div>
-            </section>
-
-            {/* CONTACT INFORMATION */}
-            <section className="supplier-detail-card" id="supplier-contact-info">
-                <div className="supplier-detail-card__header">Contact Information</div>
-
-                <div className="supplier-detail-card__body supplier-detail-grid supplier-detail-grid--2">
-                    <Field label="Phone">
-                        {loading ? (
-                            "…"
-                        ) : phone === "—" ? (
-                            "—"
-                        ) : (
-                            <a className="supplier-detail-link" href={`tel:${phone}`}>
-                                {phone}
-                            </a>
-                        )}
-                    </Field>
-
-                    <Field label="Address">
-                        {loading ? (
-                            "…"
-                        ) : addressLines.length ? (
-                            <div className="supplier-detail-address">
-                                {addressLines.map((l, i) => (
-                                    <div key={i} className="supplier-detail-address__line">
-                                        {l}
-                                    </div>
-                                ))}
-                            </div>
-                        ) : primaryAddressText ? (
-                            <pre className="supplier-detail-address-pre">{primaryAddressText}</pre>
-                        ) : (
-                            "—"
-                        )}
-                    </Field>
-
-                    <Field label="Email">
-                        {loading ? (
-                            "…"
-                        ) : email === "—" ? (
-                            "—"
-                        ) : (
-                            <a className="supplier-detail-link" href={`mailto:${email}`}>
-                                {email}
-                            </a>
-                        )}
-                    </Field>
-                </div>
-            </section>
-
-            {/* BUSINESS INFORMATION */}
-            <section className="supplier-detail-card" id="supplier-business-info">
-                <div className="supplier-detail-card__header">Business Information</div>
-
-                <div className="supplier-detail-card__body supplier-detail-grid supplier-detail-grid--2">
-                    <Field label="GSTIN" value={loading ? "…" : (supplier?.gstin || "Not provided")} />
-                    <Field label="Created" value={loading ? "…" : (supplier?.creation || "—")} />
-
-                    <Field label="PAN Number" value={loading ? "…" : (supplier?.pan || "Not provided")} />
-                    <Field label="Last Updated" value={loading ? "…" : (supplier?.modified || "—")} />
-
-                    <Field label="Created By" value={loading ? "…" : (supplier?.owner || "—")} />
-                </div>
-            </section>
+      {/* --- HEADER --- */}
+      <div className="supplier-detail-topbar">
+        <button className="btn supplier-detail-back" onClick={() => navigate(-1)}>← Back</button>
+        <div className="supplier-detail-topbar__title">
+          <div className="supplier-detail-title">{loading ? "Loading..." : displayName}</div>
+          <div className="supplier-detail-subtitle">{supplierName}</div>
         </div>
-    );
+      </div>
+
+      {err && <div className="alert alert-error">{err}</div>}
+
+      {/* --- INFO SECTIONS --- */}
+      <div className="supplier-detail-grid supplier-detail-grid--2">
+        {/* Left: General */}
+        <section className="supplier-detail-card">
+          <div className="supplier-detail-card__header">Identity & Contact</div>
+          <div className="supplier-detail-card__body supplier-detail-grid supplier-detail-grid--2">
+             <Field label="Supplier Name" value={displayName} fullWidth />
+             <Field label="Supplier ID" value={supplier?.name} />
+             <Field label="Type" value={supplier?.supplier_type} />
+             <Field label="Status">
+                <span className={`supplier-detail-badge ${
+                   String(status).toLowerCase().includes('active') ? 'supplier-detail-badge--active' : 
+                   String(status).toLowerCase().includes('inactive') ? 'supplier-detail-badge--inactive' : 'supplier-detail-badge--blocked'
+                }`}>{status}</span>
+             </Field>
+             <Field label="Rating" value={supplier?.custom_rating || supplier?.rating} />
+             <Field label="Contact Person" value={supplier?.custom_contact_person} />
+             <Field label="Phone" value={supplier?.mobile_no} />
+             <Field label="Email" value={supplier?.email_id} fullWidth />
+             <Field label="Address" value={primaryAddress} fullWidth />
+             <Field label="Country" value={supplier?.country} />
+          </div>
+        </section>
+
+        {/* Right: Financials */}
+        <section className="supplier-detail-card">
+          <div className="supplier-detail-card__header">Financials & Compliance</div>
+          <div className="supplier-detail-card__body supplier-detail-grid supplier-detail-grid--2">
+             <Field label="GSTIN" value={supplier?.gstin} />
+             <Field label="PAN Number" value={supplier?.pan} />
+             <Field label="GST Category" value={supplier?.gst_category} />
+             <Field label="Tax ID" value={supplier?.tax_id} />
+             <Field label="MSME Reg." value={supplier?.custom_msme} />
+             <Field label="Udyam Reg." value={supplier?.custom_udyam} />
+             <Field label="FSSAI Lic." value={supplier?.custom_fssai} />
+             <Field label="Payment Terms" value={supplier?.payment_terms} />
+             <Field label="Credit Limit" value={supplier?.custom_credit_limit} />
+             <Field label="Default Bank" value={supplier?.default_bank_account} />
+          </div>
+        </section>
+      </div>
+
+      {/* --- ATTACHMENTS & QR --- */}
+      <section className="supplier-detail-card">
+         <div className="supplier-detail-card__header">Documents & Payment QR</div>
+         <div className="supplier-detail-card__body supplier-detail-grid supplier-detail-grid--3">
+            <div style={{ gridColumn: 'span 1' }}>
+               <Field label="Payment QR Code">
+                  {supplier?.custom_payment_qr ? (
+                     <div className="qr-preview-container">
+                        <img 
+                           src={getProxyUrl(supplier.custom_payment_qr)} 
+                           alt="QR Code" 
+                           className="qr-thumbnail"
+                           onClick={() => window.open(getProxyUrl(supplier.custom_payment_qr), "_blank")}
+                        />
+                        <div style={{fontSize:'0.8rem', color:'#64748b', marginTop:8}}>Click to enlarge</div>
+                     </div>
+                  ) : "No QR Code"}
+               </Field>
+            </div>
+            <div style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+               <AttachmentField label="GST Certificate" fileUrl={supplier?.custom_gst_attach} />
+               <AttachmentField label="PAN Card" fileUrl={supplier?.custom_pancard_attach} />
+               <AttachmentField label="MSME Certificate" fileUrl={supplier?.custom_msme_attach} />
+               <AttachmentField label="FSSAI License" fileUrl={supplier?.custom_fssai_attach} />
+            </div>
+         </div>
+      </section>
+
+      {/* --- ✅ NEW SECTION: ITEMS & RECENT ORDERS --- */}
+      <div className="supplier-detail-grid supplier-detail-grid--2">
+         
+         {/* 1. Items Supplied Table */}
+         <section className="supplier-detail-card">
+            <div className="supplier-detail-card__header">Items Supplied ({items.length})</div>
+            <div className="supplier-detail-card__body" style={{padding:0}}>
+               <table className="simple-table">
+                  <thead>
+                     <tr>
+                        {/*<th>Item Code</th>*/}
+                        <th>Item Name</th>
+                        <th>UOM</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     {items.length > 0 ? items.map(item => (
+                        <tr key={item.name}>
+                           {/*<td style={{fontFamily:'monospace', fontWeight:500, color:'#2563eb'}}>{item.name}</td>*/}
+                           <td>{item.item_name}</td>
+                           <td>{item.stock_uom}</td>
+                        </tr>
+                     )) : (
+                        <tr><td colSpan={3} style={{textAlign:'center', padding:20, color:'#94a3b8'}}>No items linked in purchasing tab</td></tr>
+                     )}
+                  </tbody>
+               </table>
+            </div>
+         </section>
+
+         {/* 2. Recent Purchase Orders Table */}
+         <section className="supplier-detail-card">
+            <div className="supplier-detail-card__header">Recent Orders</div>
+            <div className="supplier-detail-card__body" style={{padding:0}}>
+               <table className="simple-table">
+                  <thead>
+                     <tr>
+                        <th>PO #</th>
+                        <th>Date</th>
+                        <th style={{width: '35%'}}>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>MF Status</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     {recentPOs.length > 0 ? recentPOs.map(po => (
+                        <tr key={po.name}>
+                           <td style={{color:'#2563eb', cursor:'pointer', fontWeight:500}} onClick={() => navigate(`/purchase-order/${po.name}`)}>
+                              {po.name}
+                           </td>
+                           <td>{po.transaction_date}</td>
+                           <td style={{fontSize:'0.85rem', color:'#475569'}}>
+                              {po._items_display}
+                           </td>
+                           <td style={{fontWeight:600}}>{Number(po.grand_total).toLocaleString()}</td>
+                           <td>
+                              <span style={{
+                                 fontSize:'0.75rem', padding:'2px 6px', borderRadius:4,
+                                 background: po.status === 'Completed' ? '#dcfce7' : '#f1f5f9',
+                                 color: po.status === 'Completed' ? '#166534' : '#475569'
+                              }}>
+                                 {po.status}
+                              </span>
+                           </td>
+                           <td style={{fontSize:'0.85rem'}}>{po.custom_mf_status || "—"}</td>
+                        </tr>
+                     )) : (
+                        <tr><td colSpan={5} style={{textAlign:'center', padding:20, color:'#94a3b8'}}>No recent orders</td></tr>
+                     )}
+                  </tbody>
+               </table>
+            </div>
+         </section>
+
+      </div>
+    </div>
+  );
 }

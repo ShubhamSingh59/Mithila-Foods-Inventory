@@ -1,91 +1,70 @@
-/* Card base */
+/* Card base - Reduced padding, thinner border, horizontal layout */
 .stat-card {
   background: #ffffff;
-  border: 2px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 22px;
+  border: 1px solid #e5e7eb; /* Thinner border */
+  border-radius: 10px;       /* Smaller radius */
+  padding: 12px 16px;        /* Reduced padding */
   display: flex;
-  flex-direction: column;
+  flex-direction: row;       /* Horizontal layout */
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 1px 10px rgba(0, 0, 0, 0.04);
+  gap: 12px;                 /* Space between icon and text */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Subtler shadow */
+  min-height: 70px;          /* Fixed small height */
+  transition: transform 0.2s;
 }
 
-/* Icon */
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Icon Container - Smaller */
 .stat-card__icon {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #f3f4f6; /* Gray background for icon */
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-/* Value + label */
+/* Content Wrapper */
+.stat-card__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Value - Smaller font */
 .stat-card__value {
-  font-size: 34px;
+  font-size: 20px; /* Reduced from 34px */
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.2;
+  color: #111827;
 }
 
+/* Label - Smaller font */
 .stat-card__label {
-  font-size: 14px;
+  font-size: 12px; /* Reduced from 14px */
+  font-weight: 500;
   color: #6b7280;
+  white-space: nowrap;
 }
 
-/* Accent system: border + icon + value color */
-.stat-card.accent-blue {
-  border-color: #2563eb;
-}
-.stat-card.accent-blue .stat-card__value,
-.stat-card.accent-blue .stat-card__icon {
-  color: #2563eb;
-}
+/* --- Accent System --- */
+/* We color the ICON BACKGROUND and Text, not the border, for a cleaner look */
 
-.stat-card.accent-green {
-  border-color: #16a34a;
-}
-.stat-card.accent-green .stat-card__value,
-.stat-card.accent-green .stat-card__icon {
-  color: #16a34a;
-}
+.stat-card.accent-blue .stat-card__icon { background: #eff6ff; color: #2563eb; }
+.stat-card.accent-green .stat-card__icon { background: #f0fdf4; color: #16a34a; }
+.stat-card.accent-sky .stat-card__icon { background: #f0f9ff; color: #0ea5e9; }
+.stat-card.accent-gray .stat-card__icon { background: #f3f4f6; color: #4b5563; }
 
-.stat-card.accent-sky {
-  border-color: #0ea5e9;
-}
-.stat-card.accent-sky .stat-card__value,
-.stat-card.accent-sky .stat-card__icon {
-  color: #0ea5e9;
-}
-
-.stat-card.accent-gray {
-  border-color: #6b7280;
-}
-.stat-card.accent-gray .stat-card__value,
-.stat-card.accent-gray .stat-card__icon {
-  color: #6b7280;
-}
-
-/* Palette for dynamic status tiles (rotates) */
-.stat-card.accent-0 { border-color: #16a34a; }
-.stat-card.accent-0 .stat-card__value,
-.stat-card.accent-0 .stat-card__icon { color: #16a34a; }
-
-.stat-card.accent-1 { border-color: #6b7280; }
-.stat-card.accent-1 .stat-card__value,
-.stat-card.accent-1 .stat-card__icon { color: #6b7280; }
-
-.stat-card.accent-2 { border-color: #dc2626; }
-.stat-card.accent-2 .stat-card__value,
-.stat-card.accent-2 .stat-card__icon { color: #dc2626; }
-
-.stat-card.accent-3 { border-color: #0ea5e9; }
-.stat-card.accent-3 .stat-card__value,
-.stat-card.accent-3 .stat-card__icon { color: #0ea5e9; }
-
-.stat-card.accent-4 { border-color: #a855f7; }
-.stat-card.accent-4 .stat-card__value,
-.stat-card.accent-4 .stat-card__icon { color: #a855f7; }
-
-.stat-card.accent-5 { border-color: #f59e0b; }
-.stat-card.accent-5 .stat-card__value,
-.stat-card.accent-5 .stat-card__icon { color: #f59e0b; }
+/* Dynamic Rotation Accents */
+.stat-card.accent-0 .stat-card__icon { background: #f0fdf4; color: #16a34a; }
+.stat-card.accent-1 .stat-card__icon { background: #f3f4f6; color: #4b5563; }
+.stat-card.accent-2 .stat-card__icon { background: #fef2f2; color: #dc2626; }
+.stat-card.accent-3 .stat-card__icon { background: #f0f9ff; color: #0ea5e9; }
+.stat-card.accent-4 .stat-card__icon { background: #faf5ff; color: #9333ea; }
+.stat-card.accent-5 .stat-card__icon { background: #fffbeb; color: #d97706; }

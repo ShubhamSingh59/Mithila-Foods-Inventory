@@ -1,5 +1,5 @@
 #supplier-tiles-page {
-  padding: 24px;
+  padding: 16px; /* Reduced from 24px */
   background: #fafafa;
 }
 
@@ -8,23 +8,26 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 12px; /* Reduced margin */
 }
 
 .supplier-tiles__title {
-  font-size: 20px;
+  font-size: 18px; /* Reduced title size */
   font-weight: 700;
   margin: 0;
+  color: #111827;
 }
 
 /* Button */
 .supplier-tiles__btn {
   border: 1px solid #e5e7eb;
   background: #ffffff;
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 6px;
+  padding: 6px 12px; /* Smaller button */
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
 }
 .supplier-tiles__btn:hover {
   background: #f3f4f6;
@@ -35,16 +38,17 @@
   border: 1px solid #fecaca;
   background: #fef2f2;
   color: #b91c1c;
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 16px;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
 }
 
 /* Grid */
 .supplier-tiles__grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 18px;
+  gap: 12px; /* Reduced gap from 18px */
 }
 
 @media (min-width: 640px) {

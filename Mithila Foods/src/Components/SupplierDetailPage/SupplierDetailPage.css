@@ -1,32 +1,46 @@
-/* ==============================
-   Supplier Detail Page (ERPNext theme-like)
-   ============================== */
+/* src/Components/SupplierAndTransporter/SupplierDetailPage.css */
 
-#supplier-detail-page.supplier-detail-page {
-  padding: 16px;
+/* ==============================
+   Main Layout & Container
+   ============================== */
+.supplier-detail-page {
+  padding: 24px;
+  background-color: #f8fafc; /* Theme background */
+  min-height: 100vh;
+  /* ✅ Flexbox to control vertical ordering */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-/* top bar */
+/* ==============================
+   Top Bar (Back Button + Title)
+   ============================== */
 .supplier-detail-topbar {
+  /* ✅ Order -1 moves this to the very top, above widgets */
+  order: -1; 
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 12px;
-  margin-bottom: 14px;
+  flex-direction: column; /* Stack button above title */
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 4px;
 }
 
 .supplier-detail-back {
-  border: 1px solid #dbe3ef;
-  background: #ffffff;
-  color: #111827;
-  border-radius: 10px;
-  padding: 10px 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  transition: all 0.2s;
+  /* Slight shadow to make it pop */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
 }
-
 .supplier-detail-back:hover {
-  background: #f6f8fb;
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .supplier-detail-topbar__title {
@@ -36,155 +50,223 @@
 }
 
 .supplier-detail-title {
-  font-size: 20px;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #0b1220;
-  margin: 0;
+  color: #0f172a;
+  line-height: 1.2;
 }
-
 .supplier-detail-subtitle {
-  font-size: 13px;
+  font-size: 0.9rem;
   color: #64748b;
 }
 
-/* generic link */
-.supplier-detail-link {
-  color: #2563eb;
-  text-decoration: none;
-}
-
-.supplier-detail-link:hover {
-  text-decoration: underline;
-}
-
-/* cards */
+/* ==============================
+   Cards & Sections
+   ============================== */
 .supplier-detail-card {
-  border: 1px solid #dbe3ef;
-  background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   overflow: hidden;
-  margin-bottom: 14px;
-}
-
-/* header strip like your sections */
-.supplier-detail-card__header {
-  background: #f6f8fb;
-  border-bottom: 1px solid #dbe3ef;
-  padding: 12px 14px;
-  font-weight: 700;
-  color: #0b1220;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  height: 100%; /* Ensure cards stretch nicely in grid */
 }
 
-/* body */
+.supplier-detail-card__header {
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .supplier-detail-card__body {
-  padding: 14px;
+  padding: 20px;
+  flex: 1; /* Fills remaining height */
 }
 
-/* grid */
+/* ==============================
+   Grids
+   ============================== */
 .supplier-detail-grid {
   display: grid;
-  gap: 14px;
+  gap: 20px 40px;
 }
+.supplier-detail-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.supplier-detail-grid--3 { grid-template-columns: repeat(3, 1fr); }
 
-.supplier-detail-grid--2 {
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 900px) {
-  .supplier-detail-grid--2 {
-    grid-template-columns: 1fr 1fr;
+@media (max-width: 900px) {
+  .supplier-detail-grid--2, .supplier-detail-grid--3 {
+    grid-template-columns: 1fr;
   }
 }
 
-/* field */
+/* ==============================
+   Fields & Typography
+   ============================== */
 .supplier-detail-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.supplier-detail-field__label {
-  font-size: 13px;
-  color: #475569;
-  font-weight: 600;
-}
-
-.supplier-detail-field__value {
-  font-size: 15px;
-  color: #0b1220;
-  font-weight: 500;
-  word-break: break-word;
-}
-
-/* address blocks */
-.supplier-detail-address {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.supplier-detail-address__line {
-  color: #0b1220;
-  font-size: 14px;
-  line-height: 1.35;
+.supplier-detail-field__label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  font-weight: 600;
+}
+.supplier-detail-field__value {
+  font-size: 0.95rem;
+  color: #1e293b;
+  font-weight: 500;
+  word-break: break-word;
+  line-height: 1.4;
 }
 
-/* when we show fallback pre text */
+/* Address Formatting */
 .supplier-detail-address-pre {
   margin: 0;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 13px;
-  color: #0b1220;
+  font-family: inherit;
   white-space: pre-wrap;
-  word-break: break-word;
+  font-size: 0.9rem;
+  color: #334155;
 }
 
-/* error alert (if you already have alert classes, this will still work fine) */
+/* ==============================
+   Badges (Status)
+   ============================== */
+.supplier-detail-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid transparent;
+}
+.supplier-detail-badge--active { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+.supplier-detail-badge--inactive { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+.supplier-detail-badge--blocked { background: #1e293b; color: #f8fafc; border-color: #0f172a; }
+
+/* ==============================
+   Attachments
+   ============================== */
+.attachment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-top: 6px;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+.attachment-row:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+.attachment-name {
+  font-size: 0.85rem;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.attachment-btn {
+  font-size: 0.75rem;
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+}
+.attachment-btn:hover { background: #dbeafe; }
+
+/* ==============================
+   QR Code
+   ============================== */
+.qr-preview-container {
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  background: #f8fafc;
+  width: fit-content;
+}
+.qr-thumbnail {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  border-radius: 8px;
+  cursor: pointer;
+  background: white;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.2s;
+}
+.qr-thumbnail:hover {
+  transform: scale(1.02);
+  border-color: #94a3b8;
+}
+
+/* ==============================
+   Tables (Items & POs)
+   ============================== */
+
+/* Wrapper allows scrolling for wide tables */
+.supplier-detail-card__body[style*="padding:0"] {
+  overflow-x: auto; /* ✅ Allows PO table to scroll if needed */
+}
+
+.simple-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  min-width: 400px; /* ✅ Ensures table doesn't get too crushed */
+}
+
+.simple-table th {
+  text-align: left;
+  padding: 12px 16px; /* Header padding */
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap; /* Keep headers on one line */
+}
+
+/* ✅ Compact Data Rows (User Request: "Supplied item make them smaller") */
+.simple-table td {
+  padding: 8px 16px; /* Reduced vertical padding */
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+/* ✅ Wider Columns Logic (User Request: "PO... make them little wider") */
+/* We target cells that usually hold descriptions or status to give them breath */
+.simple-table td:nth-child(1) {
+  white-space: nowrap; /* Don't wrap IDs */
+}
+
+.simple-table tr:last-child td { border-bottom: none; }
+.simple-table tr:hover td { background-color: #f8fafc; }
+
+/* Error/Alert */
 .alert.alert-error {
   border: 1px solid #fecaca;
   background: #fef2f2;
   color: #b91c1c;
-  border-radius: 12px;
-  padding: 10px 12px;
-  margin: 10px 0 14px 0;
-}
-
-/* optional badge style (if you later want status pills) */
-.supplier-detail-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 700;
-  border: 1px solid #dbe3ef;
-  background: #f8fafc;
-  color: #0b1220;
-}
-
-/* Example badge variants you can use later */
-.supplier-detail-badge--active {
-  border-color: #bbf7d0;
-  background: #ecfdf5;
-  color: #166534;
-}
-
-.supplier-detail-badge--inactive {
-  border-color: #e2e8f0;
-  background: #f1f5f9;
-  color: #334155;
-}
-
-.supplier-detail-badge--blocked {
-  border-color: #fecaca;
-  background: #fef2f2;
-  color: #b91c1c;
+  border-radius: 8px;
+  padding: 12px;
+  font-weight: 500;
 }
