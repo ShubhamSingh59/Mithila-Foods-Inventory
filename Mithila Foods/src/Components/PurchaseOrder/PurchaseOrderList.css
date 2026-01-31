@@ -367,3 +367,107 @@
   opacity: 0.6;
   cursor: default;
 }
+/* ================================
+   ADVANCE PAYMENT MODAL (NEW)
+   Place this at the END of PurchaseOrderList.css
+================================ */
+
+/* Fullscreen overlay */
+.po-list .modal-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.45); /* dark blur */
+  backdrop-filter: blur(4px);
+}
+
+/* Modal box */
+.po-list .modal-content{
+  width: min(520px, 100%);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+
+  padding: 18px 20px;
+  box-shadow: 0 25px 70px rgba(0,0,0,0.22);
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Title */
+.po-list .modal-content h3{
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+/* Description text */
+.po-list .modal-content .text-muted{
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* Field block (THIS fixes label/input alignment) */
+.po-list .po-field{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* Label */
+.po-list .po-label{
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+/* Input / Select inside modal */
+.po-list .po-input{
+  width: 100%;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+
+  padding: 0 12px;
+  font-size: 0.95rem;
+  color: #0f172a;
+  outline: none;
+
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.po-list .po-input:focus{
+  border-color: #0f172a;
+  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.12);
+}
+
+/* Buttons row */
+.po-list .po-modal-actions{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #eef2f7;
+}
+
+/* Make buttons look better in modal */
+.po-list .modal-content .btn{
+  height: 36px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+}

@@ -2462,7 +2462,7 @@ function PurchaseOrder() {
                         <label className="po-label">Rate</label>
                         <input type="number" className="po-input" min="0" step="0.01" value={row.rate} onChange={e => updatePoItem(idx, { rate: e.target.value, rateTouched: true })} />
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                    <div className="po-modal-actions">
                         <button type="button" onClick={() => removePoItem(idx)} disabled={poItems.length === 1} className="po-btn po-btn-outline">Remove</button>
                     </div>
                   </div>
