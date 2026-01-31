@@ -1,134 +1,76 @@
 /* src/index.css */
 
-/* 1. Global Variables (The Source of Truth) */
+/* 1. THEME VARIABLES (Source of Truth) */
 :root {
   /* Brand Colors */
-  --primary: #0f172a;        /* Deep Navy */
+  --primary: #0f172a;       /* Deep Navy (Sidebar, Primary Buttons) */
   --primary-hover: #1e293b;
-  --accent: #2563eb;         /* Bright Blue */
+  --accent: #2563eb;        /* Bright Blue (Links, Active States) */
+  
+  /* Status Colors */
+  --success-bg: #f0fdf4;
+  --success-text: #166534;
+  --success-border: #bbf7d0;
+  
+  --danger-bg: #fef2f2;
+  --danger-text: #991b1b;
+  --danger-border: #fecaca;
+
+  --warning-bg: #fefce8;
+  --warning-text: #854d0e;
   
   /* Backgrounds */
-  --bg-app: #f3f4f6;         /* Light Gray (App Background) */
-  --bg-surface: #ffffff;     /* White (Card Background) */
-  --bg-subtle: #f8fafc;      /* Very Light Gray (Table Headers) */
+  --bg-app: #f3f4f6;        /* Light Gray App Background */
+  --bg-panel: #ffffff;      /* White Cards */
+  --bg-subtle: #f8fafc;     /* Very Light Gray (Headers) */
 
-  /* Text */
-  --text-main: #111827;      /* Nearly Black */
-  --text-muted: #64748b;     /* Gray Text */
+  /* Text & Borders */
+  --text-main: #0f172a;     /* Dark text */
+  --text-muted: #64748b;    /* Gray text */
+  --border: #e2e8f0;        /* Light borders */
   
-  /* Borders & Radius */
-  --border: #e2e8f0;
-  --radius: 10px;            /* Standard curvature */
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  /* Spacing & Radius */
+  --radius: 10px;           /* Consistent curvature */
+  --header-height: 60px;
+  --sidebar-width: 250px;
 }
 
-/* 2. Reset & Base Styles */
+/* 2. RESET */
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: var(--bg-app);
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden; /* Prevent horizontal scroll on body */
 }
 
-* {
-  box-sizing: border-box;
-}
+/* 3. UTILITIES (Use these in your JSX) */
+.text-muted { color: var(--text-muted) !important; }
+.text-bold { font-weight: 700 !important; }
+.text-right { text-align: right !important; }
+.text-center { text-align: center !important; }
 
-/* 3. Utility Classes (Use these instead of writing new CSS) */
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 14px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  border-radius: var(--radius);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-}
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.btn-primary { background: var(--primary); color: white; }
-.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
-
-.btn-secondary { background: white; border-color: var(--border); color: var(--text-main); }
-.btn-secondary:hover:not(:disabled) { background: var(--bg-subtle); }
-
-.btn-danger { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-.btn-danger:hover:not(:disabled) { background: #fecaca; }
-
-.btn-sm { padding: 6px 10px; font-size: 0.8rem; }
-
-/* Inputs */
-.input, .select {
-  width: 100%;
-  height: 38px;
-  padding: 0 12px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--bg-surface);
-  font-size: 0.9rem;
-  outline: none;
-  transition: border-color 0.2s;
-}
-.input:focus, .select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-
-/* Cards */
-.card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
-}
-
-/* Typography */
-.h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin: 0; }
-.h2 { font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0; }
-.h3 { font-size: 1.1rem; font-weight: 600; color: var(--text-main); margin: 0; }
-.text-sm { font-size: 0.85rem; }
-.text-muted { color: var(--text-muted); }
-
-/* Flex Utilities */
-.flex-row { display: flex; align-items: center; gap: 12px; }
-.flex-col { display: flex; flex-direction: column; gap: 12px; }
+/* Flex Helpers */
+.flex-row { display: flex; align-items: center; gap: 10px; }
+.flex-col { display: flex; flex-direction: column; gap: 10px; }
 .justify-between { justify-content: space-between; }
 .flex-wrap { flex-wrap: wrap; }
-/* src/index.css */
 
-/* ... existing code ... */
-
-/* --- SKELETON LOADING --- */
+/* Skeleton Loader Animation */
 @keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
-
 .skeleton {
-  background: #e2e8f0; /* Base gray color */
-  background: linear-gradient(
-    90deg,
-    #e2e8f0 25%,
-    #f1f5f9 50%,
-    #e2e8f0 75%
-  );
+  background: #e2e8f0;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
-  border-radius: 6px; /* Soft edges */
+  border-radius: 6px;
   display: inline-block;
-  line-height: 1;
-  width: 100%; /* Default to full width of container */
+  height: 1em;
+  width: 100%;
 }

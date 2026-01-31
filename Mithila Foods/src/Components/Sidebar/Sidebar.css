@@ -1,0 +1,202 @@
+/* src/Components/Sidebar.css */
+
+/* The Sidebar Container */
+.app-sidebar {
+  /* Width is handled by the parent grid in App.css via var(--sidebar-width) */
+  background-color: var(--primary); /* Deep Navy from Theme */
+  color: #f1f5f9; /* Light text */
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  transition: width 0.3s ease;
+  overflow-x: hidden;
+  white-space: nowrap;
+  height: 100vh;
+}
+
+/* --- HEADER SECTION --- */
+.app-sidebar-header {
+  height: 60px; /* Matches header-height variable if you have one */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+/* Logo Area */
+.app-logo-circle {
+  width: 32px;
+  height: 32px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.app-logo-text {
+  margin-left: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.app-logo-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.app-logo-subtitle {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Toggle Button */
+.sidebar-toggle-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* --- NAVIGATION --- */
+.app-nav {
+  flex: 1;
+  padding: 16px 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* Space between groups */
+}
+
+/* Hide scrollbar for cleaner look */
+.app-nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* Groups */
+.app-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.app-nav-group-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 0 10px;
+  margin-bottom: 4px;
+}
+
+/* Links */
+.app-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.app-nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+/* Active State */
+.app-nav-link.active {
+  background-color: var(--accent); /* Uses your global Blue */
+  color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.app-nav-icon {
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.app-nav-link.active .app-nav-icon {
+  opacity: 1;
+}
+
+/* --- FOOTER --- */
+.app-sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.app-sidebar-footer-label {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 4px;
+}
+
+.app-sidebar-footer-badge {
+  display: inline-block;
+  background: rgba(16, 185, 129, 0.15); /* Green tint */
+  color: #34d399; /* Bright green text */
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* ==============================
+   COLLAPSED STATE LOGIC
+   ============================== */
+/* NOTE: The width is controlled by App.jsx style={{--sidebar-width}},
+   but we use this class to hide internal elements */
+
+.app-sidebar.collapsed .app-logo-text,
+.app-sidebar.collapsed .app-nav-group-label,
+.app-sidebar.collapsed .app-nav-link span,
+.app-sidebar.collapsed .app-sidebar-footer,
+.app-sidebar.collapsed .app-logo-circle {
+  display: none;
+}
+
+/* Center elements when collapsed */
+.app-sidebar.collapsed .app-sidebar-header {
+  justify-content: center;
+  padding: 0;
+}
+
+.app-sidebar.collapsed .app-nav-link {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.app-sidebar.collapsed .sidebar-toggle-btn {
+  margin: 0;
+}

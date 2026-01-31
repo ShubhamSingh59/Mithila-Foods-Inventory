@@ -1,10 +1,10 @@
-// src/App.jsx
 import React, { useState } from "react";
 import { BrowserRouter as Router, useLocation, Navigate, Routes, Route } from "react-router-dom";
 
 // Components
-import Sidebar from "./Components/Sidebar";
+import Sidebar from "./Components/Sidebar/Sidebar";
 import NotFound from "./Components/NotFound";
+import ErrorBoundary from "./Components/ErrorBoundary";
 
 // Views (Screens)
 import PurchaseOrderView from "./views/PurchaseOrderView";
@@ -15,17 +15,27 @@ import StockSummaryTabsView from "./views/StockSummaryTabsView";
 import StockReorder from "./Components/StockReorder/StockReorder";
 import SalesReturnTabsView from "./views/SalesReturnTabsView";
 import SalesOrderView from "./views/SalesOrderView";
-import SupplierTabView from "./views/SupplierTabView";
+
+// ✅ 1. Import the 3 Supplier Views
+import SupplierTabView from "./views/SupplierListView"; // View 1: Directory
+import PurchaseTrackerView from "./views/PurchaseTrackerView"; // View 2: Operations
+import SupplierIntelligenceView from "./views/SupplierIntelligenceView"; // View 3: Intelligence
 
 // CSS
 import "./App.css";
-import ErrorBoundary from "./Components/ErrorBoundary";
 
-// --- KeepAlive Wrapper ---
-// Renders the component hidden instead of unmounting it.
-const KeepAlivePage = ({ triggerPath, children }) => {
+// --- KeepAlive Wrapper (Updated) ---
+// ✅ Updated to accept 'triggerPaths' (array) for views with multiple sub-routes
+const KeepAlivePage = ({ triggerPath, triggerPaths, children }) => {
   const location = useLocation();
-  const isActive = location.pathname.startsWith(triggerPath);
+  
+  let isActive = false;
+  if (triggerPath) {
+    isActive = location.pathname.startsWith(triggerPath);
+  } else if (triggerPaths) {
+    // Check if current URL starts with ANY of the provided paths
+    isActive = triggerPaths.some(path => location.pathname.startsWith(path));
+  }
 
   return (
     <div
@@ -38,7 +48,6 @@ const KeepAlivePage = ({ triggerPath, children }) => {
 };
 
 // --- Check404 Helper ---
-// Shows 404 page only if no other known route is active
 function Check404() {
   const location = useLocation();
   const validPrefixes = [
@@ -112,14 +121,33 @@ export default function App() {
               </div>
             </KeepAlivePage>
 
-            {/* 5. SUPPLIER VIEWS */}
-            <KeepAlivePage triggerPath="/suppliers">
+            {/* ✅ 5. SUPPLIER VIEWS (Split into 3 Sections) 
+                We use 'triggerPaths' array because each view handles multiple tabs.
+            */}
+
+            {/* View 1: Directory (Suppliers & Transporters) */}
+            <KeepAlivePage triggerPaths={["/suppliers/list", "/suppliers/transporters"]}>
               <section className="app-panel app-panel-primary">
-                <SupplierTabView />
+                <SupplierTabView/>
               </section>
             </KeepAlivePage>
 
-            {/* 6. ANALYTICS VIEWS */}
+            {/* View 2: Operations (Tracker & Logistics) */}
+            <KeepAlivePage triggerPaths={["/suppliers/purchase-tracker", "/suppliers/logistics-hub"]}>
+              <section className="app-panel app-panel-primary">
+                <PurchaseTrackerView />
+              </section>
+            </KeepAlivePage>
+
+            {/* View 3: Intelligence (Scorecard & Trends) */}
+            <KeepAlivePage triggerPaths={["/suppliers/analytics", "/suppliers/item-trends"]}>
+              <section className="app-panel app-panel-primary">
+                <SupplierIntelligenceView />
+              </section>
+            </KeepAlivePage>
+
+
+            {/* 6. ANALYTICS VIEWS (General) */}
             <KeepAlivePage triggerPath="/analytics">
               <div className="app-panel app-panel-primary">
                 <Analytics />

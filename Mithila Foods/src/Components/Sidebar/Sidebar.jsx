@@ -1,11 +1,13 @@
 // src/Components/Sidebar.jsx
 import React from "react";
 import { NavLink } from "react-router-dom";
+import "./Sidebar.css";
 import { 
   Menu, ChevronLeft, 
   BarChart2, Package, Layers, 
   ShoppingCart, Truck, Briefcase, 
-  ClipboardList, Activity 
+  ClipboardList, Activity,
+  Users, TrendingUp // ✅ Added specific icons for the new views
 } from "lucide-react";
 
 export default function Sidebar({ isOpen, toggleSidebar }) {
@@ -69,14 +71,23 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
           <NavItem to="/mfg/workflow" label="MF Workflow" icon={Activity} />
         </div>
 
+        {/* ✅ UPDATED: Supplier Hub (Split into 3 Main Views) */}
         <div className="app-nav-group">
-          <div className="app-nav-group-label">Partners</div>
-          <NavItem to="/suppliers" label="Suppliers & Transporters" icon={Truck} />
+          <div className="app-nav-group-label">Supplier & Transporter</div>
+          
+          {/* View 1: Directory (Lists & Details) */}
+          <NavItem to="/suppliers/list" label="Lists" icon={Users} />
+          
+          {/* View 2: Operations (Tracker & Logistics) */}
+          <NavItem to="/suppliers/purchase-tracker" label="Tracker" icon={Truck} />
+          
+          {/* View 3: Intelligence (Scorecards & Trends) */}
+          <NavItem to="/suppliers/analytics" label="Reports" icon={TrendingUp} />
         </div>
 
         <div className="app-nav-group">
-          <div className="app-nav-group-label">Analytics</div>
-          <NavItem to="/analytics" label="Analytics" icon={BarChart2} />
+          <div className="app-nav-group-label">General Analytics</div>
+          <NavItem to="/analytics" label="Dashboard" icon={BarChart2} />
         </div>
 
       </nav>

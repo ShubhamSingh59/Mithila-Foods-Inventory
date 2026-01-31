@@ -10,16 +10,16 @@ export default function SupplierTabView() {
   // Sync tab highlight with URL
   useEffect(() => {
     const p = location.pathname.toLowerCase();
-    if (p.includes("/suppliers/purchase-tracker")) {
-      setActiveTab("purchase-tracker");
-    } else if (p.includes("/suppliers/transporters")) {
+    
+    // Removed Purchase Tracker condition
+    if (p.includes("/suppliers/transporters")) {
       setActiveTab("transporters");
     } else {
       setActiveTab("suppliers");
     }
   }, [location.pathname]);
 
-  // Navigation handlers - Use Absolute Paths
+  // Navigation handlers
   function goSuppliers() {
     setActiveTab("suppliers");
     navigate("/suppliers/list"); 
@@ -30,20 +30,11 @@ export default function SupplierTabView() {
     navigate("/suppliers/transporters");
   }
 
-  function goPurchaseTracker() {
-    setActiveTab("purchase-tracker");
-    navigate("/suppliers/purchase-tracker");
-  }
-
   return (
     <div
       className={
         "supplier-page " +
-        (activeTab === "suppliers"
-          ? "is-suppliers"
-          : activeTab === "transporters"
-          ? "is-transporters"
-          : "is-purchase-tracker")
+        (activeTab === "transporters" ? "is-transporters" : "is-suppliers")
       }
     >
       <div className="theme-tabs">
@@ -62,17 +53,8 @@ export default function SupplierTabView() {
         >
           Transporters
         </button>
-
-        <button
-          type="button"
-          className={"theme-tab-btn" + (activeTab === "purchase-tracker" ? " active" : "")}
-          onClick={goPurchaseTracker}
-        >
-          Purchase Tracker
-        </button>
       </div>
 
-      {/* Render the Routes */}
       <SupplierTransporterRoutes />
     </div>
   );

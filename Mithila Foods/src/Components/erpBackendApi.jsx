@@ -100,8 +100,12 @@ export async function updateDoc(doctype, name, payload) {
 export async function getSuppliers() {
   return getDoctypeList("Supplier", {
     fields: JSON.stringify(["name", "supplier_name", "email_id"]),
-    filters: JSON.stringify([["Supplier", "disabled", "=", 0]]),
-    limit_page_length: 500,
+    filters: JSON.stringify([
+      ["Supplier", "disabled", "=", 0],
+      ["Supplier", "is_transporter", "=", 0] // ✅ Filter out Transporters
+    ]),
+    limit_page_length: 1000, // Increased limit just in case
+    order_by: "supplier_name asc"
   });
 }
 
@@ -133,6 +137,10 @@ export async function getSuppliersForList() {
       "custom_fssai",
       "custom_msme",
       "custom_udyam",
+    ]),
+    filters: JSON.stringify([
+      ["Supplier", "supplier_group", "!=", "Transporter"], // ✅ Exclude Transporters
+      ["Supplier", "is_transporter", "=", 0]             // ✅ Double check
     ]),
     limit_page_length: 1000,
     order_by: "modified desc",
@@ -177,6 +185,9 @@ export async function getSupplierDashboardStatsByStatus() {
   while (true) {
     const rows = await getDoctypeList("Supplier", {
       fields: JSON.stringify(["name", "supplier_group", SUPPLIER_STATUS_FIELD]),
+      filters: JSON.stringify([
+        ["Supplier", "supplier_group", "!=", "Transporter"]
+      ]),
       limit_page_length: pageSize,
       limit_start: start,
       order_by: "modified desc",
@@ -1238,14 +1249,14 @@ export const MF_STATUS_OPTIONS = [
   "PO Confirmed",
   "In Transit",
   "Delivered",
-  "QC Pass",
   "QC In",
+  "QC Pass",
   "Completed",
-  "Cancelled",
+  "Cancelled", // Usually handled via buttons, but kept here for reference
 ];
 
 // ERPNext expects datetime as "YYYY-MM-DD HH:mm:ss"
-function nowKolkataErpDatetime() {
+export function nowKolkataErpDatetime() {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Kolkata",
     year: "numeric",
@@ -1263,10 +1274,17 @@ function nowKolkataErpDatetime() {
 
 // Update MF status fields on Purchase Order
 export async function setPurchaseOrderMfStatus(poName, mfStatus, { stockPercent } = {}) {
+  const now = nowKolkataErpDatetime();
+
   const patch = {
     [MF_PO_FIELDS.status]: mfStatus,
-    [MF_PO_FIELDS.updatedOn]: nowKolkataErpDatetime(),
+    [MF_PO_FIELDS.updatedOn]: now,
   };
+
+  // ✅ REQUIREMENT 1: Capture Delivered Date
+  if (mfStatus === "Delivered") {
+    patch["custom_goods_delivered_date"] = now;
+  }
 
   if (stockPercent !== undefined && stockPercent !== null && stockPercent !== "") {
     patch[MF_PO_FIELDS.stockPercent] = Number(stockPercent);
@@ -1274,7 +1292,6 @@ export async function setPurchaseOrderMfStatus(poName, mfStatus, { stockPercent 
 
   return updateDoc("Purchase Order", poName, patch);
 }
-
 // ------------------------------
 // File upload helper
 // ------------------------------
@@ -1539,24 +1556,60 @@ export async function getMfFlowWipBalances({ flowTag, wipWarehouse }) {
 // ------------------------------
 // Transporter helpers
 // ------------------------------
+async function fetchTransporterServiceAreas(transporterIds) {
+  if (!transporterIds || transporterIds.length === 0) return {};
 
+  try {
+    // ✅ FIX: Added 'parent: "Supplier"' to satisfy permissions
+    const rows = await getDoctypeList("Transporter Service Area", {
+      parent: "Supplier",
+      fields: JSON.stringify(["parent", "city"]),
+      filters: JSON.stringify([["parent", "in", transporterIds]]),
+      limit_page_length: 5000
+    });
+
+    const map = {};
+    rows.forEach(row => {
+      if (!map[row.parent]) map[row.parent] = [];
+      map[row.parent].push(row);
+    });
+    return map;
+  } catch (e) {
+    console.error("Failed to fetch service areas:", e);
+    return {};
+  }
+}
 // Change this doctype name to your real Transporter doctype
-const TRANSPORTER_DOCTYPE = "Transporter";
-
 export async function getTransportersForList() {
-  return getDoctypeList(TRANSPORTER_DOCTYPE, {
+  const transporters = await getDoctypeList("Supplier", {
     fields: JSON.stringify([
       "name",
-      "transporter_name",
-      "point_of_contact",
-      "contact",
-      "address",
-      "rating",
-      "working_days",
+      "supplier_name",
+      "mobile_no",
+      "email_id",
+      "primary_address",
+      "custom_contact_person",
+      "custom_status",
+      "custom_vehicle_type",
+      "supplier_group"
+    ]),
+    filters: JSON.stringify([
+      ["Supplier", "supplier_group", "=", "Transporter"],
+      ["Supplier", "is_transporter", "=", 1]
     ]),
     limit_page_length: 1000,
     order_by: "modified desc",
   });
+
+  if (!transporters.length) return [];
+
+  const transporterIds = transporters.map(t => t.name);
+  const serviceAreaMap = await fetchTransporterServiceAreas(transporterIds);
+
+  return transporters.map(t => ({
+    ...t,
+    custom_service_areas: serviceAreaMap[t.name] || []
+  }));
 }
 
 // ------------------------------
@@ -1752,60 +1805,31 @@ export async function getDoctypeFieldOptions(doctype, fieldname) {
 // Transporter Dashboard Stats (Tiles by status field)
 // ------------------------------
 export async function getTransporterDashboardStatsByStatus() {
-  const STATUS_FIELD = "status";
-  const UNKNOWN = "Unspecified";
-
-  // 1) status options from meta (if Select)
-  const statusOptions = await getDoctypeFieldOptions(TRANSPORTER_DOCTYPE, STATUS_FIELD);
-
-  // 2) fetch transporters in pages (minimal fields)
-  const pageSize = 1000;
-  let start = 0;
-  let all = [];
-
-  while (true) {
-    const rows = await getDoctypeList(TRANSPORTER_DOCTYPE, {
-      fields: JSON.stringify(["name", STATUS_FIELD]),
-      limit_page_length: pageSize,
-      limit_start: start,
-      order_by: "modified desc",
-    });
-
-    all = all.concat(rows || []);
-    if (!rows || rows.length < pageSize) break;
-    start += pageSize;
-  }
-
-  const total = all.length;
-
-  // 3) count by status
-  const statusCounts = new Map();
-  (statusOptions || []).forEach((s) => statusCounts.set(s, 0));
-
-  for (const t of all) {
-    const valRaw = t?.[STATUS_FIELD];
-    const val = (valRaw && String(valRaw).trim()) || UNKNOWN;
-    statusCounts.set(val, (statusCounts.get(val) || 0) + 1);
-  }
-
-  // Active count (case-insensitive match "Active")
-  let active = 0;
-  for (const [k, v] of statusCounts.entries()) {
-    if (String(k).toLowerCase() === "active") active = v;
-  }
-
-  // keep meta order first, then extra values
-  const ordered = [];
-  (statusOptions || []).forEach((opt) => {
-    ordered.push([opt, statusCounts.get(opt) || 0]);
-    statusCounts.delete(opt);
+  const rows = await getDoctypeList("Supplier", {
+    fields: JSON.stringify(["custom_status"]),
+    filters: JSON.stringify([
+      ["Supplier", "is_transporter", "=", 1] // ✅ Fix: Count everyone checked as Transporter
+    ]),
+    limit_page_length: 5000
   });
-  for (const [k, v] of statusCounts.entries()) ordered.push([k, v]);
+
+  const statusCounts = {};
+  let activeCount = 0;
+
+  rows.forEach(r => {
+    // ✅ Fix: Normalize status to prevent duplicates ("Active" vs "active")
+    let s = (r.custom_status || "Unspecified").trim();
+    s = s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+
+    statusCounts[s] = (statusCounts[s] || 0) + 1;
+
+    if (s === 'Active') activeCount++;
+  });
 
   return {
-    total,
-    active,
-    statuses: ordered.map(([status, count]) => ({ status, count })),
+    total: rows.length, // Should now reflect 8
+    active: activeCount,
+    statuses: Object.keys(statusCounts).map(k => ({ status: k, count: statusCounts[k] }))
   };
 }
 
@@ -1929,10 +1953,14 @@ export async function getPurchasePayablesBySupplier({
 
 // --- Transporter dropdown (light list) ---
 export async function getTransporters() {
-  return getDoctypeList(TRANSPORTER_DOCTYPE, {
-    fields: JSON.stringify(["name", "transporter_name"]),
+  return getDoctypeList("Supplier", {
+    fields: JSON.stringify(["name", "supplier_name"]),
+    filters: JSON.stringify([
+      ["Supplier", "is_transporter", "=", 1],
+      ["Supplier", "disabled", "=", 0]
+    ]),
     limit_page_length: 1000,
-    order_by: "modified desc",
+    order_by: "supplier_name asc",
   });
 }
 
@@ -2609,19 +2637,21 @@ export async function getSuppliersByPurchaseOrderSpending({
 //    rows: rowsOut,
 //  };
 //}
-
 // src/erpBackendApi.js
 
-// ... (keep all your existing imports and helper functions above this) ...
+// ... (Keep all imports and previous helpers like createDoc, submitDoc etc.) ...
+// src/erpBackendApi.js
+
+// ... (Keep imports and other functions) ...
 
 // ------------------------------
-// Purchase Register List (Updated with new columns & Lookups)
+// Purchase Register List (Fixed: Removed invalid field 'po_detail' from PR Items)
 // ------------------------------
 function prDateOnly(input) {
   if (!input) return "";
   const s = String(input).trim();
   if (!s) return "";
-  return s.slice(0, 10); // YYYY-MM-DD
+  return s.slice(0, 10);
 }
 
 function prChunk(arr, size = 100) {
@@ -2668,13 +2698,16 @@ export async function getPurchaseRegisterList({
         "supplier",
         "supplier_name",
         "transaction_date",
-        "status", // ERP Standard Status
-
-        // ✅ MF fields
+        "status",
+        "grand_total",
+        "advance_paid",
+        
+        // MF Fields
         "custom_mf_status",
-        "custom_mf_status_updated_on", // ✅ New Field
+        "custom_mf_status_updated_on",
+        "custom_goods_delivered_date", 
 
-        // ✅ Transporter ID
+        // Transporter Name Field
         "custom_transporter",
       ]),
       filters: JSON.stringify(poFilters),
@@ -2689,7 +2722,6 @@ export async function getPurchaseRegisterList({
     poParents.push(...list);
     if (list.length < pageSize) break;
     start += pageSize;
-
     if (poParents.length > 5000) break;
   }
 
@@ -2699,109 +2731,100 @@ export async function getPurchaseRegisterList({
   const poNames = Array.from(poByName.keys());
   if (!poNames.length) return { totalRows: 0, totalValue: 0, rows: [] };
 
-  // --- ✅ 1.5 Fetch Transporter Names ---
-  // Collect all unique Transporter IDs
+  // --- Transporter Name Lookup ---
   const transporterIds = [...new Set(poParents.map(p => p.custom_transporter).filter(Boolean))];
-  const transporterMap = new Map(); // ID -> Name
+  const transporterMap = new Map();
 
   if (transporterIds.length > 0) {
     const tBatches = prChunk(transporterIds, 100);
     for (const batch of tBatches) {
-      const tRows = await getDoctypeList("Transporter", { // Change "Transporter" if your doctype name differs
-        fields: JSON.stringify(["name", "transporter_name"]),
+      const tRows = await getDoctypeList("Supplier", {
+        fields: JSON.stringify(["name", "supplier_name"]),
         filters: JSON.stringify([["name", "in", batch]]),
         limit_page_length: 1000
       });
       (tRows || []).forEach(t => {
-        transporterMap.set(t.name, t.transporter_name || t.name);
+        transporterMap.set(t.name, t.supplier_name || t.name);
       });
     }
   }
 
-  // 2) Load Purchase Order Items (base rows)
+  // --- Lookup Transporter Invoices via 'custom_linked_po' ---
+  const transporterInvMap = new Map();
+  
+  if (poNames.length > 0) {
+    const piBatches = prChunk(poNames, 100);
+    for (const batch of piBatches) {
+      const transPis = await getDoctypeList("Purchase Invoice", {
+        fields: JSON.stringify(["name", "grand_total", "outstanding_amount", "custom_linked_po"]),
+        filters: JSON.stringify([
+          ["custom_linked_po", "in", batch],
+          ["docstatus", "=", 1]
+        ]),
+        limit_page_length: 1000
+      });
+
+      (transPis || []).forEach(pi => {
+        transporterInvMap.set(pi.custom_linked_po, pi);
+      });
+    }
+  }
+
+  // 2) Load PO Items
   const poItems = [];
   for (const part of prChunk(poNames, 100)) {
     const rows = await getDoctypeList("Purchase Order Item", {
       parent: "Purchase Order",
-      fields: JSON.stringify([
-        "name",
-        "parent",
-        "item_code",
-        "item_name",
-        "qty",
-        "rate",
-        "amount",
-        "base_rate",
-        "base_amount",
-      ]),
+      fields: JSON.stringify(["name", "parent", "item_code", "item_name", "qty", "rate", "amount", "base_rate", "base_amount"]),
       filters: JSON.stringify([["Purchase Order Item", "parent", "in", part]]),
       limit_page_length: 10000,
     });
     poItems.push(...(rows || []));
   }
-  if (!poItems.length) return { totalRows: 0, totalValue: 0, rows: [] };
-
-  // 3) PR Link Logic
+  
+  // 3) PR Logic (Fixed: Query only 'purchase_order_item')
   const prItems = [];
   for (const part of prChunk(poNames, 100)) {
-    try {
-      const rows = await getDoctypeList("Purchase Receipt Item", {
+    const rows = await getDoctypeList("Purchase Receipt Item", {
         parent: "Purchase Receipt",
-        fields: JSON.stringify(["parent", "purchase_order", "purchase_order_item"]),
+        // ✅ FIX: Removed 'po_detail' which caused the error
+        fields: JSON.stringify(["parent", "purchase_order", "purchase_order_item"]), 
         filters: JSON.stringify([["Purchase Receipt Item", "purchase_order", "in", part]]),
         limit_page_length: 10000,
-      });
-      prItems.push(...(rows || []));
-    } catch (e) {
-      // Fallback for older ERPNext versions
-      const rows2 = await getDoctypeList("Purchase Receipt Item", {
-        parent: "Purchase Receipt",
-        fields: JSON.stringify(["parent", "purchase_order", "po_detail"]),
-        filters: JSON.stringify([["Purchase Receipt Item", "purchase_order", "in", part]]),
-        limit_page_length: 10000,
-      });
-      (rows2 || []).forEach((r) => {
+    });
+    
+    (rows || []).forEach(r => {
         prItems.push({
-          parent: r.parent,
-          purchase_order: r.purchase_order,
-          purchase_order_item: r.po_detail,
+            parent: r.parent,
+            purchase_order: r.purchase_order,
+            purchase_order_item: r.purchase_order_item // This is the standard field for PR
         });
-      });
-    }
+    });
   }
 
   const prNames = Array.from(new Set(prItems.map((x) => x.parent).filter(Boolean)));
-  const prMetaByName = new Map(); // Store full PR meta (date + name)
+  const prMetaByName = new Map();
 
   for (const part of prChunk(prNames, 100)) {
     const prs = await getDoctypeList("Purchase Receipt", {
       fields: JSON.stringify(["name", "posting_date", "docstatus"]),
-      filters: JSON.stringify([
-        ["Purchase Receipt", "name", "in", part],
-        ["Purchase Receipt", "docstatus", "=", 1],
-      ]),
+      filters: JSON.stringify([["Purchase Receipt", "name", "in", part], ["Purchase Receipt", "docstatus", "=", 1]]),
       limit_page_length: 1000,
     });
-
     (prs || []).forEach((pr) => prMetaByName.set(pr.name, pr));
   }
 
-  // Maps to link PO Item -> PR Details
-  const prDetailsByPoItem = new Map(); // POItem -> { date, name }
-  const prDetailsByPo = new Map();     // PO -> { date, name } (fallback)
+  const prDetailsByPoItem = new Map();
+  const prDetailsByPo = new Map();
 
   for (const it of prItems) {
     const prMeta = prMetaByName.get(it.parent);
     if (!prMeta) continue;
-
     const details = { date: prMeta.posting_date || "", name: prMeta.name };
-    
     const poi = it.purchase_order_item;
     const po = it.purchase_order;
-
     if (poi) {
       const prev = prDetailsByPoItem.get(poi);
-      // If multiple PRs, take the latest one
       if (!prev || details.date > prev.date) prDetailsByPoItem.set(poi, details);
     }
     if (po) {
@@ -2810,12 +2833,13 @@ export async function getPurchaseRegisterList({
     }
   }
 
-  // 4) Purchase Invoice Mapping
+  // 4) PI Mapping (Regular Supplier Invoice)
   const piItemLinks = [];
   for (const part of prChunk(poNames, 100)) {
     const rows = await getDoctypeList("Purchase Invoice Item", {
       parent: "Purchase Invoice",
-      fields: JSON.stringify(["parent", "purchase_order"]),
+      // Note: Purchase Invoice Item typically has 'po_detail'
+      fields: JSON.stringify(["parent", "purchase_order", "po_detail"]), 
       filters: JSON.stringify([["Purchase Invoice Item", "purchase_order", "in", part]]),
       limit_page_length: 10000,
     });
@@ -2823,77 +2847,56 @@ export async function getPurchaseRegisterList({
   }
 
   const piNames = Array.from(new Set(piItemLinks.map((x) => x.parent).filter(Boolean)));
-
-  // Fetch PI Meta
   const piMetaByName = new Map();
   for (const part of prChunk(piNames, 100)) {
     const pis = await getDoctypeList("Purchase Invoice", {
       fields: JSON.stringify([
-        "name",
-        "bill_no", // Standard Supplier Invoice No
-        "custom_supplier_invoice", // Custom Supplier Invoice No
-        "status",
-        "grand_total",
-        "outstanding_amount",
-        "posting_date",
-        "docstatus",
+          "name", 
+          "bill_no", 
+          "status", 
+          "grand_total", 
+          "outstanding_amount", 
+          "posting_date", 
+          "docstatus"
       ]),
-      filters: JSON.stringify([
-        ["Purchase Invoice", "name", "in", part],
-        ["Purchase Invoice", "docstatus", "in", [0, 1]],
-      ]),
+      filters: JSON.stringify([["Purchase Invoice", "name", "in", part], ["Purchase Invoice", "docstatus", "in", [0, 1]]]),
       limit_page_length: 1000,
     });
-
     (pis || []).forEach((pi) => piMetaByName.set(pi.name, pi));
   }
 
-  // PI Mapping Logic (Item Level -> PO Level Fallback)
   const piByPoItem = new Map();
   const piByPo = new Map();
-
-  // Load PI Docs for Item-level precision
-  const piDocs = await mapLimit(piNames, 6, async (name) => {
-    try {
-      return await getDoc("Purchase Invoice", name);
-    } catch (e) { return null; }
-  });
-
-  for (const doc of piDocs || []) {
-    if (!doc?.name) continue;
-    const meta = piMetaByName.get(doc.name);
-    if (!meta) continue;
-
-    const piDate = meta.posting_date || doc.posting_date || "";
-
-    // 4c. Map by PO (fallback)
-    const poLink = doc.items?.[0]?.purchase_order; // grab from first item
-    if(poLink) {
-        const curr = piByPo.get(poLink);
-        const currMeta = curr ? piMetaByName.get(curr) : null;
-        if (!curr || (piDate && piDate > (currMeta?.posting_date || ""))) {
-            piByPo.set(poLink, doc.name);
-        }
-    }
-
-    // 4d. Map by PO Item
-    for (const row of doc.items || []) {
-      const poi = row.purchase_order_item || row.po_detail || "";
-      if (!poi) continue;
-
-      const curr = piByPoItem.get(poi);
-      const currMeta = curr ? piMetaByName.get(curr) : null;
-      if (!curr || (piDate && piDate > (currMeta?.posting_date || ""))) {
-        piByPoItem.set(poi, doc.name);
+  
+  for (const link of piItemLinks) {
+      const piName = link.parent;
+      const poName = link.purchase_order;
+      const poiName = link.po_detail || link.purchase_order_item; // Standard field for PI is po_detail
+      const meta = piMetaByName.get(piName);
+      
+      if (!meta) continue;
+      
+      if (poiName) {
+          const curr = piByPoItem.get(poiName);
+          const currMeta = curr ? piMetaByName.get(curr) : null;
+          if (!curr || (meta.posting_date > (currMeta?.posting_date || ""))) {
+              piByPoItem.set(poiName, piName);
+          }
       }
-    }
+      
+      if (poName) {
+          const curr = piByPo.get(poName);
+          const currMeta = curr ? piMetaByName.get(curr) : null;
+          if (!curr || (meta.posting_date > (currMeta?.posting_date || ""))) {
+              piByPo.set(poName, piName);
+          }
+      }
   }
 
-  // 5) Build Final Rows
+  // 5) Final Rows
   const qItem = String(item_q || "").trim().toLowerCase();
   const qInv = String(invoice_q || "").trim().toLowerCase();
   const qTrans = String(transporter_q || "").trim().toLowerCase();
-
   const minVal = min_value !== undefined && min_value !== "" ? Number(min_value) : null;
   const maxVal = max_value !== undefined && max_value !== "" ? Number(max_value) : null;
 
@@ -2904,88 +2907,94 @@ export async function getPurchaseRegisterList({
     if (!po) continue;
 
     const mf = String(po.custom_mf_status || "").trim();
-    // ✅ Updated On Date
     const mfDate = po.custom_mf_status_updated_on ? prDateOnly(po.custom_mf_status_updated_on) : "";
 
-    // ✅ Goods Receipt Data
-    // Delivered date priority: MF Updated On (if Delivered) -> else PR Posting Date
-    const deliveredDate = mf.toLowerCase() === "delivered" ? mfDate : "";
-    
     const prDetails = prDetailsByPoItem.get(it.name) || prDetailsByPo.get(it.parent);
     const prDate = prDetails?.date || "";
-    const prName = prDetails?.name || ""; // ✅ Goods Receipt Number
+    const prName = prDetails?.name || "";
 
-    const goodsReceivedDate = deliveredDate || prDate || "";
+    const goodsDeliveredDate = po.custom_goods_delivered_date ? prDateOnly(po.custom_goods_delivered_date) : "";
 
-    // ✅ Transporter Name Lookup
     const tId = po.custom_transporter;
     const transporterName = transporterMap.get(tId) || tId || "";
 
-    // ✅ Invoice Logic
+    // ✅ Transporter Invoice Data
+    const transpInv = transporterInvMap.get(po.name);
+    const transpInvNo = transpInv ? transpInv.name : "";
+    const transpAmt = transpInv ? (Number(transpInv.grand_total) || 0) : 0;
+    const transpOutstanding = transpInv ? (Number(transpInv.outstanding_amount) || 0) : 0;
+    const transpPaid = transpAmt - transpOutstanding;
+
     const piName = piByPoItem.get(it.name) || piByPo.get(it.parent) || "";
     const pi = piName ? piMetaByName.get(piName) : null;
+    const invoiceDate = pi?.posting_date || "";
 
-    const erpInvoiceNo = pi?.name || ""; // Internal ID
-    const supplierInvoiceNo = pi?.custom_supplier_invoice || pi?.bill_no || ""; // External Bill No
-    
-    // Status & Amounts
+    const erpInvoiceNo = pi?.name || "";
+    const supplierInvoiceNo = pi?.bill_no || "";
+
     const payStatus = String(pi?.status || (piName ? "Unknown" : "Not Invoiced")).trim();
-    const grandTotal = Number(pi?.grand_total) || 0;
+    // const invGrandTotal = Number(pi?.grand_total) || 0; // Unused variable
     const outstanding = Number(pi?.outstanding_amount) || 0;
-    const amountPaid = pi ? Math.max(0, grandTotal - outstanding) : 0;
+    
+    const advancePaid = Number(po.advance_paid) || 0;
 
     const qty = Number(it.qty) || 0;
-    const value = Number(it.base_amount) || Number(it.amount) || qty * (Number(it.base_rate) || Number(it.rate) || 0);
+    const rate = Number(it.rate) || 0;
+    const value = Number(it.base_amount) || Number(it.amount) || (qty * rate);
 
-    // --- Filters ---
-    if (!includeUnreceived && !goodsReceivedDate) continue;
+    // Filters
+    if (!includeUnreceived && !goodsDeliveredDate) continue;
     if (!includeUninvoiced && !piName) continue;
-
-    if (goods_from_date && goodsReceivedDate < goods_from_date) continue;
-    if (goods_to_date && goodsReceivedDate > goods_to_date) continue;
-
-    if (payment_status) {
-      if (!pi) continue;
-      if (String(pi.status || "").trim().toLowerCase() !== String(payment_status).trim().toLowerCase()) continue;
+    if (goods_from_date && goodsDeliveredDate < goods_from_date) continue;
+    if (goods_to_date && goodsDeliveredDate > goods_to_date) continue;
+    if (payment_status && pi) {
+        if (String(pi.status || "").trim().toLowerCase() !== String(payment_status).trim().toLowerCase()) continue;
     }
-
     if (qTrans && !transporterName.toLowerCase().includes(qTrans)) continue;
-    
-    // Filter by ANY invoice number (internal or external)
     if (qInv) {
-        const combinedInv = (erpInvoiceNo + " " + supplierInvoiceNo).toLowerCase();
-        if (!combinedInv.includes(qInv)) continue;
+      const combinedInv = (erpInvoiceNo + " " + supplierInvoiceNo).toLowerCase();
+      if (!combinedInv.includes(qInv)) continue;
     }
-
     if (qItem) {
       const blob = `${it.item_code || ""} ${it.item_name || ""}`.toLowerCase();
       if (!blob.includes(qItem)) continue;
     }
-
     if (minVal != null && value < minVal) continue;
     if (maxVal != null && value > maxVal) continue;
 
     rowsOut.push({
-      goods_received_date: goodsReceivedDate,
-      goods_received_source: deliveredDate ? "MF Delivered" : prDate ? "Purchase Receipt" : "",
-      goods_receipt_no: prName, // ✅ New Column Data
-      vendor_name: po.supplier_name || po.supplier || "",
       po_name: po.name,
       po_date: po.transaction_date || "",
-      po_status: po.status || "", // ✅ New Column Data
-      
-      erp_invoice_no: erpInvoiceNo, // ✅ Renamed
-      supplier_invoice_no: supplierInvoiceNo, // ✅ New Column Data
-      
-      item_code: it.item_code || "",
+      vendor_name: po.supplier_name || po.supplier || "",
       item_name: it.item_name || "",
-      quantity: qty,
-      value,
+      item_code: it.item_code || "",
+      
+      rate: rate,
+      value: value,
+      po_grand_total: Number(po.grand_total) || 0,
+      
+      po_status: po.status || "", 
+      mf_status: mf, 
+      mf_status_date: mfDate,
+      goods_delivered_date: goodsDeliveredDate,
+      
+      goods_receipt_no: prName,
+      pr_date: prDate,
+      
+      erp_invoice_no: erpInvoiceNo,
+      invoice_date: invoiceDate,
+      supplier_invoice_no: supplierInvoiceNo,
+      
       payment_status: payStatus,
-      amount_paid: amountPaid,
-      transporter_name: transporterName, // ✅ Human Name
-      mf_status: mf,
-      mf_status_date: mfDate, // ✅ New Column Data
+      advance_paid: advancePaid,
+      outstanding_amount: outstanding,
+      
+      transporter_name: transporterName,
+      
+      // ✅ Correctly mapped fields
+      transporter_invoice_no: transpInvNo, 
+      transporter_payment_paid: transpPaid, 
+      transporter_amount: transpAmt 
     });
 
     if (rowsOut.length >= Number(limit) && Number(limit) > 0) break;
@@ -3092,4 +3101,426 @@ export async function getRecentPOsBySupplier(supplierName) {
       _items_display: itemDisplay // ✅ New field we will use in UI
     };
   });
+}
+
+// src/erpBackendApi.js
+
+// ... (keep all previous imports and helper functions above) ...
+
+// ----------------------------------------------------------------
+// ITEM ANALYTICS (Negotiation Tool)
+// ----------------------------------------------------------------
+export async function getItemAnalyticsData(itemCode) {
+  if (!itemCode) return null;
+
+  // 1. Basic Item Details
+  const itemData = await getDoctypeList("Item", {
+    fields: JSON.stringify(["name", "item_name", "stock_uom", "valuation_rate", "standard_rate", "image"]),
+    filters: JSON.stringify([["name", "=", itemCode]]),
+    limit_page_length: 1
+  });
+
+  if (!itemData || !itemData.length) return null;
+  const item = itemData[0];
+
+  // 2. Item Prices
+  const itemPrices = await getDoctypeList("Item Price", {
+    fields: JSON.stringify(["price_list", "price_list_rate", "buying", "selling"]),
+    filters: JSON.stringify([["item_code", "=", itemCode]]),
+    limit_page_length: 100 // Increased limit to be safe
+  });
+
+  // 3. Purchase History (Fetch ALL - limit 5000)
+  const purchaseChildren = await getDoctypeList("Purchase Receipt Item", {
+    parent: "Purchase Receipt",
+    fields: JSON.stringify(["parent", "qty", "rejected_qty", "rate", "amount", "received_qty"]),
+    filters: JSON.stringify([["item_code", "=", itemCode], ["docstatus", "=", 1]]),
+    order_by: "creation desc",
+    limit_page_length: 5000 // ✅ Show ALL (practically)
+  });
+
+  let purchaseHistory = [];
+  if (purchaseChildren.length) {
+    const pNames = [...new Set(purchaseChildren.map(x => x.parent))];
+    // Fetch parents in chunks if necessary, but 5000 might hit URL limits if not careful.
+    // For safety in this specific "All Data" request, we stick to the provided robust pattern.
+    const pDocs = await getDoctypeList("Purchase Receipt", {
+      fields: JSON.stringify(["name", "posting_date", "supplier"]),
+      filters: JSON.stringify([["name", "in", pNames]]),
+      limit_page_length: pNames.length
+    });
+    const pMap = new Map(pDocs.map(d => [d.name, d]));
+
+    purchaseHistory = purchaseChildren.map(child => {
+      const parent = pMap.get(child.parent);
+      return {
+        ...child,
+        posting_date: parent?.posting_date || "",
+        supplier: parent?.supplier || "Unknown"
+      };
+    }).sort((a, b) => (a.posting_date < b.posting_date ? 1 : -1));
+  }
+
+  // 4. Sales History (Fetch ALL - limit 5000)
+  const salesChildren = await getDoctypeList("Sales Invoice Item", {
+    parent: "Sales Invoice",
+    fields: JSON.stringify(["parent", "qty", "rate", "amount"]),
+    filters: JSON.stringify([["item_code", "=", itemCode], ["docstatus", "=", 1]]),
+    order_by: "creation desc",
+    limit_page_length: 5000 // ✅ Show ALL
+  });
+
+  let salesHistory = [];
+  if (salesChildren.length) {
+    const sNames = [...new Set(salesChildren.map(x => x.parent))];
+    const sDocs = await getDoctypeList("Sales Invoice", {
+      fields: JSON.stringify(["name", "posting_date", "customer"]),
+      filters: JSON.stringify([["name", "in", sNames]]),
+      limit_page_length: sNames.length
+    });
+    const sMap = new Map(sDocs.map(d => [d.name, d]));
+
+    salesHistory = salesChildren.map(child => {
+      const parent = sMap.get(child.parent);
+      return {
+        ...child,
+        posting_date: parent?.posting_date || "",
+        customer: parent?.customer || "Unknown"
+      };
+    }).sort((a, b) => (a.posting_date < b.posting_date ? 1 : -1));
+  }
+
+  return { item, itemPrices, purchaseHistory, salesHistory };
+}
+
+// ----------------------------------------------------------------
+// SUPPLIER TRACKER (Performance, Financials, Risk)
+// ----------------------------------------------------------------
+
+//export async function getSupplierTrackerData(supplierName) {
+//  if (!supplierName) return null;
+
+//  // 1. Basic Supplier Details
+//  const supplierData = await getDoctypeList("Supplier", {
+//    fields: JSON.stringify([
+//      "name", "supplier_name", "supplier_group", 
+//      "mobile_no", "email_id", "pan", "gstin"
+//    ]),
+//    filters: JSON.stringify([["name", "=", supplierName]]),
+//    limit_page_length: 1
+//  });
+//  const supplier = supplierData[0];
+
+//  // 2. Order History
+//  const orders = await getDoctypeList("Purchase Order", {
+//    fields: JSON.stringify(["name", "grand_total", "status", "transaction_date", "per_received"]),
+//    filters: JSON.stringify([["supplier", "=", supplierName], ["docstatus", "=", 1]]),
+//    limit_page_length: 1000
+//  });
+
+//  // 3. Receipt History
+//  const receipts = await getDoctypeList("Purchase Receipt", {
+//    fields: JSON.stringify(["name", "posting_date", "per_billed", "status"]),
+//    filters: JSON.stringify([["supplier", "=", supplierName], ["docstatus", "=", 1]]),
+//    limit_page_length: 1000
+//  });
+
+//  const receiptItems = await getDoctypeList("Purchase Receipt Item", {
+//    parent: "Purchase Receipt",
+//    fields: JSON.stringify(["qty", "rejected_qty", "item_code", "item_name", "amount", "parent", "stock_uom", "rate"]),
+//    filters: JSON.stringify([["docstatus", "=", 1]]), 
+//    limit_page_length: 5000 
+//  });
+
+//  // Filter items belonging to this supplier
+//  const supplierReceiptNames = new Set(receipts.map(r => r.name));
+//  const validReceiptItems = receiptItems.filter(ri => supplierReceiptNames.has(ri.parent));
+
+//  // 4. Financial History
+//  const invoices = await getDoctypeList("Purchase Invoice", {
+//    fields: JSON.stringify(["name", "grand_total", "outstanding_amount", "posting_date", "due_date", "status"]),
+//    filters: JSON.stringify([["supplier", "=", supplierName], ["docstatus", "=", 1]]),
+//    limit_page_length: 1000
+//  });
+
+//  // 5. Approved Item Portfolio (Master Data)
+//  // ✅ FIX: Added 'parent: "Item"' to fix PermissionError
+//  const approvedItems = await getDoctypeList("Item Supplier", {
+//    parent: "Item", // <--- THIS WAS MISSING
+//    fields: JSON.stringify(["parent", "supplier_part_no"]),
+//    filters: JSON.stringify([["supplier", "=", supplierName]]),
+//    limit_page_length: 1000
+//  });
+
+//  // 6. Detailed Supply Performance
+//  const itemMap = {};
+
+//  validReceiptItems.forEach(item => {
+//    if (!itemMap[item.item_code]) {
+//      itemMap[item.item_code] = { 
+//        code: item.item_code,
+//        name: item.item_name || item.item_code,
+//        uom: item.stock_uom,
+//        totalQty: 0, 
+//        totalRejected: 0,
+//        totalValue: 0,
+//        rates: []
+//      };
+//    }
+//    const entry = itemMap[item.item_code];
+//    entry.totalQty += (item.qty + item.rejected_qty); 
+//    entry.totalRejected += item.rejected_qty;
+//    entry.totalValue += item.amount;
+//    if(item.rate > 0) entry.rates.push(item.rate);
+//  });
+
+//  const supplyHistory = Object.values(itemMap).map(i => {
+//    const avgRate = i.rates.length ? i.rates.reduce((a,b)=>a+b,0) / i.rates.length : 0;
+//    const qualityPct = i.totalQty > 0 ? ((i.totalQty - i.totalRejected) / i.totalQty) * 100 : 100;
+//    return { ...i, avgRate, qualityPct };
+//  }).sort((a,b) => b.totalValue - a.totalValue); 
+
+//  return {
+//    supplier,
+//    orders,
+//    receipts,
+//    invoices,
+//    validReceiptItems,
+//    approvedItems, 
+//    supplyHistory  
+//  };
+//}
+
+
+// src/erpBackendApi.js
+
+// ... (keep previous imports) ...
+
+export async function getSupplierTrackerData(supplierName) {
+  if (!supplierName) return null;
+
+  // 1. Basic Supplier Details
+  const supplierData = await getDoctypeList("Supplier", {
+    fields: JSON.stringify([
+      "name", "supplier_name", "supplier_group",
+      "mobile_no", "email_id", "pan", "gstin"
+    ]),
+    filters: JSON.stringify([["name", "=", supplierName]]),
+    limit_page_length: 1
+  });
+  const supplier = supplierData[0];
+
+  // 2. Order History
+  const orders = await getDoctypeList("Purchase Order", {
+    fields: JSON.stringify(["name", "grand_total", "status", "transaction_date", "per_received"]),
+    filters: JSON.stringify([["supplier", "=", supplierName], ["docstatus", "=", 1]]),
+    order_by: "transaction_date desc", // Recent first
+    limit_page_length: 1000
+  });
+
+  // 3. Receipt History
+  const receipts = await getDoctypeList("Purchase Receipt", {
+    fields: JSON.stringify(["name", "posting_date", "per_billed", "status"]),
+    filters: JSON.stringify([["supplier", "=", supplierName], ["docstatus", "=", 1]]),
+    order_by: "posting_date desc", // Recent first
+    limit_page_length: 1000
+  });
+
+  const receiptItems = await getDoctypeList("Purchase Receipt Item", {
+    parent: "Purchase Receipt",
+    fields: JSON.stringify(["qty", "rejected_qty", "item_code", "item_name", "amount", "parent", "stock_uom", "rate"]),
+    filters: JSON.stringify([["docstatus", "=", 1]]),
+    limit_page_length: 5000
+  });
+
+  // Filter items belonging to this supplier
+  const supplierReceiptNames = new Set(receipts.map(r => r.name));
+  const validReceiptItems = receiptItems.filter(ri => supplierReceiptNames.has(ri.parent));
+
+  // 4. Financial History
+  const invoices = await getDoctypeList("Purchase Invoice", {
+    fields: JSON.stringify(["name", "grand_total", "outstanding_amount", "posting_date", "due_date", "status"]),
+    filters: JSON.stringify([["supplier", "=", supplierName], ["docstatus", "=", 1]]),
+    limit_page_length: 1000
+  });
+
+  // 5. Approved Item Portfolio (Master Data)
+  const approvedLinks = await getDoctypeList("Item Supplier", {
+    parent: "Item", // Fixed Parent
+    fields: JSON.stringify(["parent"]), // Parent is Item Code
+    filters: JSON.stringify([["supplier", "=", supplierName]]),
+    limit_page_length: 1000
+  });
+
+  // Fetch Item Names for these codes
+  let approvedItems = [];
+  if (approvedLinks.length > 0) {
+    const itemCodes = [...new Set(approvedLinks.map(l => l.parent))];
+    const itemDetails = await getDoctypeList("Item", {
+      fields: JSON.stringify(["name", "item_name"]),
+      filters: JSON.stringify([["name", "in", itemCodes]]),
+      limit_page_length: itemCodes.length
+    });
+
+    // Map Code -> Name
+    const nameMap = new Map();
+    itemDetails.forEach(i => nameMap.set(i.name, i.item_name));
+
+    approvedItems = approvedLinks.map(l => ({
+      item_code: l.parent,
+      item_name: nameMap.get(l.parent) || l.parent
+    }));
+  }
+
+  // 6. Detailed Supply Performance (Per Item Analysis)
+  const itemMap = {};
+
+  validReceiptItems.forEach(item => {
+    if (!itemMap[item.item_code]) {
+      itemMap[item.item_code] = {
+        code: item.item_code,
+        name: item.item_name || item.item_code,
+        uom: item.stock_uom,
+        totalQty: 0,
+        totalRejected: 0,
+        totalValue: 0,
+        rates: [],
+        lastRate: 0,
+        lastDate: "" // to track latest rate
+      };
+    }
+    const entry = itemMap[item.item_code];
+    entry.totalQty += (item.qty + item.rejected_qty);
+    entry.totalRejected += item.rejected_qty;
+    entry.totalValue += item.amount;
+
+    if (item.rate > 0) entry.rates.push(item.rate);
+
+    // Find receipt date to determine "Last Rate"
+    const rDate = receipts.find(r => r.name === item.parent)?.posting_date || "";
+    if (rDate >= entry.lastDate) {
+      entry.lastDate = rDate;
+      entry.lastRate = item.rate;
+    }
+  });
+
+  // Convert map to array
+  const supplyHistory = Object.values(itemMap).map(i => {
+    const avgRate = i.rates.length ? i.rates.reduce((a, b) => a + b, 0) / i.rates.length : 0;
+    const qualityPct = i.totalQty > 0 ? ((i.totalQty - i.totalRejected) / i.totalQty) * 100 : 100;
+    return { ...i, avgRate, qualityPct };
+  }).sort((a, b) => b.totalValue - a.totalValue);
+
+  return {
+    supplier,
+    orders,
+    receipts,
+    invoices,
+    validReceiptItems,
+    approvedItems,
+    supplyHistory
+  };
+}
+// src/erpBackendApi.js
+
+// ... (keep imports and other functions)
+export async function getLogisticsByCity(fullCityStateString) {
+  if (!fullCityStateString) return { suppliers: [], transporters: [] };
+
+  const cityKey = fullCityStateString.split(",")[0].trim();
+
+  try {
+    // --- Step A: Find Transporters ---
+
+    // ✅ FIX: Added 'parent: "Supplier"' here too
+    const matchedRows = await getDoctypeList("Transporter Service Area", {
+      parent: "Supplier",
+      fields: JSON.stringify(["parent"]),
+      filters: JSON.stringify([
+        ["city", "like", `%${cityKey}%`]
+      ]),
+      limit_page_length: 100
+    });
+
+    const transporterIds = [...new Set(matchedRows.map(r => r.parent))];
+
+    let transporters = [];
+    if (transporterIds.length > 0) {
+      const tList = await getDoctypeList("Supplier", {
+        fields: JSON.stringify([
+          "name",
+          "supplier_name",
+          "custom_contact_person",
+          "mobile_no",
+          "custom_vehicle_type"
+        ]),
+        filters: JSON.stringify([
+          ["name", "in", transporterIds]
+        ]),
+        limit_page_length: 100
+      });
+
+      const serviceMap = await fetchTransporterServiceAreas(transporterIds);
+
+      transporters = tList.map(t => ({
+        ...t,
+        custom_service_areas: serviceMap[t.name] || []
+      }));
+    }
+
+    // --- Step B: Find Material Suppliers (Using Address Logic) ---
+    const addresses = await getDoctypeList("Address", {
+      fields: JSON.stringify(["name", "address_line1", "city", "state", "phone", "email_id"]),
+      filters: JSON.stringify([["city", "like", `%${cityKey}%`]]),
+      limit_page_length: 100
+    });
+
+    let suppliers = [];
+    if (addresses.length > 0) {
+      const addressIds = addresses.map(a => a.name);
+
+      const links = await getDoctypeList("Dynamic Link", {
+        parent: "Address",
+        fields: JSON.stringify(["link_name", "parent"]),
+        filters: JSON.stringify([
+          ["link_doctype", "=", "Supplier"],
+          ["parent", "in", addressIds]
+        ]),
+        limit_page_length: 100
+      });
+
+      const supplierAddressMap = {};
+      const validSupplierNames = [];
+
+      links.forEach(link => {
+        const addr = addresses.find(a => a.name === link.parent);
+        if (addr) {
+          supplierAddressMap[link.link_name] = addr;
+          validSupplierNames.push(link.link_name);
+        }
+      });
+
+      if (validSupplierNames.length > 0) {
+        suppliers = await getDoctypeList("Supplier", {
+          fields: JSON.stringify(["name", "supplier_name", "supplier_group", "custom_contact_person", "mobile_no"]),
+          filters: JSON.stringify([
+            ["name", "in", validSupplierNames],
+            ["supplier_group", "!=", "Transporter"]
+          ]),
+          limit_page_length: 100
+        });
+
+        suppliers = suppliers.map(s => ({
+          ...s,
+          _address: supplierAddressMap[s.name]
+        }));
+      }
+    }
+
+    return { suppliers, transporters };
+
+  } catch (err) {
+    console.error("Error fetching logistics:", err);
+    return { suppliers: [], transporters: [] };
+  }
 }

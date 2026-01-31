@@ -1343,9 +1343,9 @@ export default function SalesOrder() {
               <div className="sales-section-head">
                 <div>
                   <h3 className="sales-section-title">Bulk Upload (Sheet)</h3>
-                  <div className="sales-section-subtitle">
+                  {/*<div className="sales-section-subtitle">
                     Upload file • Parse rows • Create invoices in ERPNext
-                  </div>
+                  </div>*/}
                 </div>
 
                 <button type="button" onClick={resetBulk} className="btn btn-secondary btn-sm">

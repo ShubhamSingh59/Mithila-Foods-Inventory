@@ -1,59 +1,68 @@
-/* PurchaseRegisterList.css */
+/* src/Components/PurchaseTracker/PurchaseRegisterList.css */
 
-/* Card container (matches the white panels in your screenshot) */
+/* --- Card Container --- */
 .prl-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* If supplier-detail-card already adds padding, we still normalize nicely */
-.prl-card .supplier-detail-card__header.prl-header {
+/* --- Header --- */
+.supplier-detail-card__header.prl-header {
+  padding: 14px 18px; /* Slightly tighter padding */
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-
-  padding: 14px 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #ffffff;
 }
 
-.prl-card .supplier-detail-card__body {
-  padding: 14px 16px 16px;
-}
-
-/* Title */
 .prl-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #111827;
+  font-size: 1.15rem; /* Reduced slightly from 1.25rem */
+  font-weight: 700;   /* Increased weight (Extra Bold) */
+  color: var(--text-main);
 }
 
-/* Header actions (Apply / Reset) */
 .prl-actions {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
+/* Buttons */
 .prl-btn {
-  border: 1px solid #111827;
-  background: #111827;
-  color: #ffffff;
-
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 16px;
-  font-weight: 600;
+  height: 36px; /* Slightly smaller height */
+  padding: 0 16px;
+  border-radius: var(--radius);
+  font-size: 0.9rem; /* Slightly smaller text */
+  font-weight: 600;  /* Bolder text */
   cursor: pointer;
-  line-height: 1;
+  border: 1px solid transparent;
+  transition: all 0.2s;
   white-space: nowrap;
 }
 
-.prl-btn:hover:not(:disabled) {
-  filter: brightness(0.95);
+.prl-btn:not(.prl-btn-ghost) {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.prl-btn:not(.prl-btn-ghost):hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.prl-btn-ghost {
+  background: white;
+  color: var(--text-main);
+  border-color: var(--border);
+}
+.prl-btn-ghost:hover:not(:disabled) {
+  background: var(--bg-subtle);
 }
 
 .prl-btn:disabled {
@@ -61,228 +70,234 @@
   cursor: not-allowed;
 }
 
-.prl-btn-ghost {
-  background: #ffffff;
-  color: #111827;
-  border: 1px solid #e5e7eb;
+/* --- Body Area --- */
+.supplier-detail-card__body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.prl-btn-ghost:hover:not(:disabled) {
-  background: #f9fafb;
-}
-
-/* Error style (fallback if your global .alert isn't present) */
-.alert {
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 16px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
-  color: #111827;
-  margin-bottom: 12px;
-}
-
-.alert-error {
-  border-color: #fecaca;
-  background: #fef2f2;
-  color: #991b1b;
-}
-
-/* Filters block like the form sections in screenshot */
+/* --- Filters Section --- */
 .prl-filters {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap; 
+  gap: 14px;
+  align-items: flex-end; 
 
-  padding: 12px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  margin-bottom: 12px;
-}
-
-@media (min-width: 640px) {
-  .prl-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1024px) {
-  .prl-filters {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+  padding: 18px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
 .prl-filter {
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  
+  /* Flex Grow to fill space */
+  flex: 1 1 180px; 
+  min-width: 160px;
 }
 
 .prl-label {
-  display: block;
-  font-size: 16px;
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 6px;
+  font-size: 0.8rem;
+  font-weight: 600; /* Extra Bold Label */
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .prl-input {
   width: 100%;
-  height: 36px;
-
+  height: 38px;
+  padding: 0 12px;
+  
   border: 1px solid #d1d5db;
-  border-radius: 12px;
-
-  padding: 8px 10px;
-  font-size: 16px;
-  color: #111827;
+  border-radius: var(--radius);
   background: #ffffff;
-}
-
-.prl-input::placeholder {
-  color: #9ca3af;
+  
+  font-size: 0.92rem; /* Reduced slightly from 1rem */
+  font-weight: 600;   /* Bolder input text */
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.15s ease;
 }
 
 .prl-input:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* Checkbox area spans full width */
+/* Checkbox Row */
 .prl-filter.prl-check {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 18px;
+  flex: 1 1 100%; 
+  flex-direction: row;
   align-items: center;
-  flex-wrap: wrap;
-  padding-top: 4px;
+  gap: 24px;
+  
+  padding-top: 10px;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  margin-top: 4px;
 }
 
 .prl-check-row {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
-  color: #374151;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  cursor: pointer;
+  font-weight: 600; /* Bolder checkbox label */
 }
 
 .prl-check-row input[type="checkbox"] {
   width: 16px;
   height: 16px;
+  cursor: pointer;
 }
 
-/* Summary row */
+/* --- Summary Stats --- */
 .prl-summary {
   display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 24px;
   align-items: center;
-
-  padding: 10px 12px;
-  border: 1px solid #e5e7eb;
+  padding: 12px 18px;
+  border: 1px solid var(--border);
   background: #ffffff;
-  border-radius: 14px;
-
-  font-size: 16px;
-  color: #111827;
-  margin-bottom: 12px;
+  border-radius: var(--radius);
+  font-size: 0.95rem; 
+  font-weight: 600;
+  color: var(--text-main);
 }
 
-/* Table wrapper like the screenshot */
+.prl-summary b {
+  font-weight: 600; /* Extra Bold Label */
+  margin-right: 6px;
+}
+
+/* --- Table Styles --- */
 .prl-table-wrap {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   background: #ffffff;
+  overflow-x: auto; /* Horizontal Scroll enabled */
 }
 
-/* Table */
 .prl-table {
   width: 100%;
-  min-width: 1200px; /* gives ERPNext-like horizontal scroll when needed */
-  border-collapse: separate;
-  border-spacing: 0;
+  min-width: 1400px; /* Forces scroll on smaller screens */
+  border-collapse: collapse;
+  font-size: 0.92rem; /* Reduced size slightly */
 }
 
+/* Table Header */
 .prl-table thead th {
   position: sticky;
   top: 0;
   z-index: 2;
-
-  background: #f9fafb;
-  color: #374151;
-  font-size: 16px;
-  font-weight: 700;
-
+  
+  background: #f1f5f9; 
+  color: var(--primary); 
+  font-size: 0.85rem;
+  font-weight: 650; /* Extra Bold Header */
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  
   text-align: left;
-  padding: 10px 12px;
-
-  border-bottom: 1px solid #e5e7eb;
-  white-space: nowrap;
+  padding: 14px 16px; 
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap; 
 }
 
+/* Table Body */
 .prl-table tbody td {
-  padding: 10px 12px;
-  font-size: 16px;
-  color: #111827;
-  border-bottom: 1px solid #eef2f7;
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-main);
   vertical-align: middle;
-  white-space: nowrap;
+  font-weight: 500; /* Bolder content text */
+  
+  /* Force single line */
+  white-space: nowrap; 
 }
 
 .prl-table tbody tr:hover {
-  background: #f9fafb;
+  background: var(--bg-subtle);
 }
 
-/* Remove last border */
 .prl-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* Numeric cells */
+/* Numeric Columns */
 .prl-num {
-  text-align: right;
+  text-align: right !important;
   font-variant-numeric: tabular-nums;
+  font-weight: 600; /* Numbers stand out more */
 }
 
-/* Muted text */
-.prl-muted {
-  color: #6b7280;
+/* Text Colors */
+.prl-muted { 
+  color: var(--text-muted); 
+  font-weight: 500; /* Slightly lighter weight for secondary info */
+}
+.prl-bold { 
+  font-weight: 700; /* Heaviest weight for IDs/Primary keys */
+  color: var(--text-main); 
 }
 
-/* Item display (name + code) */
+/* Item Cell Layout */
 .prl-item {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 220px;
-
-  /* allow description column to wrap if needed */
-  white-space: normal;
+  min-width: 200px;
 }
 
 .prl-item-name {
-  font-weight: 700;
-  color: #111827;
-  line-height: 1.2;
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 0.92rem;
+  
+  /* Single Line */
+  white-space: nowrap; 
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .prl-item-code {
-  font-size: 16px;
-  color: #6b7280;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-weight: 600;
 }
 
-/* Empty state */
+/* Status Badge */
+.prl-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700; /* Extra Bold Badge Text */
+  background: var(--bg-app);
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+/* Specific Status Colors */
+.status-to-receive-and-bill { background: #eff6ff; color: #1e40af; border-color: #dbeafe; }
+.status-completed { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+.status-cancelled { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+
+/* Empty State */
 .prl-empty {
-  padding: 18px 12px;
+  padding: 60px;
   text-align: center;
-  color: #6b7280;
-  font-size: 13px;
-}
-
-/* Footnote */
-.prl-footnote {
-  margin-top: 10px;
-  font-size: 12px;
-  color: #6b7280;
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.95rem;
+  font-weight: 500;
 }

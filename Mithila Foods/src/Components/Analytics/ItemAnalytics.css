@@ -1,0 +1,288 @@
+/* src/Components/SupplierAnalytics/ItemAnalytics.css */
+
+.ia-container {
+  /* Font handled by index.css */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  color: var(--text-main);
+}
+
+/* --- Search Bar --- */
+.ia-search-box {
+  background: var(--bg-panel);
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  margin-bottom: 24px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.ia-input {
+  flex: 1;
+  height: 38px; /* Match global input height */
+  padding: 0 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  background: #ffffff;
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.ia-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.ia-btn {
+  background: var(--primary);
+  color: white;
+  padding: 0 20px;
+  height: 38px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.ia-btn:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+/* --- Top Metrics Cards --- */
+.ia-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+  margin-bottom: 24px;
+}
+
+.ia-card {
+  background: var(--bg-panel);
+  padding: 15px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.ia-card-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.ia-card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.ia-card-sub {
+  font-size: 0.8rem;
+  margin-top: 4px;
+  color: var(--text-muted);
+}
+
+/* Color coding using vars */
+.ia-good { 
+  color: var(--success-text); 
+  background: var(--success-bg); 
+  border: 1px solid var(--success-border);
+  padding: 2px 6px; 
+  border-radius: 4px; 
+}
+.ia-bad { 
+  color: var(--danger-text); 
+  background: var(--danger-bg); 
+  border: 1px solid var(--danger-border);
+  padding: 2px 6px; 
+  border-radius: 4px; 
+}
+.ia-neutral { color: var(--text-muted); }
+
+/* --- Chart Section --- */
+.ia-chart-section {
+  background: var(--bg-panel);
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.ia-section-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+
+.ia-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: var(--text-main);
+}
+
+/* Simple CSS Bar Chart */
+.ia-simple-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 150px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 5px;
+  overflow-x: auto;
+}
+
+.ia-bar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40px;
+  flex-shrink: 0;
+}
+
+.ia-bar {
+  width: 100%;
+  background: var(--accent);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+  min-height: 2px;
+  position: relative;
+}
+
+.ia-bar:hover { 
+  background: var(--primary); 
+}
+
+/* Tooltip on hover */
+.ia-bar:hover::after {
+  content: attr(data-val);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  margin-bottom: 5px;
+  z-index: 10;
+}
+
+.ia-bar-date {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 5px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+/* --- Tables --- */
+.ia-table-wrapper {
+  overflow-x: auto;
+  background: var(--bg-panel);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.ia-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.ia-table th {
+  background: var(--bg-subtle);
+  padding: 12px 15px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.ia-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--bg-app);
+  color: var(--text-main);
+}
+
+.ia-table tr:last-child td { border-bottom: none; }
+
+.ia-rank-badge {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--border);
+  text-align: center;
+  line-height: 24px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+.ia-rank-1 { background: #fef08a; color: #854d0e; } /* Gold */
+.ia-rank-2 { background: #e2e8f0; color: #475569; } /* Silver */
+.ia-rank-3 { background: #ffedd5; color: #9a3412; } /* Bronze */
+
+.ia-quality-good { color: var(--success-text); font-weight: 600; }
+.ia-quality-bad { color: var(--danger-text); font-weight: 600; }
+
+/* --- Volume Chart --- */
+.ia-vol-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.ia-vol-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 0.9rem;
+}
+
+.ia-vol-label {
+  width: 140px;
+  text-align: right;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ia-vol-bar-track {
+  flex: 1;
+  background: var(--bg-app);
+  height: 20px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ia-vol-bar {
+  background: var(--accent);
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.ia-vol-value {
+  width: 80px;
+  font-weight: 600;
+  color: var(--text-main);
+}

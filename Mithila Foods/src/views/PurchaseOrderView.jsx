@@ -7,7 +7,6 @@ function PurchaseOrderView() {
     return (
         <>
             <PurchaseOrder />
-            <PurchaseOrderList />
         </>
     )
 }

@@ -1,0 +1,224 @@
+/* src/Components/SupplierAnalytics/SupplierTracker.css */
+
+/* Main Container - Using global background */
+.st-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: var(--bg-app);
+  font-family: inherit; /* Use global font */
+}
+
+/* --- HEADER SECTION --- */
+.st-header {
+  background: var(--bg-panel);
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.st-title-group h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.st-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+/* Search Bar Area */
+.st-search-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.st-input {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 250px;
+  background-color: white;
+  color: var(--text-main);
+  outline: none;
+}
+.st-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Reuse global button styles implicitly, but override specifics here if needed */
+.st-btn {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.st-btn:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+.st-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --- GRID LAYOUT --- */
+.st-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+/* --- METRIC CARDS --- */
+.st-card {
+  background: var(--bg-panel);
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.st-card-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.st-card-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+
+.st-card-sub {
+  font-size: 0.8rem;
+  margin-top: auto; /* Push to bottom if height varies */
+  padding-top: 8px;
+  color: var(--text-muted);
+}
+
+/* Color Helpers using Theme Vars */
+.st-text-green { color: var(--success-text); }
+.st-text-red { color: var(--danger-text); }
+
+.st-bg-green { 
+  background: var(--success-bg); 
+  color: var(--success-text); 
+  padding: 2px 6px; 
+  border-radius: 4px; 
+  font-size: 0.75rem; 
+  border: 1px solid var(--success-border);
+}
+.st-bg-red { 
+  background: var(--danger-bg); 
+  color: var(--danger-text); 
+  padding: 2px 6px; 
+  border-radius: 4px; 
+  font-size: 0.75rem; 
+  border: 1px solid var(--danger-border);
+}
+
+/* --- SECTION STYLING --- */
+.st-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-main);
+  border-left: 4px solid var(--accent);
+  padding-left: 12px;
+}
+
+.st-section {
+  background: var(--bg-panel);
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+/* --- TABLES --- */
+.st-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.st-table th {
+  text-align: left;
+  padding: 12px;
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.st-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--bg-app); /* Lighter border for rows */
+  color: var(--text-main);
+}
+
+.st-table tr:hover td {
+  background-color: #fcfcfc;
+}
+
+.st-table tr:last-child td { border-bottom: none; }
+
+/* --- FLEX UTILITY --- */
+.st-flex-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap; /* Important for responsiveness */
+}
+
+.st-flex-col {
+  flex: 1;
+  min-width: 300px; /* Prevent crushing on small screens */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .st-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .st-search-bar {
+    width: 100%;
+  }
+  .st-input {
+    width: 100%;
+  }
+  .st-btn {
+    width: 100%;
+  }
+  .st-grid {
+    grid-template-columns: 1fr; /* Stack cards */
+  }
+}

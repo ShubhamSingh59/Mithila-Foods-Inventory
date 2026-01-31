@@ -17,7 +17,7 @@ export default function SupplierTransporterRoutes() {
       <Route path="/suppliers" element={<Navigate to="/suppliers/list" replace />} />
 
       {/* 1. Suppliers Tab (The main list with internal Analytics tab) */}
-      <Route path="/suppliers/list" element={<SupplierTabs />} />
+      <Route path="/suppliers/list" element={<SupplierPanel />} />
       
       {/* Supplier Detail Page */}
       {/* Note: We use 'details' prefix to avoid collision with other keywords */}
@@ -26,9 +26,6 @@ export default function SupplierTransporterRoutes() {
       {/* 2. Transporters Tab */}
       <Route path="/suppliers/transporters" element={<TransporterPanel />} />
       <Route path="/suppliers/transporters/:id" element={<TransporterDetailPage />} />
-
-      {/* 3. Purchase Tracker Tab */}
-      <Route path="/suppliers/purchase-tracker" element={<PurchaseRegisterList />} />
     </Routes>
   );
 }
