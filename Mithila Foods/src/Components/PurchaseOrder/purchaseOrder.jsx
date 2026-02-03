@@ -2563,47 +2563,205 @@ function SupplierSearchDropdown({ suppliers, value, onSelect, placeholder, disab
   );
 }
 
-function POItemSearchDropdown({ items, value, onSelect, placeholder, disabled }) {
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState("");
-  const ref = useRef(null);
+//function POItemSearchDropdown({ items, value, onSelect, placeholder, disabled }) {
+//  const [open, setOpen] = useState(false);
+//  const [q, setQ] = useState("");
+//  const ref = useRef(null);
 
-  const selected = useMemo(() => items.find(x => x.name === value), [items, value]);
+//  const selected = useMemo(() => items.find(x => x.name === value), [items, value]);
+//  const filtered = useMemo(() => {
+//    if (!q) return items.slice(0, 80);
+//    return items.filter(i => 
+//        (i.name||"").toLowerCase().includes(q.toLowerCase()) || 
+//        (i.item_name||"").toLowerCase().includes(q.toLowerCase())
+//    ).slice(0, 80);
+//  }, [items, q]);
+
+//  useEffect(() => {
+//    function clickOut(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+//    document.addEventListener("mousedown", clickOut);
+//    return () => document.removeEventListener("mousedown", clickOut);
+//  }, []);
+
+//  return (
+//    <div className="stdrop" ref={ref}>
+//       <button type="button" className="stdrop-control" onClick={() => !disabled && setOpen(!open)} disabled={disabled}>
+//         <div className="stdrop-value">{selected ? (selected.item_name || selected.name) : placeholder}</div>
+//         <div className="stdrop-caret">▾</div>
+//       </button>
+//       {open && (
+//         <div className="stdrop-popover">
+//            <div className="stdrop-search"><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Search item..." className="po-input"/></div>
+//            <div className="stdrop-list">
+//               {filtered.map(i => (
+//                 <div key={i.name} className="stdrop-item" onClick={() => { onSelect(i.name); setOpen(false); setQ(""); }}>
+//                    <div className="stdrop-item-title">{i.name}</div>
+//                    <div className="stdrop-item-sub">{i.item_name}</div>
+//                 </div>
+//               ))}
+//            </div>
+//         </div>
+//       )}
+//    </div>
+//  );
+//}
+
+
+/** Item dropdown
+ * Same dropdown style as supplier dropdown:
+ * - search items
+ * - show item code + item name + uom
+ * - clear selection (✕)
+ */
+function POItemSearchDropdown({ items, value, onSelect, placeholder, disabled }) {
+  const [open, setOpen] = useState(false); // dropdown open/close
+  const [q, setQ] = useState("");          // search text
+  const ref = useRef(null);               // for outside click close
+
+  // current selected item object
+  const selected = useMemo(() => {
+    return items.find((x) => x.name === value) || null;
+  }, [items, value]);
+
+  // filter items list based on search
   const filtered = useMemo(() => {
-    if (!q) return items.slice(0, 80);
-    return items.filter(i => 
-        (i.name||"").toLowerCase().includes(q.toLowerCase()) || 
-        (i.item_name||"").toLowerCase().includes(q.toLowerCase())
-    ).slice(0, 80);
+    const s = (q || "").trim().toLowerCase();
+    const base = !s
+      ? items
+      : items.filter((it) => {
+        const code = (it.name || "").toLowerCase();
+        const name = (it.item_name || "").toLowerCase();
+        const grp = (it.item_group || "").toLowerCase();
+        return code.includes(s) || name.includes(s) || grp.includes(s);
+      });
+
+    return base.slice(0, 80);
   }, [items, q]);
 
+  // close dropdown when clicking outside
   useEffect(() => {
-    function clickOut(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
-    document.addEventListener("mousedown", clickOut);
-    return () => document.removeEventListener("mousedown", clickOut);
+    function onDown(e) {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
   }, []);
+
+  // clear item selection
+  const clearSelection = (e) => {
+    e?.stopPropagation?.();
+    if (disabled) return;
+    onSelect("");
+    setOpen(false);
+    setQ("");
+  };
+  
 
   return (
     <div className="stdrop" ref={ref}>
-       <button type="button" className="stdrop-control" onClick={() => !disabled && setOpen(!open)} disabled={disabled}>
-         <div className="stdrop-value">{selected ? (selected.item_name || selected.name) : placeholder}</div>
-         <div className="stdrop-caret">▾</div>
-       </button>
-       {open && (
-         <div className="stdrop-popover">
-            <div className="stdrop-search"><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Search item..." className="po-input"/></div>
-            <div className="stdrop-list">
-               {filtered.map(i => (
-                 <div key={i.name} className="stdrop-item" onClick={() => { onSelect(i.name); setOpen(false); setQ(""); }}>
-                    <div className="stdrop-item-title">{i.name}</div>
-                    <div className="stdrop-item-sub">{i.item_name}</div>
-                 </div>
-               ))}
-            </div>
-         </div>
-       )}
+      <button
+        type="button"
+        className={`stdrop-control ${open ? "is-open" : ""}`}
+        onClick={() => !disabled && setOpen((v) => !v)}
+        disabled={disabled}
+      >
+        <div className="stdrop-value">
+          {selected ? (
+            <>
+              <div className="stdrop-title">{selected.name}</div>
+              <div className="stdrop-sub">
+                {selected.item_name || ""}
+                {selected.stock_uom ? ` · ${selected.stock_uom}` : ""}
+              </div>
+            </>
+          ) : (
+            <div className="stdrop-placeholder">{placeholder}</div>
+          )}
+        </div>
+
+        {/* right side icons */}
+        <div className="stdrop-actions">
+          {!!value && !disabled && (
+            <span
+              className="stdrop-clear"
+              role="button"
+              tabIndex={0}
+              title="Clear"
+              onClick={clearSelection}
+              onKeyDown={(e) =>
+                (e.key === "Enter" || e.key === " ") && clearSelection(e)
+              }
+            >
+              ✕
+            </span>
+          )}
+          <div className="stdrop-caret">▾</div>
+        </div>
+      </button>
+
+      {/* dropdown list */}
+      {open && !disabled && (
+        <div className="stdrop-popover">
+          <div className="stdrop-search">
+            <input
+              autoFocus
+              className="po-input"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Type to search..."
+            />
+          </div>
+
+          <div className="stdrop-list">
+            {/* clear option */}
+            {!!value && (
+              <button
+                type="button"
+                className="stdrop-item stdrop-item-clear"
+                onClick={() => {
+                  onSelect("");
+                  setOpen(false);
+                  setQ("");
+                }}
+              >
+                <div className="stdrop-item-title">Clear selection</div>
+              </button>
+            )}
+
+            {/* item results */}
+            {filtered.map((it) => (
+              <button
+                key={it.name}
+                type="button"
+                className="stdrop-item"
+                onClick={() => {
+                  onSelect(it.name);
+                  setOpen(false);
+                  setQ("");
+                }}
+              >
+                <div className="stdrop-item-title">{it.name}</div>
+                <div className="stdrop-item-sub">
+                  {it.item_name || ""}
+                  {it.stock_uom ? ` · ${it.stock_uom}` : ""}
+                </div>
+              </button>
+            ))}
+
+            {!filtered.length ? (
+              <div className="stdrop-empty">No items found.</div>
+            ) : (
+              <div className="stdrop-hint">Showing up to 80 results</div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+
+
 
 export default PurchaseOrder;
