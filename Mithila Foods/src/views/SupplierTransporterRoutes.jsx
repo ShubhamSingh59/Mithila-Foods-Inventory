@@ -7,6 +7,8 @@ import SupplierDetailPage from "../Components/SupplierDetailPage/SupplierDetailP
 import TransporterDetailPage from "../Components/TransporterDetailPage/TransporterDetailPage";
 import PurchaseRegisterList from "../Components/PurchaseTracker/PurchaseRegisterList";
 import SupplierTabs from "../Components/SuppliersTabs/SupplierTabs";
+import SupplierCreateForm from "../Components/SupplierAndTransporter/SupplierCreateForm";
+import TransporterCreateForm from "../Components/SupplierAndTransporter/TransporterCreateForm";
 
 export default function SupplierTransporterRoutes() {
   return (
@@ -18,14 +20,16 @@ export default function SupplierTransporterRoutes() {
 
       {/* 1. Suppliers Tab (The main list with internal Analytics tab) */}
       <Route path="/suppliers/list" element={<SupplierPanel />} />
-      
+
       {/* Supplier Detail Page */}
       {/* Note: We use 'details' prefix to avoid collision with other keywords */}
       <Route path="/suppliers/list/:id" element={<SupplierDetailPage />} />
-
+      <Route path="/suppliers/create" element={<SupplierCreateForm/>} />
+      <Route path="/suppliers/transporters/create" element={<TransporterCreateForm/>} />
       {/* 2. Transporters Tab */}
       <Route path="/suppliers/transporters" element={<TransporterPanel />} />
       <Route path="/suppliers/transporters/:id" element={<TransporterDetailPage />} />
+      <Route path="*" element={null} />
     </Routes>
   );
 }

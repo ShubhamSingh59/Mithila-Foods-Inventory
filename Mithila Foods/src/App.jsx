@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, useLocation, Navigate, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, useLocation, Navigate, Routes, Route } from "react-router-dom";
 
 // Components
 import Sidebar from "./Components/Sidebar/Sidebar";
@@ -126,7 +126,7 @@ export default function App() {
             */}
 
             {/* View 1: Directory (Suppliers & Transporters) */}
-            <KeepAlivePage triggerPaths={["/suppliers/list", "/suppliers/transporters"]}>
+            <KeepAlivePage triggerPaths={["/suppliers/list", "/suppliers/transporters", "/suppliers/create"]}>
               <section className="app-panel app-panel-primary">
                 <SupplierTabView/>
               </section>
