@@ -12,7 +12,7 @@
 
 /* --- Header --- */
 .supplier-detail-card__header.prl-header {
-  padding: 14px 18px; /* Slightly tighter padding */
+  padding: 16px 20px;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
   
@@ -23,8 +23,8 @@
 }
 
 .prl-title {
-  font-size: 1.15rem; /* Reduced slightly from 1.25rem */
-  font-weight: 700;   /* Increased weight (Extra Bold) */
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--text-main);
 }
 
@@ -36,11 +36,11 @@
 
 /* Buttons */
 .prl-btn {
-  height: 36px; /* Slightly smaller height */
-  padding: 0 16px;
+  height: 38px;
+  padding: 0 18px;
   border-radius: var(--radius);
-  font-size: 0.9rem; /* Slightly smaller text */
-  font-weight: 600;  /* Bolder text */
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
   transition: all 0.2s;
@@ -72,20 +72,20 @@
 
 /* --- Body Area --- */
 .supplier-detail-card__body {
-  padding: 18px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 /* --- Filters Section --- */
 .prl-filters {
   display: flex;
   flex-wrap: wrap; 
-  gap: 14px;
+  gap: 16px;
   align-items: flex-end; 
 
-  padding: 18px;
+  padding: 20px;
   background: var(--bg-subtle);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -94,32 +94,31 @@
 .prl-filter {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  
-  /* Flex Grow to fill space */
-  flex: 1 1 180px; 
-  min-width: 160px;
+  gap: 8px;
+  flex: 1 1 200px; 
+  min-width: 180px;
+}
+
+.prl-filter:has(input[type="date"]) {
+  flex: 0 1 180px; 
 }
 
 .prl-label {
-  font-size: 0.8rem;
-  font-weight: 600; /* Extra Bold Label */
+  font-size: 0.85rem;
+  font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 .prl-input {
   width: 100%;
-  height: 38px;
+  height: 40px;
   padding: 0 12px;
-  
   border: 1px solid #d1d5db;
   border-radius: var(--radius);
   background: #ffffff;
-  
-  font-size: 0.92rem; /* Reduced slightly from 1rem */
-  font-weight: 600;   /* Bolder input text */
+  font-size: 1rem;
   color: var(--text-main);
   outline: none;
   transition: border-color 0.15s ease;
@@ -136,8 +135,7 @@
   flex-direction: row;
   align-items: center;
   gap: 24px;
-  
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid rgba(0,0,0,0.05);
   margin-top: 4px;
 }
@@ -146,15 +144,15 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--text-main);
   cursor: pointer;
-  font-weight: 600; /* Bolder checkbox label */
+  font-weight: 500;
 }
 
 .prl-check-row input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   cursor: pointer;
 }
 
@@ -163,17 +161,16 @@
   display: flex;
   gap: 24px;
   align-items: center;
-  padding: 12px 18px;
+  padding: 14px 20px;
   border: 1px solid var(--border);
   background: #ffffff;
   border-radius: var(--radius);
-  font-size: 0.95rem; 
-  font-weight: 600;
+  font-size: 1rem;
   color: var(--text-main);
 }
 
 .prl-summary b {
-  font-weight: 600; /* Extra Bold Label */
+  font-weight: 700;
   margin-right: 6px;
 }
 
@@ -182,14 +179,14 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: #ffffff;
-  overflow-x: auto; /* Horizontal Scroll enabled */
+  overflow-x: auto;
 }
 
 .prl-table {
   width: 100%;
-  min-width: 1400px; /* Forces scroll on smaller screens */
   border-collapse: collapse;
-  font-size: 0.92rem; /* Reduced size slightly */
+  font-size: 0.95rem;
+  min-width: 1400px; 
 }
 
 /* Table Header */
@@ -197,29 +194,24 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  
   background: #f1f5f9; 
   color: var(--primary); 
-  font-size: 0.85rem;
-  font-weight: 650; /* Extra Bold Header */
+  font-size: 0.9rem;
+  font-weight: 800; 
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  
+  letter-spacing: 0.02em;
   text-align: left;
-  padding: 14px 16px; 
+  padding: 16px 16px; 
   border-bottom: 2px solid var(--border);
   white-space: nowrap; 
 }
 
 /* Table Body */
 .prl-table tbody td {
-  padding: 12px 10px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   color: var(--text-main);
   vertical-align: middle;
-  font-weight: 500; /* Bolder content text */
-  
-  /* Force single line */
   white-space: nowrap; 
 }
 
@@ -235,18 +227,12 @@
 .prl-num {
   text-align: right !important;
   font-variant-numeric: tabular-nums;
-  font-weight: 600; /* Numbers stand out more */
+  font-weight: 600;
 }
 
 /* Text Colors */
-.prl-muted { 
-  color: var(--text-muted); 
-  font-weight: 500; /* Slightly lighter weight for secondary info */
-}
-.prl-bold { 
-  font-weight: 700; /* Heaviest weight for IDs/Primary keys */
-  color: var(--text-main); 
-}
+.prl-muted { color: var(--text-muted); }
+.prl-bold { font-weight: 700; color: var(--text-main); }
 
 /* Item Cell Layout */
 .prl-item {
@@ -259,35 +245,31 @@
 .prl-item-name {
   font-weight: 600;
   color: var(--text-main);
-  font-size: 0.92rem;
-  
-  /* Single Line */
+  font-size: 0.95rem;
   white-space: nowrap; 
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .prl-item-code {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
   white-space: nowrap;
-  font-weight: 600;
 }
 
 /* Status Badge */
 .prl-badge {
   display: inline-block;
-  padding: 5px 12px;
+  padding: 6px 12px;
   border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 700; /* Extra Bold Badge Text */
+  font-size: 0.8rem;
+  font-weight: 700;
   background: var(--bg-app);
   color: var(--text-muted);
   border: 1px solid transparent;
   white-space: nowrap;
 }
 
-/* Specific Status Colors */
 .status-to-receive-and-bill { background: #eff6ff; color: #1e40af; border-color: #dbeafe; }
 .status-completed { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
 .status-cancelled { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
@@ -298,6 +280,77 @@
   text-align: center;
   color: var(--text-muted);
   font-style: italic;
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 1rem;
+}
+
+/* --- NEW: Tiny Pay Button & Transporter Cell --- */
+.prl-transporter-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.prl-btn-xs {
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  height: 26px;
+  border-radius: 4px;
+  background-color: var(--primary); /* Deep Navy */
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.prl-btn-xs:hover {
+  background-color: var(--primary-hover);
+}
+
+/* --- NEW: Modal Styles --- */
+.prl-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.7); /* Dark semi-transparent */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(2px);
+}
+
+.prl-modal {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.prl-modal h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-main);
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.prl-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }

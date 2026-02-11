@@ -3524,3 +3524,49 @@ export async function getLogisticsByCity(fullCityStateString) {
     return { suppliers: [], transporters: [] };
   }
 }
+
+// ------------------------------
+// Transporter Payment Helper
+// ------------------------------
+export async function createTransporterInvoice({
+  transporter, // The Transporter Name (Supplier)
+  amount,      // Amount to pay
+  poName,      // Link to this PO
+  company,
+  posting_date
+}) {
+  const payload = {
+    doctype: "Purchase Invoice",
+    supplier: transporter,
+    company: company,
+    posting_date: posting_date || new Date().toISOString().slice(0, 10),
+    due_date: posting_date || new Date().toISOString().slice(0, 10),
+    
+    // IMPORTANT: Link to the Material PO so it shows in the Tracker
+    custom_linked_po: poName, 
+
+    // Service Invoice settings
+    update_stock: 0, 
+
+    items: [
+      {
+        // Ensure you have an Item named "Transportation" in ERPNext (Item Group: Services)
+        item_code: "Transportation", 
+        qty: 1,
+        rate: Number(amount),
+        description: `Transport charges for PO: ${poName}`
+      }
+    ]
+  };
+
+  // 1. Create Draft
+  const res = await createDoc("Purchase Invoice", payload);
+  const piName = res.data?.name;
+
+  if (!piName) throw new Error("Failed to create Transporter Invoice draft.");
+
+  // 2. Submit Immediately
+  await submitDoc("Purchase Invoice", piName);
+
+  return piName;
+}
