@@ -108,7 +108,7 @@ function toErpDate(input) {
       feb: 2, february: 2,
       mar: 3, march: 3,
       apr: 4, april: 4,
-      may: 5, may: 5,
+      may: 5,
       jun: 6, june: 6,
       jul: 7, july: 7,
       aug: 8, august: 8,
