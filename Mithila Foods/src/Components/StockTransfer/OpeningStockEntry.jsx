@@ -10,6 +10,7 @@ import {
   createDoc,
   submitDoc,
 } from "../erpBackendApi";
+import { useOrg } from "../Context/OrgContext";
 import "./OpeningStockEntry.css";
 
 /**
@@ -27,7 +28,20 @@ import "./OpeningStockEntry.css";
  */
 
 const RAW_WH = "Raw Material - MF";
-const FINISHED_WH = "Finished Goods - MF";
+
+function getWarehouseForBrand(brandName) {
+  const b = String(brandName || "").trim().toLowerCase();
+  if (b.includes("prepto")) return "Finished Goods Prepto - MF";
+  if (b.includes("howrah")) return "Finished Goods Howrah - MF";
+  if (b.includes("mithila")) return "Finished Goods Mithila - MF";
+  return "Finished Goods - MF";
+}
+
+function pickWarehouseForItem(item, brand) {
+  if (!item) return RAW_WH;
+  const isProduct = String(item.item_group || "").toLowerCase().includes("product");
+  return isProduct ? getWarehouseForBrand(brand) : RAW_WH;
+}
 
 // ✅ Use a NON-group child account here in ERPNext
 const DEFAULT_DIFFERENCE_ACCOUNT = "Temporary Opening - MF";
@@ -271,10 +285,10 @@ function ItemSearchDropdown({ items, value, onSelect, placeholder, className = "
     const base = !s
       ? items
       : items.filter((it) => {
-          const code = (it.name || "").toLowerCase();
-          const name = (it.item_name || "").toLowerCase();
-          return code.includes(s) || name.includes(s);
-        });
+        const code = (it.name || "").toLowerCase();
+        const name = (it.item_name || "").toLowerCase();
+        return code.includes(s) || name.includes(s);
+      });
 
     return base.slice(0, 80); // keep it snappy
   }, [items, q]);
@@ -364,7 +378,11 @@ function ItemSearchDropdown({ items, value, onSelect, placeholder, className = "
 
 function OpeningStockEntry() {
   // Master data
+  const { orgs, activeOrg } = useOrg(); // Get orgs from context
   const [items, setItems] = useState([]);
+  const [manualBrand, setManualBrand] = useState(
+    activeOrg === "F2D TECH PRIVATE LIMITED" ? "Prepto" : activeOrg
+  );
   const [priceLists, setPriceLists] = useState([]);
   const [companies, setCompanies] = useState([]);
 
@@ -405,7 +423,25 @@ function OpeningStockEntry() {
     });
     return m;
   }, [items]);
+  /** 1. Filtered Item List Logic **/
+  const brandFilteredItems = useMemo(() => {
+    return items.filter(it => {
+      const isProduct = String(it.item_group || "").toLowerCase().includes("product");
 
+      // IF PARENT (F2D) is selected: 
+      // Show ONLY Raw Materials, Packing, and Consumables (Hide all Finished Products)
+      if (manualBrand === "F2D TECH PRIVATE LIMITED") {
+        return !isProduct;
+      }
+
+      // IF A BRAND is selected: 
+      // Show that Brand's Finished Products + ALL shared Raw Materials
+      if (isProduct) {
+        return it.brand === manualBrand;
+      }
+      return true; // Keep shared raw materials visible for everyone
+    });
+  }, [items, manualBrand]);
   /* ---------------------------
      Initial load of master data
      --------------------------- */
@@ -521,43 +557,57 @@ function OpeningStockEntry() {
    * - picks price list (Buying/Selling)
    * - fetches rate automatically
    */
+
   async function handleRowItemChange(rowId, itemCode) {
-    const item = items.find((it) => it.name === itemCode);
-    const uom = item?.stock_uom || item?.uom || item?.default_uom || "";
-    const group = item?.item_group || "";
+    const item = itemByCode.get(itemCode);
+    if (!item) return;
 
-    const finished = isFinishedGroup(group);
-    const nextWarehouse = finished ? FINISHED_WH : RAW_WH;
-    const nextPL = pickPriceListName(finished ? PL_SELLING : PL_BUYING, priceLists);
+    const nextWh = pickWarehouseForItem(item, manualBrand); // Use dynamic brand WH
 
-    let targetRow = null;
+    setRows((prev) => prev.map((r) => r.id === rowId ? {
+      ...r, item_code: itemCode, item_group: item.item_group, uom: item.stock_uom, warehouse: nextWh, rate: "", rowError: ""
+    } : r));
 
-    // Update row quickly (UI), then fetch rate
-    setRows((prev) =>
-      prev.map((r) => {
-        if (r.id !== rowId) return r;
-
-        const updated = {
-          ...r,
-          item_code: itemCode,
-          item_group: group,
-          uom,
-          warehouse: nextWarehouse,
-          price_list: nextPL,
-          rate: "", // reset (we will refetch)
-          rowError: "",
-        };
-
-        targetRow = updated;
-        return updated;
-      })
-    );
-
-    if (!targetRow) return;
-
-    const updated = await fetchRateForRow(targetRow);
-    setRows((prev) => prev.map((r) => (r.id === rowId ? updated : r)));
+    const updated = await fetchRateForRow({ ...rows.find(r => r.id === rowId), item_code: itemCode, warehouse: nextWh });
+    setRows((prev) => prev.map((r) => r.id === rowId ? updated : r));
   }
+  //async function handleRowItemChange(rowId, itemCode) {
+  //  const item = items.find((it) => it.name === itemCode);
+  //  const uom = item?.stock_uom || item?.uom || item?.default_uom || "";
+  //  const group = item?.item_group || "";
+
+  //  const finished = isFinishedGroup(group);
+  //  const nextWarehouse = finished ? FINISHED_WH : RAW_WH;
+  //  const nextPL = pickPriceListName(finished ? PL_SELLING : PL_BUYING, priceLists);
+
+  //  let targetRow = null;
+
+  //  // Update row quickly (UI), then fetch rate
+  //  setRows((prev) =>
+  //    prev.map((r) => {
+  //      if (r.id !== rowId) return r;
+
+  //      const updated = {
+  //        ...r,
+  //        item_code: itemCode,
+  //        item_group: group,
+  //        uom,
+  //        warehouse: nextWarehouse,
+  //        price_list: nextPL,
+  //        rate: "", // reset (we will refetch)
+  //        rowError: "",
+  //      };
+
+  //      targetRow = updated;
+  //      return updated;
+  //    })
+  //  );
+
+  //  if (!targetRow) return;
+
+  //  const updated = await fetchRateForRow(targetRow);
+  //  setRows((prev) => prev.map((r) => (r.id === rowId ? updated : r)));
+  //}
 
   async function handleRefreshRate(rowId) {
     const row = rows.find((r) => r.id === rowId);
@@ -621,8 +671,8 @@ function OpeningStockEntry() {
       console.error(err);
       setError(
         err.response?.data?.error?.message ||
-          err.message ||
-          "Failed to create/submit Stock Reconciliation"
+        err.message ||
+        "Failed to create/submit Stock Reconciliation"
       );
     } finally {
       setSaving(false);
@@ -704,8 +754,7 @@ function OpeningStockEntry() {
         // Warehouse = file value OR auto from item_group
         let warehouse = whRaw;
         if (!warehouse) {
-          const finished = isFinishedGroup(item?.item_group);
-          warehouse = finished ? FINISHED_WH : RAW_WH;
+          warehouse = pickWarehouseForItem(item, manualBrand);
         }
 
         lines.push({
@@ -917,20 +966,22 @@ function OpeningStockEntry() {
       {activeTab === "manual" && (
         <form onSubmit={handleSubmit} className="opening-stock-form">
           {/* Company + Posting Date */}
-          <div className="opening-stock-top-grid">
+          {/* Top Controls: Brand, Company, Date */}
+          <div className="opening-stock-top-grid" style={{ marginBottom: '20px' }}>
+            <div className="field-group">
+              <label className="form-label">Active Brand Context</label>
+              <select className="select" value={manualBrand} onChange={(e) => setManualBrand(e.target.value)}>
+                {orgs.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+              </select>
+            </div>
+
             <div className="field-group">
               <label className="form-label">Company</label>
-              <select
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className="select"
-                disabled={saving || loadingInit}
-              >
+              <select value={company} onChange={(e) => setCompany(e.target.value)} className="select" disabled={saving || loadingInit}>
                 <option value="">-- select company --</option>
                 {companies.map((c) => (
                   <option key={c.name} value={c.name}>
-                    {c.company_name || c.name}
-                    {c.abbr ? ` (${c.abbr})` : ""}
+                    {c.company_name || c.name} {c.abbr ? ` (${c.abbr})` : ""}
                   </option>
                 ))}
               </select>
@@ -938,13 +989,7 @@ function OpeningStockEntry() {
 
             <div className="field-group">
               <label className="form-label">Posting Date</label>
-              <input
-                type="date"
-                value={postingDate}
-                onChange={(e) => setPostingDate(e.target.value)}
-                className="input"
-                disabled={saving || loadingInit}
-              />
+              <input type="date" value={postingDate} onChange={(e) => setPostingDate(e.target.value)} className="input" disabled={saving || loadingInit} />
             </div>
           </div>
 
@@ -1068,20 +1113,22 @@ function OpeningStockEntry() {
       {activeTab === "bulk" && (
         <div className="opening-stock-bulk">
           {/* Bulk: same company/date controls */}
-          <div className="opening-stock-top-grid" style={{ marginTop: 10 }}>
+          {/* Top Controls: Brand, Company, Date */}
+          <div className="opening-stock-top-grid" style={{ marginTop: 10, marginBottom: '20px' }}>
+            <div className="field-group">
+              <label className="form-label">Active Brand Context</label>
+              <select className="select" value={manualBrand} onChange={(e) => setManualBrand(e.target.value)}>
+                {orgs.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+              </select>
+            </div>
+
             <div className="field-group">
               <label className="form-label">Company</label>
-              <select
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className="select"
-                disabled={bulkParsing || bulkCreating}
-              >
+              <select value={company} onChange={(e) => setCompany(e.target.value)} className="select" disabled={bulkParsing || bulkCreating}>
                 <option value="">-- select company --</option>
                 {companies.map((c) => (
                   <option key={c.name} value={c.name}>
-                    {c.company_name || c.name}
-                    {c.abbr ? ` (${c.abbr})` : ""}
+                    {c.company_name || c.name} {c.abbr ? ` (${c.abbr})` : ""}
                   </option>
                 ))}
               </select>
@@ -1089,13 +1136,7 @@ function OpeningStockEntry() {
 
             <div className="field-group">
               <label className="form-label">Posting Date</label>
-              <input
-                type="date"
-                value={postingDate}
-                onChange={(e) => setPostingDate(e.target.value)}
-                className="input"
-                disabled={bulkParsing || bulkCreating}
-              />
+              <input type="date" value={postingDate} onChange={(e) => setPostingDate(e.target.value)} className="input" disabled={bulkParsing || bulkCreating} />
             </div>
           </div>
 
@@ -1124,8 +1165,7 @@ function OpeningStockEntry() {
                 Required columns: <b>item_code</b> and <b>qty</b>. Optional: <b>warehouse</b>,{" "}
                 <b>rate</b>.
                 <br />
-                If warehouse is missing, it auto-picks: <b>{FINISHED_WH}</b> for Products, else{" "}
-                <b>{RAW_WH}</b>.
+                If warehouse is missing, it auto-routes based on the <b>Active Brand Context</b>.
               </div>
             </div>
 

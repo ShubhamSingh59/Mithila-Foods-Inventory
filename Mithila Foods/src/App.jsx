@@ -23,12 +23,13 @@ import SupplierIntelligenceView from "./views/SupplierIntelligenceView"; // View
 
 // CSS
 import "./App.css";
+import { OrgProvider } from "./Components/Context/OrgContext";
 
 // --- KeepAlive Wrapper (Updated) ---
 // ✅ Updated to accept 'triggerPaths' (array) for views with multiple sub-routes
 const KeepAlivePage = ({ triggerPath, triggerPaths, children }) => {
   const location = useLocation();
-  
+
   let isActive = false;
   if (triggerPath) {
     isActive = location.pathname.startsWith(triggerPath);
@@ -66,102 +67,104 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
-    <Router>
-      <div
-        className="app-shell"
-        // 64px is the collapsed width defined in CSS
-        style={{ "--sidebar-width": sidebarOpen ? "250px" : "64px" }}
-      >
-        {/* Sidebar */}
-        <Sidebar
-          isOpen={sidebarOpen}
-          toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        />
+    <OrgProvider>
+      <Router>
+        <div
+          className="app-shell"
+          // 64px is the collapsed width defined in CSS
+          style={{ "--sidebar-width": sidebarOpen ? "250px" : "64px" }}
+        >
+          {/* Sidebar */}
+          <Sidebar
+            isOpen={sidebarOpen}
+            toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          />
 
-        {/* Main Content Area */}
-        <main className="app-main">
-          <ErrorBoundary>
-            {/* 1. STOCK VIEWS */}
-            <KeepAlivePage triggerPath="/stock/daily">
-              <StockSummaryTabsView />
-            </KeepAlivePage>
+          {/* Main Content Area */}
+          <main className="app-main">
+            <ErrorBoundary>
+              {/* 1. STOCK VIEWS */}
+              <KeepAlivePage triggerPath="/stock/daily">
+                <StockSummaryTabsView />
+              </KeepAlivePage>
 
-            <KeepAlivePage triggerPath="/stock/reorder">
-              <StockReorder />
-            </KeepAlivePage>
+              <KeepAlivePage triggerPath="/stock/reorder">
+                <StockReorder />
+              </KeepAlivePage>
 
-            {/* 2. PURCHASE VIEWS */}
-            <KeepAlivePage triggerPath="/purchase">
-              <div className="app-panel">
-                <PurchaseOrderView />
-              </div>
-            </KeepAlivePage>
+              {/* 2. PURCHASE VIEWS */}
+              <KeepAlivePage triggerPath="/purchase">
+                <div className="app-panel">
+                  <PurchaseOrderView />
+                </div>
+              </KeepAlivePage>
 
-            {/* 3. SALES VIEWS */}
-            <KeepAlivePage triggerPath="/sales/orders">
-              <div className="app-panel">
-                <SalesOrderView />
-              </div>
-            </KeepAlivePage>
+              {/* 3. SALES VIEWS */}
+              <KeepAlivePage triggerPath="/sales/orders">
+                <div className="app-panel">
+                  <SalesOrderView />
+                </div>
+              </KeepAlivePage>
 
-            <KeepAlivePage triggerPath="/sales/return">
-              <div className="app-panel app-panel-secondary">
-                <SalesReturnTabsView />
-              </div>
-            </KeepAlivePage>
+              <KeepAlivePage triggerPath="/sales/return">
+                <div className="app-panel app-panel-secondary">
+                  <SalesReturnTabsView />
+                </div>
+              </KeepAlivePage>
 
-            {/* 4. MFG VIEWS */}
-            <KeepAlivePage triggerPath="/mfg/transfer">
-              <MfgTabsView />
-            </KeepAlivePage>
+              {/* 4. MFG VIEWS */}
+              <KeepAlivePage triggerPath="/mfg/transfer">
+                <MfgTabsView />
+              </KeepAlivePage>
 
-            <KeepAlivePage triggerPath="/mfg/workflow">
-              <div className="app-panel">
-                <MfWorkflow />
-              </div>
-            </KeepAlivePage>
+              <KeepAlivePage triggerPath="/mfg/workflow">
+                <div className="app-panel">
+                  <MfWorkflow />
+                </div>
+              </KeepAlivePage>
 
-            {/* ✅ 5. SUPPLIER VIEWS (Split into 3 Sections) 
+              {/* ✅ 5. SUPPLIER VIEWS (Split into 3 Sections) 
                 We use 'triggerPaths' array because each view handles multiple tabs.
             */}
 
-            {/* View 1: Directory (Suppliers & Transporters) */}
-            <KeepAlivePage triggerPaths={["/suppliers/list", "/suppliers/transporters", "/suppliers/create"]}>
-              <section className="app-panel app-panel-primary">
-                <SupplierTabView/>
-              </section>
-            </KeepAlivePage>
+              {/* View 1: Directory (Suppliers & Transporters) */}
+              <KeepAlivePage triggerPaths={["/suppliers/list", "/suppliers/transporters", "/suppliers/create"]}>
+                <section className="app-panel app-panel-primary">
+                  <SupplierTabView />
+                </section>
+              </KeepAlivePage>
 
-            {/* View 2: Operations (Tracker & Logistics) */}
-            <KeepAlivePage triggerPaths={["/suppliers/purchase-tracker", "/suppliers/logistics-hub"]}>
-              <section className="app-panel app-panel-primary">
-                <PurchaseTrackerView />
-              </section>
-            </KeepAlivePage>
+              {/* View 2: Operations (Tracker & Logistics) */}
+              <KeepAlivePage triggerPaths={["/suppliers/purchase-tracker", "/suppliers/logistics-hub"]}>
+                <section className="app-panel app-panel-primary">
+                  <PurchaseTrackerView />
+                </section>
+              </KeepAlivePage>
 
-            {/* View 3: Intelligence (Scorecard & Trends) */}
-            <KeepAlivePage triggerPaths={["/suppliers/analytics", "/suppliers/item-trends"]}>
-              <section className="app-panel app-panel-primary">
-                <SupplierIntelligenceView />
-              </section>
-            </KeepAlivePage>
+              {/* View 3: Intelligence (Scorecard & Trends) */}
+              <KeepAlivePage triggerPaths={["/suppliers/analytics", "/suppliers/item-trends"]}>
+                <section className="app-panel app-panel-primary">
+                  <SupplierIntelligenceView />
+                </section>
+              </KeepAlivePage>
 
 
-            {/* 6. ANALYTICS VIEWS (General) */}
-            <KeepAlivePage triggerPath="/analytics">
-              <div className="app-panel app-panel-primary">
-                <Analytics />
-              </div>
-            </KeepAlivePage>
+              {/* 6. ANALYTICS VIEWS (General) */}
+              <KeepAlivePage triggerPath="/analytics">
+                <div className="app-panel app-panel-primary">
+                  <Analytics />
+                </div>
+              </KeepAlivePage>
 
-            {/* ROUTING: Redirects & 404 */}
-            <Routes>
-              <Route path="/" element={<Navigate to="/stock/daily" replace />} />
-              <Route path="*" element={<Check404 />} />
-            </Routes>
-          </ErrorBoundary>
-        </main>
-      </div>
-    </Router>
+              {/* ROUTING: Redirects & 404 */}
+              <Routes>
+                <Route path="/" element={<Navigate to="/stock/daily" replace />} />
+                <Route path="*" element={<Check404 />} />
+              </Routes>
+            </ErrorBoundary>
+          </main>
+        </div>
+      </Router>
+    </OrgProvider>
   );
 }

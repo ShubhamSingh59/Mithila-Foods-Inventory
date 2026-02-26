@@ -1,31 +1,21 @@
-// server.js (or index.js)
-// This is a small Node + Express backend.
-// It works as a proxy between your React app and ERPNext.
-// React calls this backend, and this backend calls ERPNext using API key/secret.
+// server.js 
 
-// ------------------------------
-// Imports
-// ------------------------------
+// **** This code work as the proxy between our frontend and ERP. It connects both of them **** //
+
+// *** Imports ***//
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
-const dotenv = require("dotenv");
-const multer = require("multer");
+const dotenv = require("dotenv"); // this will help us to load and safly handle the token and api key
+const multer = require("multer"); // this multer helps us to handle the massive messay data which we are sending from the frontent by using our bulk upload.
 const FormData = require("form-data");
 
-// ------------------------------
-// Load environment variables from .env
-// ------------------------------
 dotenv.config();
 
-// ------------------------------
-// Create Express app
-// ------------------------------
+// *** Express App
 const app = express();
 
-// ------------------------------
-// CORS: allow frontend URLs to call this backend
-// ------------------------------
+// *** Cors Policy --> telling our backend it is safe to handle the request from these urls.
 app.use(
   cors({
     origin: [
@@ -35,32 +25,19 @@ app.use(
   })
 );
 
-// ------------------------------
-// Parse JSON request bodies
-// ------------------------------
-app.use(express.json());
 
-// ------------------------------
-// Multer setup (file upload in memory)
-// ------------------------------
-// This keeps uploaded files in RAM (not saved on disk).
-const upload = multer();
+app.use(express.json()); // helps our server to read the files.
 
-// ------------------------------
-// Read ERPNext connection settings from .env
-// ------------------------------
+const upload = multer(); // multer setup. Upload our files in the ram memory
+
+// *** Get the all Credential from .env to connect with the ERP
 const {
   ERP_BASE_URL,
   ERP_API_KEY,
   ERP_API_SECRET,
-  DEFAULT_PURCHASE_WAREHOUSE, // present but not used in this file
 } = process.env;
 
-// ------------------------------
-// ERPNext axios client
-// ------------------------------
-// All calls go to: ERP_BASE_URL + "/api"
-// Authorization uses ERPNext token: "token <api_key>:<api_secret>"
+// *** This gies us access to erp and we do not have write the api keys for every api hit
 const erpClient = axios.create({
   baseURL: `${ERP_BASE_URL}/api`,
   headers: {
@@ -70,23 +47,63 @@ const erpClient = axios.create({
   timeout: 30000,
 });
 
+
+
 // ============================================================================
-// 1) RESOURCE ROUTES (ERPNext /api/resource)
+// 1. CORE DOCUMENT RESOURCE APIs (CRUD)
 // ============================================================================
 
-// List documents of a doctype.
-// Frontend calls: GET /api/doctype/Item?fields=...&filters=...&limit_page_length=...
-// Backend calls:  GET ERP /api/resource/Item
+
+
+// *** This helps us to show the images from the ERP. In the react frontedn we give the URL in the img tag but that frontend or tag does not have the access to our erp so we build this proxy to get in. *** //
+app.get("/api/proxy-image", async (req, res) => {
+  const { path } = req.query;
+
+  if (!path) {
+    return res.status(400).send("Path is required");
+  }
+
+  try {
+    // We remove the '/api' from baseURL because file paths are usually at the root
+    const baseUrl = process.env.ERP_BASE_URL; 
+    
+    // Ensure we don't have double slashes
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    const fullUrl = `${baseUrl}${cleanPath}`;
+
+    // 2. Fetch the image as a stream (binary data)
+    const response = await axios({
+      method: "GET",
+      url: fullUrl,
+      responseType: "stream",
+      headers: {
+        // Pass your API keys so we can see Private files too!
+        Authorization: `token ${process.env.ERP_API_KEY}:${process.env.ERP_API_SECRET}`,
+      },
+    });
+
+    // 3. Forward the content-type (png/jpg) to the browser
+    res.set("Content-Type", response.headers["content-type"]);
+
+    // 4. Pipe the image data straight to the frontend
+    response.data.pipe(res);
+
+  } catch (err) {
+    console.error("Image Proxy Error:", err.message);
+    res.status(404).send("Image not found");
+  }
+});
+
+
+// ============= Fetches a list of records for a specific DocType (e.g., getting a list of all Items or POs). ======= //
 app.get("/api/doctype/:doctype", async (req, res) => {
   const { doctype } = req.params;
 
   try {
     const response = await erpClient.get(`/resource/${doctype}`, {
-      // Pass through query params like fields, filters, order_by, limit_page_length, etc.
       params: req.query,
     });
 
-    // ERPNext returns { data: [...] }
     res.json(response.data);
   } catch (err) {
     console.error(
@@ -99,9 +116,8 @@ app.get("/api/doctype/:doctype", async (req, res) => {
   }
 });
 
-// Create a new document in a doctype.
-// Frontend calls: POST /api/doctype/Purchase Order   body: {doctype:"Purchase Order", ...}
-// Backend calls:  POST ERP /api/resource/Purchase Order
+
+// ============ This API gives us option to create a new DOC in ERP ======= //
 app.post("/api/doctype/:doctype", async (req, res) => {
   const { doctype } = req.params;
   const data = req.body;
@@ -109,7 +125,6 @@ app.post("/api/doctype/:doctype", async (req, res) => {
   try {
     const response = await erpClient.post(`/resource/${doctype}`, data);
 
-    // ERPNext returns created doc as { data: {...} }
     res.json(response.data);
   } catch (err) {
     console.error(
@@ -122,9 +137,55 @@ app.post("/api/doctype/:doctype", async (req, res) => {
   }
 });
 
-// Submit a document by setting docstatus = 1.
-// Frontend calls: POST /api/submit   body: {doctype, name}
-// Backend calls:  PUT ERP /api/resource/:doctype/:name  body: {docstatus:1}
+
+// ============= This API helps us to access the one specific doc from the list of doc (ex--> Seeing the details about one specfic PO) ======= //
+app.get("/api/doc/:doctype/:name", async (req, res) => {
+  const { doctype, name } = req.params;
+
+  try {
+    const response = await erpClient.get(
+      `/resource/${doctype}/${encodeURIComponent(name)}`
+    );
+
+    // ERPNext returns { data: { ...doc..., items: [...] } }
+    res.json(response.data);
+  } catch (err) {
+    console.error(
+      `GET /resource/${doctype}/${name} error:`,
+      err.response?.data || err.message
+    );
+    res
+      .status(err.response?.status || 500)
+      .json({ error: err.response?.data || err.message });
+  }
+});
+
+
+// =========== This API helps us to update that specific doc like any specifc PO ======= //
+app.put("/api/doc/:doctype/:name", async (req, res) => {
+  const { doctype, name } = req.params;
+
+  try {
+    const response = await erpClient.put(
+      `/resource/${doctype}/${encodeURIComponent(name)}`,
+      // Body contains fields to update
+      req.body
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    console.error(
+      `PUT /resource/${doctype}/${name} error:`,
+      err.response?.data || err.message
+    );
+    res
+      .status(err.response?.status || 500)
+      .json({ error: err.response?.data || err.message });
+  }
+});
+
+
+// ============= This API helps us to submit the doc for example chnaging the DRAFT PO --> CONFIRM PO. This chnges the docstatus ==1 in the ERP ======= //
 app.post("/api/submit", async (req, res) => {
   const { doctype, name } = req.body;
 
@@ -151,54 +212,7 @@ app.post("/api/submit", async (req, res) => {
   }
 });
 
-// Get one ERPNext document (full doc with child tables).
-// Frontend calls: GET /api/doc/BOM/BOM-0001
-// Backend calls:  GET ERP /api/resource/BOM/BOM-0001
-app.get("/api/doc/:doctype/:name", async (req, res) => {
-  const { doctype, name } = req.params;
 
-  try {
-    const response = await erpClient.get(
-      `/resource/${doctype}/${encodeURIComponent(name)}`
-    );
-
-    // ERPNext returns { data: { ...doc..., items: [...] } }
-    res.json(response.data);
-  } catch (err) {
-    console.error(
-      `GET /resource/${doctype}/${name} error:`,
-      err.response?.data || err.message
-    );
-    res
-      .status(err.response?.status || 500)
-      .json({ error: err.response?.data || err.message });
-  }
-});
-
-// Update a document (generic).
-// Frontend calls: PUT /api/doc/Purchase%20Order/PO-0001   body: { status: "Completed" }
-// Backend calls:  PUT ERP /api/resource/Purchase Order/PO-0001
-app.put("/api/doc/:doctype/:name", async (req, res) => {
-  const { doctype, name } = req.params;
-
-  try {
-    const response = await erpClient.put(
-      `/resource/${doctype}/${encodeURIComponent(name)}`,
-      // Body contains fields to update
-      req.body
-    );
-
-    res.json(response.data);
-  } catch (err) {
-    console.error(
-      `PUT /resource/${doctype}/${name} error:`,
-      err.response?.data || err.message
-    );
-    res
-      .status(err.response?.status || 500)
-      .json({ error: err.response?.data || err.message });
-  }
-});
 
 // ============================================================================
 // 2) METHOD ROUTES (ERPNext /api/method)
@@ -483,51 +497,6 @@ app.get("/api/reports/reorder", async (req, res) => {
         error: "Failed to generate report",
         details: err.response?.data || err.message 
     });
-  }
-});
-
-// server.js
-
-// ... (your existing code)
-
-// ✅ NEW: Image Proxy Route
-// Usage: /api/proxy-image?path=/private/files/my-image.png
-app.get("/api/proxy-image", async (req, res) => {
-  const { path } = req.query;
-
-  if (!path) {
-    return res.status(400).send("Path is required");
-  }
-
-  try {
-    // 1. Construct the full URL using the Backend's .env
-    // We remove the '/api' from baseURL because file paths are usually at the root
-    const baseUrl = process.env.ERP_BASE_URL; 
-    
-    // Ensure we don't have double slashes
-    const cleanPath = path.startsWith("/") ? path : `/${path}`;
-    const fullUrl = `${baseUrl}${cleanPath}`;
-
-    // 2. Fetch the image as a stream (binary data)
-    const response = await axios({
-      method: "GET",
-      url: fullUrl,
-      responseType: "stream",
-      headers: {
-        // Pass your API keys so we can see Private files too!
-        Authorization: `token ${process.env.ERP_API_KEY}:${process.env.ERP_API_SECRET}`,
-      },
-    });
-
-    // 3. Forward the content-type (png/jpg) to the browser
-    res.set("Content-Type", response.headers["content-type"]);
-
-    // 4. Pipe the image data straight to the frontend
-    response.data.pipe(res);
-
-  } catch (err) {
-    console.error("Image Proxy Error:", err.message);
-    res.status(404).send("Image not found");
   }
 });
 

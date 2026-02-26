@@ -273,7 +273,7 @@ export async function getAllItems() {
 // Items allowed for Purchase Order (limited to specific item groups)
 export async function getItemsForPO() {
   return getDoctypeList("Item", {
-    fields: JSON.stringify(["name", "item_name", "item_group", "stock_uom"]),
+    fields: JSON.stringify(["name", "item_name", "item_group", "stock_uom", "brand"]),
     filters: JSON.stringify([
       ["Item", "item_group", "in", ["Raw Material", "Pouch", "Sticker"]],
     ]),
@@ -292,6 +292,7 @@ export async function getItemsForBOM() {
       "item_group",
       "valuation_rate",
       "last_purchase_rate",
+      "brand"
     ]),
     limit_page_length: 1000,
   });
@@ -300,7 +301,7 @@ export async function getItemsForBOM() {
 // Finished goods items (Products group)
 export async function getFinishedItems() {
   return getDoctypeList("Item", {
-    fields: JSON.stringify(["name", "item_name", "stock_uom", "item_group"]),
+    fields: JSON.stringify(["name", "item_name", "stock_uom", "item_group", "brand"]),
     filters: JSON.stringify([["Item", "item_group", "=", "Products"]]),
     limit_page_length: 1000,
   });
@@ -319,6 +320,9 @@ export async function getFinishedItemsForSales() {
       "custom_fba_sku",
       "custom_fk_sku",
       "custom_blinkit_upc",
+      "brand", 
+      "custom_courier_bag_packaging",
+      "custom_shipping_label"
     ]),
     filters: JSON.stringify([["Item", "item_group", "=", "Products"]]),
     limit_page_length: 1000,

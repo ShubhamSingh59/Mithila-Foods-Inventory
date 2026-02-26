@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getDoctypeList } from "../erpBackendApi";
 import "./StockReorder.css";
+import { useOrg } from "../Context/OrgContext";
 
 /**
  * Stock Reorder (Read-only dashboard)
@@ -36,6 +37,8 @@ function chunkArray(arr, size = 150) {
 }
 
 function StockReorder() {
+  // Brand Chnage
+  const { activeOrg, orgs, changeOrg } = useOrg();
   // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -150,6 +153,7 @@ function StockReorder() {
             "warehouse",
             "warehouse_reorder_level",
             "warehouse_reorder_qty",
+            "material_request_type"
           ]),
           filters: JSON.stringify([
             ["Item Reorder", "warehouse", "=", DEFAULT_WAREHOUSE],
@@ -177,6 +181,7 @@ function StockReorder() {
               "warehouse",
               "warehouse_reorder_level",
               "warehouse_reorder_qty",
+              "material_request_type"
             ]),
             filters: JSON.stringify([
               ["Item Reorder", "warehouse", "=", DEFAULT_WAREHOUSE],
@@ -202,11 +207,12 @@ function StockReorder() {
 
         const lvl = Number(r.warehouse_reorder_level || 0);
         const qty = Number(r.warehouse_reorder_qty || 0);
-
+        const reqType = r.material_request_type || "Purchase";
         const prev = reorderMap.get(code) || { reorder_level: 0, reorder_qty: 0 };
         reorderMap.set(code, {
           reorder_level: Math.max(prev.reorder_level, lvl),
           reorder_qty: Math.max(prev.reorder_qty, qty),
+          material_request_type: reqType,
         });
       });
 
@@ -225,7 +231,7 @@ function StockReorder() {
 
       for (const part of chunkArray(itemCodes, CHUNK_SIZE)) {
         const items = await getDoctypeList("Item", {
-          fields: JSON.stringify(["name", "item_name", "item_group"]),
+          fields: JSON.stringify(["name", "item_name", "item_group", "brand"]),
           filters: JSON.stringify([["Item", "name", "in", part]]),
           limit_page_length: 1000,
         });
@@ -235,6 +241,7 @@ function StockReorder() {
           itemMetaMap.set(it.name, {
             item_name: it.item_name || it.name,
             item_group: it.item_group || "Unknown",
+            brand: it.brand
           });
         });
       }
@@ -269,7 +276,7 @@ function StockReorder() {
           const meta = itemMetaMap.get(code) || { item_name: code, item_group: "Unknown" };
           const current_qty = Number(binQtyMap.get(code) || 0);
 
-          const rr = reorderMap.get(code) || { reorder_level: 0, reorder_qty: 0 };
+          const rr = reorderMap.get(code) || { reorder_level: 0, reorder_qty: 0, material_request_type: "Purchase" };
 
           // If reorder_level is 0 but reorder_qty exists, we use reorder_qty as fallback threshold
           const reorder_level =
@@ -279,13 +286,18 @@ function StockReorder() {
             item_code: code,
             item_name: meta.item_name || code,
             item_group: meta.item_group || "Unknown",
+            brand: meta.brand,
             current_qty,
             reorder_level,
             difference: current_qty - reorder_level,
           };
         })
-        .filter((r) => Number(r.reorder_level || 0) > 0); // keep only configured items
-
+        .filter((r) => Number(r.reorder_level || 0) > 0) // keep only configured items
+        .filter((r) =>
+          activeOrg === "F2D TECH PRIVATE LIMITED" ||
+          r.brand === activeOrg ||
+          String(r.item_group).toLowerCase().includes("raw")
+        );
       setFlatItems(flat);
 
       // ------------------------------------------------------------
@@ -300,7 +312,7 @@ function StockReorder() {
     } finally {
       setLoading(false);
     }
-  }, [buildRowsFromFlat]);
+  }, [buildRowsFromFlat, activeOrg]);
 
   // Initial load
   useEffect(() => {
@@ -409,6 +421,20 @@ function StockReorder() {
         </div>
 
         <div className="stock-reorder-controls">
+          {/* BRAND SWITCHER */}
+          <select
+            className="input stock-reorder-search-input"
+            value={activeOrg}
+            onChange={(e) => changeOrg(e.target.value)}
+            title="Switch Brand / Organization"
+            style={{ fontWeight: "bold", color: "#007bff", width: "180px" }}
+          >
+            {orgs.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </select>
           <input
             className="input stock-reorder-search-input"
             placeholder="Search item name / code"
@@ -454,6 +480,7 @@ function StockReorder() {
                 <th style={{ width: "18%" }}>Current Qty</th>
                 <th style={{ width: "18%" }}>Reorder Level</th>
                 <th style={{ width: "18%" }}>Difference</th>
+                <th style={{ width: "15%" }}>Request Type</th>
               </tr>
             </thead>
 
@@ -468,7 +495,7 @@ function StockReorder() {
                       className="stock-reorder-category-row"
                       onClick={() => toggleCategory(r.category_key)}
                     >
-                      <td colSpan={4} className="stock-reorder-category-cell">
+                      <td colSpan={5} className="stock-reorder-category-cell">
                         <span className="stock-reorder-category-icon">📁</span>
                         <span className="stock-reorder-category-label">{r.category_label}</span>
                         <span className="stock-reorder-category-toggle">
@@ -496,6 +523,10 @@ function StockReorder() {
 
                     <td className="stock-reorder-num">
                       <Diff v={r.difference} />
+                    </td>
+
+                    <td className="stock-reorder-num" style={{ fontSize: "13px", opacity: 0.85 }}>
+                      {r.material_request_type}
                     </td>
                   </tr>
                 );

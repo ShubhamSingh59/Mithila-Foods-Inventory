@@ -82,6 +82,55 @@
   color: white;
 }
 
+/* --- NEW: SWITCHER SECTION --- */
+.app-sidebar-switcher {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: rgba(0, 0, 0, 0.15); /* Slightly darker than sidebar to inset it */
+}
+
+.app-sidebar-switcher-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.app-sidebar-switcher-select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #f1f5f9;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  appearance: none; /* Removes default OS styling for a cleaner look */
+}
+
+.app-sidebar-switcher-select:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.app-sidebar-switcher-select:focus {
+  border-color: var(--accent, #3b82f6);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Fix option colors so they are readable in light/dark mode browsers */
+.app-sidebar-switcher-select option {
+  background-color: var(--primary); /* Keeps it dark */
+  color: #f1f5f9;
+  font-weight: 500;
+}
+
 /* --- NAVIGATION --- */
 .app-nav {
   flex: 1;

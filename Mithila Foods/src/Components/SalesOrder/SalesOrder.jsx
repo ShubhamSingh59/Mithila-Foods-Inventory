@@ -16,6 +16,7 @@ import {
   updateDoc,
 } from "../erpBackendApi";
 
+import { useOrg } from "../Context/OrgContext";
 import SalesOrderRecentList from "./SalesOrderRecentList";
 import "./SalesOrder.css";
 
@@ -35,8 +36,8 @@ import "./SalesOrder.css";
  */
 
 // Defaults (you can change if needed)
-const DEFAULT_COMPANY = "Mithila Foods";
-const DEFAULT_WAREHOUSE = "Finished Goods - MF"; // fixed warehouse
+const DEFAULT_COMPANY = "F2D TECH PRIVATE LIMITED";
+//const DEFAULT_WAREHOUSE = "Finished Goods - MF"; // fixed warehouse
 const DEFAULT_CUSTOMER = "Test Customer";
 const TRY_SINGLE_LINE_FALLBACK = true; // when bulk grouped create fails, try single-line invoices
 const DEFAULT_SELLING_PRICE_LIST = "Standard Selling";
@@ -283,7 +284,16 @@ const BULK_COL = {
     "selling-price-per-item-(inr)",
   ],
   productName: ["product-name", "item-name", "product", "title", "product-title"],
+  brand: ["brand", "brand-name", "brandname", "organization"],
 };
+
+function getWarehouseForBrand(brandName) {
+  const b = String(brandName || "").trim().toLowerCase();
+  if (b.includes("prepto")) return "Finished Goods Prepto - MF";
+  if (b.includes("howrah")) return "Finished Goods Howrah - MF";
+  if (b.includes("mithila")) return "Finished Goods Mithila - MF";
+  return "Finished Goods - MF"; // default fallback
+}
 
 function looseKey(k) {
   return String(k || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -390,7 +400,7 @@ async function getRecentDraftSalesInvoices(limit = LIST_LIMIT) {
 }
 
 export default function SalesOrder() {
-  const FIXED_WAREHOUSE = DEFAULT_WAREHOUSE;
+  //const FIXED_WAREHOUSE = DEFAULT_WAREHOUSE;
 
   // Master data
   const [customers, setCustomers] = useState([]);
@@ -403,7 +413,18 @@ export default function SalesOrder() {
     new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
   );
   const [customer, setCustomer] = useState("");
+  const [manualBrand, setManualBrand] = useState("Prepto");
+  const brandFilteredItems = useMemo(() => {
+    console.log("ALL ITEMS FROM API:", items); // 🔍 Diagnostic log
 
+    if (!manualBrand) return items;
+
+    return items.filter(it => {
+      // Sometimes brand might be empty, or it might be "brand_name" depending on ERPNext setup
+      const itemBrand = String(it.brand || it.custom_brand || "").trim();
+      return itemBrand === manualBrand;
+    });
+  }, [items, manualBrand]);
   // Bulk fields
   const [bulkPostingDate, setBulkPostingDate] = useState(new Date().toISOString().slice(0, 10));
 
@@ -712,7 +733,7 @@ export default function SalesOrder() {
     if (!itemCode) return;
 
     const [binRes, priceRes] = await Promise.allSettled([
-      getBinForItemWarehouse(itemCode, FIXED_WAREHOUSE),
+      getBinForItemWarehouse(itemCode, getWarehouseForBrand(manualBrand)), // ✅ UNCOMMENTED AND MADE DYNAMIC
       getItemRateFromPriceList(itemCode, DEFAULT_SELLING_PRICE_LIST),
     ]);
 
@@ -778,14 +799,59 @@ export default function SalesOrder() {
     const validRows = rows.filter((r) => r.item_code && !isNaN(parseFloat(r.qty)) && parseFloat(r.qty) > 0);
     if (!validRows.length) return setError("Add at least one item with quantity > 0.");
 
-    const itemsPayload = validRows.map((r) => ({
-      ...(editingDraftName && r._rowName ? { name: r._rowName } : {}),
-      item_code: r.item_code,
-      qty: parseFloat(r.qty),
-      rate: r.rate === "" || r.rate == null ? undefined : parseFloat(r.rate),
-      warehouse: FIXED_WAREHOUSE,
-    }));
+    //const itemsPayload = validRows.map((r) => ({
+    //  ...(editingDraftName && r._rowName ? { name: r._rowName } : {}),
+    //  item_code: r.item_code,
+    //  qty: parseFloat(r.qty),
+    //  rate: r.rate === "" || r.rate == null ? undefined : parseFloat(r.rate),
+    //  warehouse: getWarehouseForBrand(manualBrand),
+    //  //warehouse: FIXED_WAREHOUSE,
+    //}));
+    // ✅ 1. Check if the customer is Easy Ship
+    const isEasyShip = customer.toLowerCase().includes("easyship") || customer.toLowerCase().includes("easy ship");
 
+    const itemsPayload = [];
+
+    validRows.forEach((r) => {
+      const rowQty = parseFloat(r.qty);
+      const rowWarehouse = getWarehouseForBrand(manualBrand);
+
+      // ✅ 2. Push the main core product
+      itemsPayload.push({
+        ...(editingDraftName && r._rowName ? { name: r._rowName } : {}),
+        item_code: r.item_code,
+        qty: rowQty,
+        rate: r.rate === "" || r.rate == null ? undefined : parseFloat(r.rate),
+        warehouse: rowWarehouse,
+      });
+
+      // ✅ 3. Smart Injection for Easy Ship
+      if (isEasyShip) {
+        // Find the item in our master list to get its specific packaging
+        const itemDetails = items.find((it) => it.name === r.item_code);
+
+        if (itemDetails) {
+          // Inject Courier Bag (Rate is 0, so invoice value doesn't change)
+          if (itemDetails.custom_es_courier_bag) {
+            itemsPayload.push({
+              item_code: itemDetails.custom_es_courier_bag,
+              qty: rowQty,
+              rate: 0,
+              warehouse: rowWarehouse,
+            });
+          }
+          // Inject Packaging Label
+          if (itemDetails.custom_es_packaging_label) {
+            itemsPayload.push({
+              item_code: itemDetails.custom_es_packaging_label,
+              qty: rowQty,
+              rate: 0,
+              warehouse: rowWarehouse,
+            });
+          }
+        }
+      }
+    });
     try {
       setSavingDraft(true);
 
@@ -794,7 +860,7 @@ export default function SalesOrder() {
           customer,
           company,
           posting_date: postingDate,
-          warehouse: FIXED_WAREHOUSE,
+          //warehouse: FIXED_WAREHOUSE,
           items: itemsPayload.map(({ name, ...rest }) => rest),
         });
 
@@ -820,7 +886,7 @@ export default function SalesOrder() {
           customer,
           company,
           posting_date: postingDate,
-          set_warehouse: FIXED_WAREHOUSE,
+          //set_warehouse: FIXED_WAREHOUSE,
           items: [...itemsPayload, ...deletes],
         });
 
@@ -860,15 +926,15 @@ export default function SalesOrder() {
       const mapped =
         its.length > 0
           ? its.map((it, idx) => ({
-              id: idx,
-              _rowName: it.name || "",
-              item_code: it.item_code || "",
-              qty: it.qty != null ? String(it.qty) : "",
-              rate: it.rate != null ? String(it.rate) : "",
-              qtyError: "",
-              rateError: "",
-              rowError: "",
-            }))
+            id: idx,
+            _rowName: it.name || "",
+            item_code: it.item_code || "",
+            qty: it.qty != null ? String(it.qty) : "",
+            rate: it.rate != null ? String(it.rate) : "",
+            qtyError: "",
+            rateError: "",
+            rowError: "",
+          }))
           : [createEmptyRow(0)];
 
       setRows(mapped);
@@ -1014,7 +1080,7 @@ export default function SalesOrder() {
             : undefined;
 
         const product_name = String(pickFirstSmart(r, BULK_COL.productName) || "").trim();
-
+        const brand = String(pickFirstSmart(r, BULK_COL.brand) || "").trim();
         const hasAnyKey = !!asin || !!sku;
 
         if (!invoiceId || !qty || qty <= 0 || !purchaseDate || !hasAnyKey) {
@@ -1033,6 +1099,7 @@ export default function SalesOrder() {
           qty,
           rate,
           product_name,
+          brand,
         });
       });
 
@@ -1159,13 +1226,53 @@ export default function SalesOrder() {
               .filter(Boolean)
               .sort()[0] || "";
 
-          const itemsPayload = g.lines.map((l) => ({
-            item_code: l.item_code,
-            qty: l.qty,
-            rate: l.rate,
-            warehouse: FIXED_WAREHOUSE,
-          }));
+          //const itemsPayload = g.lines.map((l) => ({
+          //  item_code: l.item_code,
+          //  qty: l.qty,
+          //  rate: l.rate,
+          //  warehouse: getWarehouseForBrand(l.brand),
+          //  //warehouse: FIXED_WAREHOUSE,
+          //}));
+          // ✅ 1. Check if the customer is Easy Ship
+          const isEasyShip = customer.toLowerCase().includes("easyship") || customer.toLowerCase().includes("easy ship");
 
+          const itemsPayload = [];
+
+          g.lines.forEach((l) => {
+            const rowWarehouse = getWarehouseForBrand(l.brand);
+
+            // ✅ 2. Push the main core product
+            itemsPayload.push({
+              item_code: l.item_code,
+              qty: l.qty,
+              rate: l.rate,
+              warehouse: rowWarehouse,
+            });
+
+            // ✅ 3. Smart Injection for Bulk Upload
+            if (isEasyShip) {
+              const itemDetails = items.find((it) => it.name === l.item_code);
+
+              if (itemDetails) {
+                if (itemDetails.custom_es_courier_bag) {
+                  itemsPayload.push({
+                    item_code: itemDetails.custom_es_courier_bag,
+                    qty: l.qty,
+                    rate: 0,
+                    warehouse: rowWarehouse,
+                  });
+                }
+                if (itemDetails.custom_es_packaging_label) {
+                  itemsPayload.push({
+                    item_code: itemDetails.custom_es_packaging_label,
+                    qty: l.qty,
+                    rate: 0,
+                    warehouse: rowWarehouse,
+                  });
+                }
+              }
+            }
+          });
           const markAll = (status, msg, siName = "") => {
             g.lines.forEach((l) => {
               allResults.push({
@@ -1187,7 +1294,7 @@ export default function SalesOrder() {
               company,
               posting_date: posting,
               due_date: due,
-              warehouse: FIXED_WAREHOUSE,
+              //warehouse: FIXED_WAREHOUSE,
               items: itemsPayload,
               po_no: g.invoice_id,
               po_date: poDate,
@@ -1210,25 +1317,38 @@ export default function SalesOrder() {
             if (TRY_SINGLE_LINE_FALLBACK) {
               for (const l of g.lines) {
                 try {
+                  // ✅ Build single line payload with smart injection
+                  const rowWarehouse = getWarehouseForBrand(l.brand);
+                  const fallbackPayload = [
+                    {
+                      item_code: l.item_code,
+                      qty: l.qty,
+                      rate: l.rate,
+                      warehouse: rowWarehouse,
+                    }
+                  ];
+
+                  if (isEasyShip) {
+                    const itemDetails = items.find(it => it.name === l.item_code);
+                    if (itemDetails?.custom_es_courier_bag) {
+                      fallbackPayload.push({ item_code: itemDetails.custom_es_courier_bag, qty: l.qty, rate: 0, warehouse: rowWarehouse });
+                    }
+                    if (itemDetails?.custom_es_packaging_label) {
+                      fallbackPayload.push({ item_code: itemDetails.custom_es_packaging_label, qty: l.qty, rate: 0, warehouse: rowWarehouse });
+                    }
+                  }
+
                   const created1 = await createSalesInvoice({
                     customer,
                     company,
                     posting_date: posting,
                     due_date: due,
-                    warehouse: FIXED_WAREHOUSE,
-                    items: [
-                      {
-                        item_code: l.item_code,
-                        qty: l.qty,
-                        rate: l.rate,
-                        warehouse: FIXED_WAREHOUSE,
-                      },
-                    ],
+                    items: fallbackPayload, // ✅ NOW IT INJECTS THE BAGS DURING FALLBACK TOO
                     po_no: g.invoice_id,
                     po_date: l.purchase_date,
                     remarks: `Fallback single-line import. invoice-id=${g.invoice_id} sku=${l.sku} asin=${l.asin}`,
                   });
-
+                  
                   const si1 = created1?.data?.name || "";
 
                   try {
@@ -1556,8 +1676,21 @@ export default function SalesOrder() {
                   </div>
 
                   <div className="sales-field-group">
-                    <label className="form-label sales-field-label">Warehouse</label>
-                    <input className="input sales-readonly-input" value={FIXED_WAREHOUSE} disabled />
+                    {/*<label className="form-label sales-field-label">Warehouse</label>*/}
+                    {/*<input className="input sales-readonly-input" value={FIXED_WAREHOUSE} disabled />*/}
+                    <label className="form-label sales-field-label">Brand</label>
+                    <select
+                      className="select"
+                      value={manualBrand}
+                      onChange={(e) => setManualBrand(e.target.value)}
+                    >
+                      <option value="Prepto">Prepto</option>
+                      <option value="Mithila Foods">Mithila Foods</option>
+                      <option value="Howrah Foods">Howrah Foods</option>
+                    </select>
+                    <div style={{ fontSize: "11px", marginTop: "4px", color: "#666" }}>
+                      Routes to: <b>{getWarehouseForBrand(manualBrand)}</b>
+                    </div>
                   </div>
                 </div>
 
@@ -1590,7 +1723,7 @@ export default function SalesOrder() {
                         <div className="sales-item-field">
                           <label className="form-label">Item</label>
                           <ItemSearchDropdown
-                            items={items}
+                            items={brandFilteredItems}
                             value={row.item_code}
                             onSelect={(code) => handleItemChange(row.id, code)}
                             placeholder="Search item name / code..."
@@ -1642,8 +1775,8 @@ export default function SalesOrder() {
                         ? "Updating Draft..."
                         : "Creating Draft..."
                       : editingDraftName
-                      ? "Update Draft"
-                      : "Create Draft Sale"}
+                        ? "Update Draft"
+                        : "Create Draft Sale"}
                   </button>
 
                   {editingDraftName ? (
@@ -1703,10 +1836,10 @@ function ItemSearchDropdown({ items, value, onSelect, placeholder }) {
     const base = !s
       ? items
       : items.filter((it) => {
-          const code = (it.name || "").toLowerCase();
-          const name = (it.item_name || "").toLowerCase();
-          return code.includes(s) || name.includes(s);
-        });
+        const code = (it.name || "").toLowerCase();
+        const name = (it.item_name || "").toLowerCase();
+        return code.includes(s) || name.includes(s);
+      });
     return base.slice(0, 80);
   }, [items, q]);
 

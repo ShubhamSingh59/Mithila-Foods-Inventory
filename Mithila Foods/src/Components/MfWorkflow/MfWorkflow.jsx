@@ -1,6 +1,7 @@
 // src/Components/MfWorkflow.jsx
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import "./mfWorkflowTheme.css";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"; // ✅ Added React and useCallback
+import { useOrg } from "../Context/OrgContext"; 
+import { makeFlowId, makeFlowTag, RAW_WH, WIP_WH, FG_WH, WASTAGE_WH } from "./mfFlowConfig";
 import {
   getCompanies,
   getDoctypeList,
@@ -16,8 +17,16 @@ import {
   listMfFlowStockEntries,
   getMfFlowWipBalances,
 } from "../erpBackendApi";
+import "./mfWorkflowTheme.css";
 
-import { makeFlowId, makeFlowTag, RAW_WH, WIP_WH, FG_WH, WASTAGE_WH } from "./mfFlowConfig";
+// ✅ Dynamic warehouse routing helper (Moved BELOW all imports)
+function getWarehouseForBrand(brandName) {
+  const b = String(brandName || "").trim().toLowerCase();
+  if (b.includes("prepto")) return "Finished Goods Prepto - MF";
+  if (b.includes("howrah")) return "Finished Goods Howrah - MF";
+  if (b.includes("mithila")) return "Finished Goods Mithila - MF";
+  return FG_WH; // Fallback to the constant
+}
 
 /**
  * MF WORKFLOW (Raw → WIP → FG) – Single screen
@@ -129,11 +138,11 @@ function MfItemSearchDropdown({
     const base = !s
       ? items || []
       : (items || []).filter((it) => {
-          const code = String(it?.name || "").toLowerCase();
-          const nm = String(it?.item_name || "").toLowerCase();
-          const uom = String(it?.stock_uom || "").toLowerCase();
-          return code.includes(s) || nm.includes(s) || uom.includes(s);
-        });
+        const code = String(it?.name || "").toLowerCase();
+        const nm = String(it?.item_name || "").toLowerCase();
+        const uom = String(it?.stock_uom || "").toLowerCase();
+        return code.includes(s) || nm.includes(s) || uom.includes(s);
+      });
     return base.slice(0, maxResults);
   }, [items, q, maxResults]);
 
@@ -457,7 +466,11 @@ function IssueToWipTab({ company, flowTag, onCreated }) {
       try {
         const data = await getDoctypeList("Item", {
           fields: JSON.stringify(["name", "item_name", "stock_uom", "disabled"]),
-          filters: JSON.stringify([["Item", "disabled", "=", 0]]),
+          // ✅ Ignore the 'Products' group at the database level so they never load
+          filters: JSON.stringify([
+            ["Item", "disabled", "=", 0],
+            ["Item", "item_group", "!=", "Products"]
+          ]),
           limit_page_length: 5000,
           order_by: "modified desc",
         });
@@ -663,11 +676,22 @@ function IssueToWipTab({ company, flowTag, onCreated }) {
    - Validates raw qty <= latest available in WIP before submit
    ========================================================= */
 function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoReturn }) {
+  const { orgs, activeOrg } = useOrg(); // ✅ Init context
+  const [manualBrand, setManualBrand] = useState(
+    activeOrg === "F2D TECH PRIVATE LIMITED" ? "Prepto" : activeOrg
+  );
+
   const [boms, setBoms] = useState([]);
   const [finishedItems, setFinishedItems] = useState([]);
   const [rawItems, setRawItems] = useState([]);
 
   const [finishedItem, setFinishedItem] = useState("");
+
+  // ✅ Create a filtered list based on the selected Brand
+  const brandFilteredFinishedItems = useMemo(() => {
+    if (!manualBrand) return finishedItems;
+    return finishedItems.filter(it => it.brand === manualBrand);
+  }, [finishedItems, manualBrand]);
   const [selectedBomName, setSelectedBomName] = useState("");
   const [fgQty, setFgQty] = useState("1");
 
@@ -936,7 +960,7 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
         {
           item_code: bom.item,
           qty: fg,
-          t_warehouse: FG_WH,
+          t_warehouse: getWarehouseForBrand(manualBrand), // ✅ Route to correct Brand Warehouse!
           is_finished_item: 1,
         },
       ],
@@ -967,9 +991,28 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
 
       <form onSubmit={submit} className="stock-mfg-form">
         <div className="stock-mfg-form-grid">
+          {/* ✅ Brand Dropdown */}
+          <FieldGroup label="Brand">
+            <select
+              className="select"
+              value={manualBrand}
+              onChange={(e) => {
+                setManualBrand(e.target.value);
+                setFinishedItem(""); // Clear item if brand changes to avoid errors
+                setSelectedBomName("");
+                setRows((p) => p.filter((r) => !r.fromBom));
+              }}
+              disabled={loading}
+            >
+              {orgs.map((o) => (
+                <option key={o.id} value={o.id}>{o.label}</option>
+              ))}
+            </select>
+          </FieldGroup>
+
           <FieldGroup label="Finished Item">
             <MfItemSearchDropdown
-              items={finishedItems}
+              items={brandFilteredFinishedItems} // ✅ Use the filtered list
               value={finishedItem}
               placeholder="Search finished item..."
               disabled={loading}
@@ -1595,7 +1638,7 @@ export default function MfWorkflow() {
       </div>
 
       {/* Tab content */}
-      {tab === TABS.ISSUE && <IssueToWipTab company={company} flowTag={flowTag} onCreated={() => {}} />}
+      {tab === TABS.ISSUE && <IssueToWipTab company={company} flowTag={flowTag} onCreated={() => { }} />}
 
       {tab === TABS.MFG && (
         <ManufactureFromWipTab
