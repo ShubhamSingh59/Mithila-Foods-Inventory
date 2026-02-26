@@ -1,17 +1,4 @@
-/* src/CSS/SalesOrderRecentList.css
-   --------------------------------
-   Styling for the "Recent Sales" panel (right side).
-   Goal: Same clean look like your Sales Return screens:
-   - Simple header
-   - Good spacing
-   - Clear filter row
-   - Nice status pills
-   - No heavy shadows
-*/
 
-/* ==============================
-   Remove outer wrapper "pill"
-   ============================== */
 .app-panel:has(.sales-order) {
   padding: 0 !important;
   background: transparent !important;

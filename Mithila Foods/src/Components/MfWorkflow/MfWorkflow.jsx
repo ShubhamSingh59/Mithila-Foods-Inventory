@@ -1,6 +1,6 @@
 // src/Components/MfWorkflow.jsx
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"; // ✅ Added React and useCallback
-import { useOrg } from "../Context/OrgContext"; 
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useOrg } from "../Context/OrgContext";
 import { makeFlowId, makeFlowTag, RAW_WH, WIP_WH, FG_WH, WASTAGE_WH } from "./mfFlowConfig";
 import {
   getCompanies,
@@ -18,8 +18,6 @@ import {
   getMfFlowWipBalances,
 } from "../erpBackendApi";
 import "./mfWorkflowTheme.css";
-
-// ✅ Dynamic warehouse routing helper (Moved BELOW all imports)
 function getWarehouseForBrand(brandName) {
   const b = String(brandName || "").trim().toLowerCase();
   if (b.includes("prepto")) return "Finished Goods Prepto - MF";
@@ -39,18 +37,10 @@ function getWarehouseForBrand(brandName) {
  * 4) Return Raw      : WIP_WH → RAW_WH         (Material Transfer, linked to a Manufacture entry)
  * 5) Tracker         : Summary table (only docs where custom_mf_track=1)
  * + WIP Stock tab    : Bin.actual_qty view for WIP warehouse
- *
- * How it links documents:
- * - Each created Stock Entry gets remarks like:  "MFLOW:<flowId> | <ACTION>"
- * - Wastage/Return entries are linked to one Manufacture Stock Entry using:
- *   "MFLOW:<flowId> | WASTE FOR <MFG-SE-NAME>" or "RETURN FOR <MFG-SE-NAME>"
  */
 
 const FLOW_KEY = "mf_flow_id_v1";
 
-/* =========================================================
-   Small UI building block: label + control wrapper
-   ========================================================= */
 function FieldGroup({ label, children }) {
   return (
     <div className="stock-mfg-field-group">
@@ -60,9 +50,6 @@ function FieldGroup({ label, children }) {
   );
 }
 
-/* =========================================================
-   Tracker helpers: aggregate lines as "ITEM (qty UOM)"
-   ========================================================= */
 function safeUom(x) {
   const u = String(x || "").trim();
   return u || "UOM";
@@ -99,7 +86,6 @@ function fmtUsed(lines, limit = 20) {
 }
 
 function parseForMfg(remarks = "") {
-  // extracts token after "FOR " (example: "WASTE FOR MAT-STE-0001")
   const m = String(remarks).match(/\bFOR\s+([^\s|]+)/i);
   return m?.[1] || "";
 }
@@ -111,11 +97,6 @@ function onlyDateFromDoc(doc) {
   return m ? m.slice(0, 10) : "";
 }
 
-/* =========================================================
-   Searchable dropdown (same component used in Issue/Manufacture)
-   - Shows selected item code + name + uom
-   - Has a clear (✕) button
-   ========================================================= */
 function MfItemSearchDropdown({
   items = [],
   value = "",
@@ -258,9 +239,6 @@ function MfItemSearchDropdown({
   );
 }
 
-/* =========================================================
-   TAB: WIP Stock (Bin.actual_qty in WIP warehouse)
-   ========================================================= */
 function WipWarehouseStockTab() {
   const [rows, setRows] = useState([]); // { item_code, item_name, stock_uom, actual_qty }
   const [loading, setLoading] = useState(false);
@@ -444,12 +422,6 @@ function WipWarehouseStockTab() {
   );
 }
 
-/* =========================================================
-   TAB: 1) Issue Material (Raw → WIP)
-   - User selects raw item(s)
-   - Shows current Raw available (Bin in RAW_WH)
-   - Validates qty <= latest available before submit
-   ========================================================= */
 function IssueToWipTab({ company, flowTag, onCreated }) {
   const [items, setItems] = useState([]);
   const [rows, setRows] = useState([{ id: 0, item_code: "", uom: "", current_qty: "", qty: "" }]);
@@ -466,7 +438,6 @@ function IssueToWipTab({ company, flowTag, onCreated }) {
       try {
         const data = await getDoctypeList("Item", {
           fields: JSON.stringify(["name", "item_name", "stock_uom", "disabled"]),
-          // ✅ Ignore the 'Products' group at the database level so they never load
           filters: JSON.stringify([
             ["Item", "disabled", "=", 0],
             ["Item", "item_group", "!=", "Products"]
@@ -489,7 +460,6 @@ function IssueToWipTab({ company, flowTag, onCreated }) {
     return m;
   }, [items]);
 
-  // Fetch raw availability for a single item and write into a row
   async function refreshAvailableForRow(rowId, itemCode) {
     if (!itemCode) return;
     try {
@@ -516,7 +486,6 @@ function IssueToWipTab({ company, flowTag, onCreated }) {
     setRows((p) => p.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
 
-  // Helper: fetch latest RAW availability for codes (used for final validation on submit)
   async function fetchLatestRawAvail(codes) {
     const uniq = Array.from(new Set((codes || []).filter(Boolean)));
     const pairs = await mapLimit(uniq, 6, async (code) => {
@@ -537,14 +506,12 @@ function IssueToWipTab({ company, flowTag, onCreated }) {
 
     if (!company) return setErr("Company is required.");
 
-    // Keep only valid lines
     const valid = rows
       .map((r) => ({ ...r, qtyNum: Number(r.qty) }))
       .filter((r) => r.item_code && Number.isFinite(r.qtyNum) && r.qtyNum > 0);
 
     if (!valid.length) return setErr("Add at least one item with qty.");
 
-    // Validate against latest RAW availability (not just whatever was displayed earlier)
     const codes = valid.map((r) => r.item_code);
     const latest = await fetchLatestRawAvail(codes);
 
@@ -668,18 +635,7 @@ function IssueToWipTab({ company, flowTag, onCreated }) {
   );
 }
 
-/* =========================================================
-   TAB: 2) Manufacture (WIP → FG)
-   - Select Finished Item → Select BOM → enter FG qty
-   - BOM raw rows auto-scale based on FG qty
-   - User can add manual raw lines (optional)
-   - Validates raw qty <= latest available in WIP before submit
-   ========================================================= */
-function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoReturn }) {
-  const { orgs, activeOrg } = useOrg(); // ✅ Init context
-  const [manualBrand, setManualBrand] = useState(
-    activeOrg === "F2D TECH PRIVATE LIMITED" ? "Prepto" : activeOrg
-  );
+function ManufactureFromWipTab({ company, flowTag, orgs, activeOrg, changeOrg, onCreated, onGoWaste, onGoReturn }) {
 
   const [boms, setBoms] = useState([]);
   const [finishedItems, setFinishedItems] = useState([]);
@@ -687,16 +643,15 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
 
   const [finishedItem, setFinishedItem] = useState("");
 
-  // ✅ Create a filtered list based on the selected Brand
   const brandFilteredFinishedItems = useMemo(() => {
-    if (!manualBrand) return finishedItems;
-    return finishedItems.filter(it => it.brand === manualBrand);
-  }, [finishedItems, manualBrand]);
+    if (!activeOrg || activeOrg === "F2D TECH PRIVATE LIMITED") return finishedItems;
+    return finishedItems.filter(it => it.brand === activeOrg);
+  }, [finishedItems, activeOrg]);
   const [selectedBomName, setSelectedBomName] = useState("");
   const [fgQty, setFgQty] = useState("1");
 
-  const [bomItemsBase, setBomItemsBase] = useState([]); // original BOM items (unscaled)
-  const [rows, setRows] = useState([]);                 // scaled + manual rows
+  const [bomItemsBase, setBomItemsBase] = useState([]);
+  const [rows, setRows] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -706,7 +661,6 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
   const [availMap, setAvailMap] = useState({}); // item_code -> actual_qty
   const [availLoading, setAvailLoading] = useState(false);
 
-  // Load BOMs + items once
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -739,7 +693,6 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
     [boms, finishedItem]
   );
 
-  // Scale BOM rows by FG qty ratio
   function scaleRowsFromBom(items, finishedQty, bomQty, manualRows = []) {
     const fg = parseFloat(finishedQty);
     const bq = parseFloat(bomQty);
@@ -757,7 +710,6 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
     return [...bomRows, ...manualRows];
   }
 
-  // Load a BOM doc (with items) and build rows for current FG qty
   async function loadBomDocAndRows(bomName, finishedQty, bomQty) {
     setErr("");
     setMsg("");
@@ -805,7 +757,6 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
     }
   }
 
-  // Final validation should use latest availability (not stale state)
   async function fetchLatestWipAvail(codes = []) {
     const uniq = Array.from(new Set((codes || []).filter(Boolean)));
     const pairs = await mapLimit(uniq, 6, async (code) => {
@@ -960,7 +911,7 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
         {
           item_code: bom.item,
           qty: fg,
-          t_warehouse: getWarehouseForBrand(manualBrand), // ✅ Route to correct Brand Warehouse!
+          t_warehouse: getWarehouseForBrand(activeOrg),
           is_finished_item: 1,
         },
       ],
@@ -991,13 +942,12 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
 
       <form onSubmit={submit} className="stock-mfg-form">
         <div className="stock-mfg-form-grid">
-          {/* ✅ Brand Dropdown */}
           <FieldGroup label="Brand">
             <select
               className="select"
-              value={manualBrand}
+              value={activeOrg}
               onChange={(e) => {
-                setManualBrand(e.target.value);
+                changeOrg(e.target.value);
                 setFinishedItem(""); // Clear item if brand changes to avoid errors
                 setSelectedBomName("");
                 setRows((p) => p.filter((r) => !r.fromBom));
@@ -1012,7 +962,7 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
 
           <FieldGroup label="Finished Item">
             <MfItemSearchDropdown
-              items={brandFilteredFinishedItems} // ✅ Use the filtered list
+              items={brandFilteredFinishedItems}
               value={finishedItem}
               placeholder="Search finished item..."
               disabled={loading}
@@ -1147,11 +1097,6 @@ function ManufactureFromWipTab({ company, flowTag, onCreated, onGoWaste, onGoRet
   );
 }
 
-/* =========================================================
-   TAB: 3/4) Wastage or Return (WIP → Wastage/Raw)
-   - user selects a Manufacture entry from TODAY (Kolkata date)
-   - user enters qty per item (must be <= remaining qty in WIP for this flow)
-   ========================================================= */
 function WasteReturnTab({ mode, company, flowTag, defaultMfgSeName }) {
   const targetWh = mode === "WASTE" ? WASTAGE_WH : RAW_WH;
   const title =
@@ -1393,12 +1338,6 @@ function WasteReturnTab({ mode, company, flowTag, defaultMfgSeName }) {
   );
 }
 
-/* =========================================================
-   TAB: 5) Tracker
-   - Reads submitted Stock Entries where custom_mf_track = 1
-   - Groups waste/return by Manufacture entry name
-   - Shows: Finished item, Raw used, Wastage, Return, Date
-   ========================================================= */
 function TrackerTab() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -1535,9 +1474,6 @@ function TrackerTab() {
   );
 }
 
-/* =========================================================
-   MAIN MF WORKFLOW
-   ========================================================= */
 export default function MfWorkflow() {
   const [companies, setCompanies] = useState([]);
   const [company, setCompany] = useState("");
@@ -1637,18 +1573,23 @@ export default function MfWorkflow() {
         </button>
       </div>
 
-      {/* Tab content */}
       {tab === TABS.ISSUE && <IssueToWipTab company={company} flowTag={flowTag} onCreated={() => { }} />}
 
-      {tab === TABS.MFG && (
-        <ManufactureFromWipTab
-          company={company}
-          flowTag={flowTag}
-          onCreated={(seName) => setLastMfgSe(seName)}
-          onGoWaste={() => setTab(TABS.WASTE)}
-          onGoReturn={() => setTab(TABS.RETURN)}
-        />
-      )}
+      {tab === TABS.MFG && (() => {
+        const { orgs, activeOrg, changeOrg } = useOrg();
+        return (
+          <ManufactureFromWipTab
+            company={company}
+            flowTag={flowTag}
+            orgs={orgs}
+            activeOrg={activeOrg}
+            changeOrg={changeOrg}
+            onCreated={(seName) => setLastMfgSe(seName)}
+            onGoWaste={() => setTab(TABS.WASTE)}
+            onGoReturn={() => setTab(TABS.RETURN)}
+          />
+        );
+      })()}
 
       {tab === TABS.WIP_STOCK && <WipWarehouseStockTab />}
 

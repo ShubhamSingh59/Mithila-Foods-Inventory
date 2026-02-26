@@ -3,7 +3,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { useOrg } from "../Context/OrgContext";
 import "./Sidebar.css";
-import {
+import { // These are all the logos we are using in the sidebar
   Menu, ChevronLeft,
   BarChart2, Package, Layers,
   ShoppingCart, Truck, Briefcase,
@@ -12,11 +12,9 @@ import {
 } from "lucide-react";
 
 export default function Sidebar({ isOpen, toggleSidebar }) {
-  // Hook into the org context
-  // Hook into the org context
   const { activeOrg, orgs, loading } = useOrg();
-  
-  // Find the human-readable label for the active org
+
+  // Find the label for the active org
   const activeOrgLabel = orgs.find(o => o.id === activeOrg)?.label || activeOrg;
 
   // Helper for links
@@ -36,39 +34,20 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
 
       {/* Header */}
       <div className="app-sidebar-header">
-        {/* Only show logo circle if sidebar is OPEN. 
-            If closed, we only show the toggle button to keep it clean. */}
-        {isOpen && <div className="app-logo-circle">S</div>}
+        {isOpen && <div className="app-logo-circle">F2D</div>}
 
         {isOpen && (
           <div className="app-logo-text">
-            <div className="app-logo-title">Stock & Supplier</div>
-            <div className="app-logo-subtitle">ERPNext Console</div>
+            <div className="app-logo-title">F2D Tracker</div>
+            <div className="app-sidebar-active-context">
+              {loading ? "Loading..." : activeOrgLabel}
+            </div>
           </div>
         )}
-
         <button onClick={toggleSidebar} className="sidebar-toggle-btn">
           {isOpen ? <ChevronLeft size={18} /> : <Menu size={18} />}
         </button>
       </div>
-
-     {/* ACTIVE ORGANIZATION DISPLAY */}
-      {isOpen && (
-        <div className="app-sidebar-switcher" style={{ padding: "0 20px", marginBottom: "20px" }}>
-          <label 
-            className="app-sidebar-switcher-label" 
-            style={{ fontSize: "11px", textTransform: "uppercase", color: "#888", display: "block" }}
-          >
-            Active Context
-          </label>
-          <div 
-            className="app-sidebar-active-org" 
-            style={{ fontWeight: "bold", color: "var(--text-color, #333)", marginTop: "4px", fontSize: "14px" }}
-          >
-            {loading ? "Loading..." : activeOrgLabel}
-          </div>
-        </div>
-      )}
 
       {/* Navigation */}
       <nav className="app-nav">
@@ -96,17 +75,10 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
           <NavItem to="/mfg/workflow" label="MF Workflow" icon={Activity} />
         </div>
 
-        {/* Supplier Hub (Split into 3 Main Views) */}
         <div className="app-nav-group">
           <div className="app-nav-group-label">Supplier & Transporter</div>
-
-          {/* View 1: Directory (Lists & Details) */}
           <NavItem to="/suppliers/list" label="Lists" icon={Users} />
-
-          {/* View 2: Operations (Tracker & Logistics) */}
           <NavItem to="/suppliers/purchase-tracker" label="Tracker" icon={Truck} />
-
-          {/* View 3: Intelligence (Scorecards & Trends) */}
           <NavItem to="/suppliers/analytics" label="Reports" icon={TrendingUp} />
         </div>
 
@@ -117,13 +89,13 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
 
       </nav>
 
-      {/* Footer */}
+      {/*Footer
       <div className="app-sidebar-footer">
         <div className="app-sidebar-footer-label">Status</div>
         <div className="app-sidebar-footer-badge">
           Connected
         </div>
-      </div>
+      </div>*/}
 
     </aside>
   );

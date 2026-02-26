@@ -1,45 +1,36 @@
 // src/SalesOrder.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  getCustomers,
-  getFinishedItemsForSales,
-  createSalesInvoice,
-  submitDoc,
-  getRecentSalesInvoices,
-  createPaymentEntryForInvoice,
-  getSalesInvoiceWithItems,
-  getCompanies,
-  getItemRateFromPriceList,
-  getBinForItemWarehouse,
   getDoctypeList,
   getDoc,
   updateDoc,
-} from "../erpBackendApi";
+  submitDoc,
+} from "../api/core";
+import {
+  getCustomers,
+  getFinishedItemsForSales,
+  getCompanies,
+} from "../api/master"
+import {
+  createSalesInvoice,
+
+  getRecentSalesInvoices,
+  createPaymentEntryForInvoice,
+  getSalesInvoiceWithItems,
+} from "../api/sales"
+import {
+  getItemRateFromPriceList,
+  getBinForItemWarehouse,
+
+} from "../api/stock";
 
 import { useOrg } from "../Context/OrgContext";
 import SalesOrderRecentList from "./SalesOrderRecentList";
 import "./SalesOrder.css";
 
-/**
- * SalesOrder Page
- * ---------------
- * This screen has 2 sections:
- * LEFT: Create Sales Invoice (Manual Entry or Bulk Upload)
- * RIGHT: Recent Sales list (Draft + Submitted) with actions
- *
- * Draft flow:
- * - Create Draft Sale (not submitted)
- * - From right list: Edit Draft OR Create Sale Invoice (submit)
- *
- * Paid flow:
- * - For submitted invoices: Mark Paid (creates Payment Entry)
- */
-
-// Defaults (you can change if needed)
 const DEFAULT_COMPANY = "F2D TECH PRIVATE LIMITED";
-//const DEFAULT_WAREHOUSE = "Finished Goods - MF"; // fixed warehouse
 const DEFAULT_CUSTOMER = "Test Customer";
-const TRY_SINGLE_LINE_FALLBACK = true; // when bulk grouped create fails, try single-line invoices
+const TRY_SINGLE_LINE_FALLBACK = true;
 const DEFAULT_SELLING_PRICE_LIST = "Standard Selling";
 
 const LIST_LIMIT = 10; // show only last 10 (draft + submitted)
@@ -64,17 +55,13 @@ function toYMDFromDate(d) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-/**
- * Many possible date formats -> YYYY-MM-DD (ERP date)
- * Helps when parsing bulk sheets that may have different formats.
- */
+
 function toErpDate(input) {
   const s0 = String(input ?? "").trim();
   if (!s0) return "";
 
   const s = s0.replace(/\s+/g, " ").trim();
 
-  // ISO datetime
   if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return s.slice(0, 10);
 
   // YYYY-MM-DD
@@ -121,7 +108,7 @@ function toErpDate(input) {
       feb: 2, february: 2,
       mar: 3, march: 3,
       apr: 4, april: 4,
-      may: 5,
+      may: 5, may: 5,
       jun: 6, june: 6,
       jul: 7, july: 7,
       aug: 8, august: 8,
@@ -142,7 +129,6 @@ function toErpDate(input) {
   return "";
 }
 
-/** Normalize sheet headers into safe keys */
 function normalizeKey(k) {
   return String(k ?? "")
     .replace(/\uFEFF/g, "")
@@ -333,7 +319,6 @@ function pickFirstSmart(row, aliases) {
   return "";
 }
 
-/** Simple concurrency runner (used in bulk create) */
 async function runWithLimit(items, limit, workerFn, onProgress) {
   const out = new Array(items.length);
   let i = 0;
@@ -373,7 +358,6 @@ function getCustomerMapConfig(customerName) {
   return { skuField: "", allowAsin: true, requireAsin: false };
 }
 
-/** Draft list helper (ONLY normal Sales Invoices, NOT returns) */
 async function getRecentDraftSalesInvoices(limit = LIST_LIMIT) {
   const rows = await getDoctypeList("Sales Invoice", {
     fields: JSON.stringify([
@@ -400,42 +384,35 @@ async function getRecentDraftSalesInvoices(limit = LIST_LIMIT) {
 }
 
 export default function SalesOrder() {
-  //const FIXED_WAREHOUSE = DEFAULT_WAREHOUSE;
-
-  // Master data
   const [customers, setCustomers] = useState([]);
-  const [items, setItems] = useState([]); // must include custom_asin/custom_* mapping fields
+  const [items, setItems] = useState([]);
   const [companies, setCompanies] = useState([]);
 
-  // Header form fields
   const [company, setCompany] = useState("");
   const [postingDate, setPostingDate] = useState(
     new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10)
   );
   const [customer, setCustomer] = useState("");
-  const [manualBrand, setManualBrand] = useState("Prepto");
+  const { activeOrg, orgs, changeOrg } = useOrg();
   const brandFilteredItems = useMemo(() => {
-    console.log("ALL ITEMS FROM API:", items); // 🔍 Diagnostic log
+    console.log("ALL ITEMS FROM API:", items);
 
-    if (!manualBrand) return items;
+    if (activeOrg === "F2D TECH PRIVATE LIMITED" || !activeOrg) return items;
 
     return items.filter(it => {
-      // Sometimes brand might be empty, or it might be "brand_name" depending on ERPNext setup
       const itemBrand = String(it.brand || it.custom_brand || "").trim();
-      return itemBrand === manualBrand;
+      return itemBrand === activeOrg;
     });
-  }, [items, manualBrand]);
-  // Bulk fields
+  }, [items, activeOrg]);
   const [bulkPostingDate, setBulkPostingDate] = useState(new Date().toISOString().slice(0, 10));
 
-  // Available qty map (item_code -> qty)
   const [availMap, setAvailMap] = useState({});
 
   /** Create an empty row for manual entry */
   function createEmptyRow(id) {
     return {
       id,
-      _rowName: "", // ERP child row name (when editing draft)
+      _rowName: "",
       item_code: "",
       qty: "",
       rate: "",
@@ -445,26 +422,20 @@ export default function SalesOrder() {
     };
   }
 
-  // Manual item rows
   const [rows, setRows] = useState([createEmptyRow(0)]);
 
-  // Draft edit state
   const [editingDraftName, setEditingDraftName] = useState("");
   const [editDraftLoading, setEditDraftLoading] = useState("");
   const [submittingDraft, setSubmittingDraft] = useState("");
   const [savingDraft, setSavingDraft] = useState(false);
 
-  // Recent list (draft + submitted)
   const [recentInvoices, setRecentInvoices] = useState([]);
   const [loadingInit, setLoadingInit] = useState(false);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [payingInvoice, setPayingInvoice] = useState("");
 
-  // Messages
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-
-  // Filter on right side
   const [invoiceCustomerFilter, setInvoiceCustomerFilter] = useState("");
 
   const filteredRecentInvoices = useMemo(() => {
@@ -472,7 +443,6 @@ export default function SalesOrder() {
     return (recentInvoices || []).filter((inv) => inv.customer === invoiceCustomerFilter);
   }, [recentInvoices, invoiceCustomerFilter]);
 
-  // Sort on right side (by posting date)
   const [postingDateSort, setPostingDateSort] = useState("desc"); // desc = Newest → Oldest
 
   const postingDateSortLabel =
@@ -500,7 +470,6 @@ export default function SalesOrder() {
   const [bulkResults, setBulkResults] = useState([]);
   const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
 
-  // UI tab: manual or bulk
   const [activeTab, setActiveTab] = useState("manual");
 
   function extractErrMsg(err) {
@@ -563,13 +532,11 @@ export default function SalesOrder() {
     const skuKey = normKey(sku);
     const asinKey = normKey(asin);
 
-    // 1) ASIN first (if allowed)
     if (allowAsin && asinKey) {
       const byAsin = itemIndexes.custom_asin.get(asinKey);
       if (byAsin) return byAsin;
     }
 
-    // 2) SKU fallback (customer-specific field)
     if (skuField && skuKey) {
       const bySku = itemIndexes?.[skuField]?.get(skuKey);
       if (bySku) return bySku;
@@ -601,7 +568,6 @@ export default function SalesOrder() {
       const drafts = (draftsBase || []).map((d) => ({ ...d, __isDraft: true }));
       const submitted = (submittedBase || []).map((s) => ({ ...s, __isDraft: false }));
 
-      // drafts first then submitted, only 10 total
       const baseList = [...drafts, ...submitted].slice(0, LIST_LIMIT);
 
       const enriched = [];
@@ -651,7 +617,6 @@ export default function SalesOrder() {
     await loadInvoices();
   }
 
-  // Initial load: master data + recent list
   useEffect(() => {
     async function loadInit() {
       setLoadingInit(true);
@@ -668,7 +633,6 @@ export default function SalesOrder() {
         setItems(itemData || []);
         setCompanies(companyData || []);
 
-        // Choose default company/customer if present, otherwise first option
         if (!company) {
           const ok = (companyData || []).some((c) => c.name === DEFAULT_COMPANY);
           setCompany(ok ? DEFAULT_COMPANY : companyData?.[0]?.name || "");
@@ -688,14 +652,13 @@ export default function SalesOrder() {
 
     loadInit();
     loadInvoices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // =========================
   // Manual flow (draft + edit)
   // =========================
 
-  /** Update qty/rate and validate negative values */
+
   function handleRowChange(rowId, field, value) {
     setRows((prev) =>
       prev.map((r) => {
@@ -733,7 +696,7 @@ export default function SalesOrder() {
     if (!itemCode) return;
 
     const [binRes, priceRes] = await Promise.allSettled([
-      getBinForItemWarehouse(itemCode, getWarehouseForBrand(manualBrand)), // ✅ UNCOMMENTED AND MADE DYNAMIC
+      getBinForItemWarehouse(itemCode, getWarehouseForBrand(activeOrg)),
       getItemRateFromPriceList(itemCode, DEFAULT_SELLING_PRICE_LIST),
     ]);
 
@@ -804,19 +767,17 @@ export default function SalesOrder() {
     //  item_code: r.item_code,
     //  qty: parseFloat(r.qty),
     //  rate: r.rate === "" || r.rate == null ? undefined : parseFloat(r.rate),
-    //  warehouse: getWarehouseForBrand(manualBrand),
+    //  warehouse: getWarehouseForBrand(activeOrg),
     //  //warehouse: FIXED_WAREHOUSE,
     //}));
-    // ✅ 1. Check if the customer is Easy Ship
     const isEasyShip = customer.toLowerCase().includes("easyship") || customer.toLowerCase().includes("easy ship");
 
     const itemsPayload = [];
 
     validRows.forEach((r) => {
       const rowQty = parseFloat(r.qty);
-      const rowWarehouse = getWarehouseForBrand(manualBrand);
+      const rowWarehouse = getWarehouseForBrand(activeOrg);
 
-      // ✅ 2. Push the main core product
       itemsPayload.push({
         ...(editingDraftName && r._rowName ? { name: r._rowName } : {}),
         item_code: r.item_code,
@@ -825,7 +786,6 @@ export default function SalesOrder() {
         warehouse: rowWarehouse,
       });
 
-      // ✅ 3. Smart Injection for Easy Ship
       if (isEasyShip) {
         // Find the item in our master list to get its specific packaging
         const itemDetails = items.find((it) => it.name === r.item_code);
@@ -1233,7 +1193,6 @@ export default function SalesOrder() {
           //  warehouse: getWarehouseForBrand(l.brand),
           //  //warehouse: FIXED_WAREHOUSE,
           //}));
-          // ✅ 1. Check if the customer is Easy Ship
           const isEasyShip = customer.toLowerCase().includes("easyship") || customer.toLowerCase().includes("easy ship");
 
           const itemsPayload = [];
@@ -1241,7 +1200,6 @@ export default function SalesOrder() {
           g.lines.forEach((l) => {
             const rowWarehouse = getWarehouseForBrand(l.brand);
 
-            // ✅ 2. Push the main core product
             itemsPayload.push({
               item_code: l.item_code,
               qty: l.qty,
@@ -1249,7 +1207,6 @@ export default function SalesOrder() {
               warehouse: rowWarehouse,
             });
 
-            // ✅ 3. Smart Injection for Bulk Upload
             if (isEasyShip) {
               const itemDetails = items.find((it) => it.name === l.item_code);
 
@@ -1317,7 +1274,6 @@ export default function SalesOrder() {
             if (TRY_SINGLE_LINE_FALLBACK) {
               for (const l of g.lines) {
                 try {
-                  // ✅ Build single line payload with smart injection
                   const rowWarehouse = getWarehouseForBrand(l.brand);
                   const fallbackPayload = [
                     {
@@ -1343,12 +1299,12 @@ export default function SalesOrder() {
                     company,
                     posting_date: posting,
                     due_date: due,
-                    items: fallbackPayload, // ✅ NOW IT INJECTS THE BAGS DURING FALLBACK TOO
+                    items: fallbackPayload,
                     po_no: g.invoice_id,
                     po_date: l.purchase_date,
                     remarks: `Fallback single-line import. invoice-id=${g.invoice_id} sku=${l.sku} asin=${l.asin}`,
                   });
-                  
+
                   const si1 = created1?.data?.name || "";
 
                   try {
@@ -1415,7 +1371,6 @@ export default function SalesOrder() {
     }
   }
 
-  // -------- render --------
   return (
     <div className="sales-order">
       {/* Page header */}
@@ -1436,7 +1391,6 @@ export default function SalesOrder() {
       {message && <div className="alert alert-success sales-message">{message}</div>}
 
       <div className="sales-layout">
-        {/* LEFT panel */}
         <div className="sales-panel sales-panel-left">
           {/* Tabs */}
           <div className="sales-tabs">
@@ -1681,15 +1635,17 @@ export default function SalesOrder() {
                     <label className="form-label sales-field-label">Brand</label>
                     <select
                       className="select"
-                      value={manualBrand}
-                      onChange={(e) => setManualBrand(e.target.value)}
+                      value={activeOrg}
+                      onChange={(e) => changeOrg(e.target.value)}
                     >
-                      <option value="Prepto">Prepto</option>
-                      <option value="Mithila Foods">Mithila Foods</option>
-                      <option value="Howrah Foods">Howrah Foods</option>
+                      {orgs.map((o) => (
+                        <option key={o.id} value={o.id}>
+                          {o.label}
+                        </option>
+                      ))}
                     </select>
                     <div style={{ fontSize: "11px", marginTop: "4px", color: "#666" }}>
-                      Routes to: <b>{getWarehouseForBrand(manualBrand)}</b>
+                      Routes to: <b>{getWarehouseForBrand(activeOrg)}</b>
                     </div>
                   </div>
                 </div>
@@ -1821,9 +1777,6 @@ export default function SalesOrder() {
   );
 }
 
-/* -----------------------------------------
-   Item search dropdown (stdrop)
-   ----------------------------------------- */
 function ItemSearchDropdown({ items, value, onSelect, placeholder }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -1871,7 +1824,26 @@ function ItemSearchDropdown({ items, value, onSelect, placeholder }) {
             <div className="stdrop-placeholder">{placeholder}</div>
           )}
         </div>
-        <div className="stdrop-caret">▾</div>
+        <div className="stdrop-actions" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {!!value && (
+            <span
+              className="stdrop-clear"
+              role="button"
+              tabIndex={0}
+              title="Clear"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect("");
+                setOpen(false);
+                setQ("");
+              }}
+              style={{ fontSize: "14px", color: "#999", cursor: "pointer" }}
+            >
+              ✕
+            </span>
+          )}
+          <div className="stdrop-caret">▾</div>
+        </div>
       </button>
 
       {open && (

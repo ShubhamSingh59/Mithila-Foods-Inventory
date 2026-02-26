@@ -1,45 +1,41 @@
 // src/PurchaseOrder.jsx
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
-  // Master lists
   getSuppliers,
   getItemsForPO,
   getItemSuppliers,
   getTransporters,
-
-  // PO Actions
+} from "../api/master"
+import {
   createPurchaseOrder,
   updatePurchaseOrder,
-  submitDoc,
   deletePurchaseOrder,
   getPurchaseOrderWithItems,
   setPurchaseOrderTransporter,
-
-  // Email/PDF
+  MF_PO_FIELDS,
   sendPurchaseOrderEmail,
   getPurchaseOrderPdfUrl,
-
-  // Helpers
+} from "../api/purchase"
+import {
+  submitDoc, 
+} from "../api/core";
+import {
   getItemRateFromPriceList,
-  MF_PO_FIELDS
-} from "../erpBackendApi";
+} from "../api/stock";
 
 import "./PurchaseOrder.css";
 import PurchaseOrderList from "./PurchaseOrderList";
 import { useOrg } from "../Context/OrgContext";
 
 function PurchaseOrder() {
-  // -------------------- Master Data --------------------
   const [suppliers, setSuppliers] = useState([]);
   const [items, setItems] = useState([]);
   const [itemSuppliers, setItemSuppliers] = useState([]);
   const [transporters, setTransporters] = useState([]);
 
-  // -------------------- Form State --------------------
   const [supplier, setSupplier] = useState("");
   const [supplierEmail, setSupplierEmail] = useState("");
 
-  // This will now store the Supplier ID (e.g., "SUP-001" or "Sharma Transport")
   const [transporter, setTransporter] = useState("");
   const { activeOrg } = useOrg();
 
@@ -57,11 +53,9 @@ function PurchaseOrder() {
   const [poDate, setPoDate] = useState(todayStr);
   const [receivedByDate, setReceivedByDate] = useState(todayStr);
 
-  // -------------------- Tracking --------------------
   const [lastPoName, setLastPoName] = useState("");
   const [editingPoName, setEditingPoName] = useState("");
 
-  // -------------------- Loading Flags --------------------
   const [loadingLists, setLoadingLists] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submittingPo, setSubmittingPo] = useState(false);
@@ -90,7 +84,6 @@ function PurchaseOrder() {
         setItemSuppliers(mapData || []);
         setTransporters(transData || []);
 
-        // URL Params Prefill
         const params = new URLSearchParams(window.location.search);
         const qpQty = params.get("qty");
         const qpWarehouse = params.get("warehouse");
@@ -108,7 +101,7 @@ function PurchaseOrder() {
     loadLists();
   }, []);
 
-  // ... (Keep existing Rate Cache logic: fetchStandardBuyingRate) ...
+  // ... (Rate Cache logic: fetchStandardBuyingRate) ...
   const buyingRateCacheRef = useRef(new Map());
   const rateReqTokenRef = useRef({});
 
@@ -127,7 +120,7 @@ function PurchaseOrder() {
     }
   }
 
-  // ... (Keep existing Filtering Logic: selectedSupplierRow, etc.) ...
+  // ... (Filtering Logic: selectedSupplierRow, etc.) ...
   const selectedSupplierRow = useMemo(() =>
     suppliers.find(s => s.supplier_name === supplier || s.name === supplier),
     [suppliers, supplier]);
@@ -184,7 +177,6 @@ function PurchaseOrder() {
     return filtered;
   }, [suppliers, itemToSupplierNames, poItems, supplier, selectedSupplierRow]);
 
-  // -------------------- Handlers --------------------
 
   function handleSupplierValueChange(displayValue, supplierObj) {
     setSupplier(displayValue);
@@ -251,7 +243,6 @@ function PurchaseOrder() {
     return found ? [found, ...itemsForCurrentSupplier] : itemsForCurrentSupplier;
   }
 
-  // ... (Keep existing handleEditPo) ...
   async function handleEditPo(poName) {
     try {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -292,7 +283,6 @@ function PurchaseOrder() {
     }
   }
 
-  // ... (Keep existing submit handlers) ...
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
@@ -406,7 +396,6 @@ function PurchaseOrder() {
     }
   }
 
-  // -------------------- RENDER --------------------
   return (
     <div className="po-page">
       <div className="po-card po-card-main">
@@ -446,13 +435,11 @@ function PurchaseOrder() {
               />
             </div>
 
-            {/* ✅ UPDATED: Transporter Dropdown (Now using Supplier List) */}
             <div className="po-field">
               <label className="po-label">Transporter <span className="po-label-hint">(optional)</span></label>
               <select className="po-input" value={transporter} onChange={e => setTransporter(e.target.value)} disabled={loadingLists}>
                 <option value="">-- None --</option>
                 {transporters.map(t => (
-                  // Now mapping t.supplier_name instead of t.transporter_name
                   <option key={t.name} value={t.name}>{t.supplier_name || t.name}</option>
                 ))}
               </select>
@@ -516,7 +503,13 @@ function PurchaseOrder() {
                 {submitting ? "Saving..." : (editingPoName ? "Update Draft" : "Create Draft")}
               </button>
 
-              <button type="button" onClick={() => { if (window.confirm("Submit PO?")) handleSubmitPo() }} disabled={submittingPo} className="po-btn po-btn-outline">
+             <button 
+                type="button" 
+                onClick={() => { if (window.confirm("Submit PO?")) handleSubmitPo() }} 
+                disabled={submittingPo || (!editingPoName && !lastPoName)} 
+                className="po-btn po-btn-outline"
+                title={(!editingPoName && !lastPoName) ? "Create a draft first" : "Submit PO permanently"}
+              >
                 {submittingPo ? "Submitting..." : "Submit PO"}
               </button>
 
@@ -547,7 +540,6 @@ function PurchaseOrder() {
   );
 }
 
-// -------------------- Sub-Components --------------------
 
 function SupplierSearchDropdown({ suppliers, value, onSelect, placeholder, disabled }) {
   const [open, setOpen] = useState(false);
@@ -592,60 +584,10 @@ function SupplierSearchDropdown({ suppliers, value, onSelect, placeholder, disab
   );
 }
 
-//function POItemSearchDropdown({ items, value, onSelect, placeholder, disabled }) {
-//  const [open, setOpen] = useState(false);
-//  const [q, setQ] = useState("");
-//  const ref = useRef(null);
-
-//  const selected = useMemo(() => items.find(x => x.name === value), [items, value]);
-//  const filtered = useMemo(() => {
-//    if (!q) return items.slice(0, 80);
-//    return items.filter(i => 
-//        (i.name||"").toLowerCase().includes(q.toLowerCase()) || 
-//        (i.item_name||"").toLowerCase().includes(q.toLowerCase())
-//    ).slice(0, 80);
-//  }, [items, q]);
-
-//  useEffect(() => {
-//    function clickOut(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
-//    document.addEventListener("mousedown", clickOut);
-//    return () => document.removeEventListener("mousedown", clickOut);
-//  }, []);
-
-//  return (
-//    <div className="stdrop" ref={ref}>
-//       <button type="button" className="stdrop-control" onClick={() => !disabled && setOpen(!open)} disabled={disabled}>
-//         <div className="stdrop-value">{selected ? (selected.item_name || selected.name) : placeholder}</div>
-//         <div className="stdrop-caret">▾</div>
-//       </button>
-//       {open && (
-//         <div className="stdrop-popover">
-//            <div className="stdrop-search"><input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Search item..." className="po-input"/></div>
-//            <div className="stdrop-list">
-//               {filtered.map(i => (
-//                 <div key={i.name} className="stdrop-item" onClick={() => { onSelect(i.name); setOpen(false); setQ(""); }}>
-//                    <div className="stdrop-item-title">{i.name}</div>
-//                    <div className="stdrop-item-sub">{i.item_name}</div>
-//                 </div>
-//               ))}
-//            </div>
-//         </div>
-//       )}
-//    </div>
-//  );
-//}
-
-
-/** Item dropdown
- * Same dropdown style as supplier dropdown:
- * - search items
- * - show item code + item name + uom
- * - clear selection (✕)
- */
 function POItemSearchDropdown({ items, value, onSelect, placeholder, disabled }) {
-  const [open, setOpen] = useState(false); // dropdown open/close
-  const [q, setQ] = useState("");          // search text
-  const ref = useRef(null);               // for outside click close
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState(""); 
+  const ref = useRef(null);               
 
   // current selected item object
   const selected = useMemo(() => {
@@ -667,7 +609,6 @@ function POItemSearchDropdown({ items, value, onSelect, placeholder, disabled })
     return base.slice(0, 80);
   }, [items, q]);
 
-  // close dropdown when clicking outside
   useEffect(() => {
     function onDown(e) {
       if (!ref.current) return;
@@ -743,7 +684,6 @@ function POItemSearchDropdown({ items, value, onSelect, placeholder, disabled })
           </div>
 
           <div className="stdrop-list">
-            {/* clear option */}
             {!!value && (
               <button
                 type="button"
@@ -758,7 +698,6 @@ function POItemSearchDropdown({ items, value, onSelect, placeholder, disabled })
               </button>
             )}
 
-            {/* item results */}
             {filtered.map((it) => (
               <button
                 key={it.name}

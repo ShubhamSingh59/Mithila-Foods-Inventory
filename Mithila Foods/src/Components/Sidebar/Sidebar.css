@@ -2,7 +2,6 @@
 
 /* The Sidebar Container */
 .app-sidebar {
-  /* Width is handled by the parent grid in App.css via var(--sidebar-width) */
   background-color: var(--primary); /* Deep Navy from Theme */
   color: #f1f5f9; /* Light text */
   display: flex;
@@ -12,6 +11,26 @@
   overflow-x: hidden;
   white-space: nowrap;
   height: 100vh;
+}
+.app-sidebar-active-context {
+  font-size: 0.75rem;
+  color: #3b82f6; /* Bright Blue to make it stand out */
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+  /* Add a tiny dot before it for a "Live" feel */
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.app-sidebar-active-context::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background-color: #3b82f6;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 /* --- HEADER SECTION --- */
@@ -27,10 +46,10 @@
 
 /* Logo Area */
 .app-logo-circle {
-  width: 32px;
+  width: 35px;
   height: 32px;
   background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;

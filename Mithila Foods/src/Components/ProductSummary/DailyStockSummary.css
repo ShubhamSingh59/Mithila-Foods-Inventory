@@ -1,21 +1,11 @@
-/* src/CSS/DailyStockSummary.css
-   STOCK-RECON LIGHT THEME (NO OUTER H-SCROLL, LIGHTER FONT-WEIGHT)
-   - Controls in ONE ROW (wraps)
-   - Header visible in BOTH collapsed + expanded
-   - Less curve
-   - Only 2 shadows: filter bar + table wrapper
-*/
-
-/* ===== Safety: prevent accidental page-level horizontal scroll ===== */
 .daily-stock-summary,
 .daily-stock-summary * {
   box-sizing: border-box;
 }
 .daily-stock-summary {
-  overflow-x: hidden; /* ✅ no horizontal scroll at start */
+  overflow-x: hidden; 
 }
 
-/* ===== Remove outer "panel" look ===== */
 .app-panel:has(.daily-stock-summary) {
   padding: 0 !important;
   background: transparent !important;
@@ -31,23 +21,19 @@
   margin: 0 !important;
 }
 
-/* ===== Page wrapper ===== */
 .daily-stock-summary {
   display: flex;
   flex-direction: column;
   gap: 12px;
   padding: 12px 10px 18px;
   width: 100%;
-
   background: transparent;
   border: none;
   border-radius: 0;
   box-shadow: none;
-
   color: #0f172a;
 }
 
-/* ===== Header row ===== */
 .daily-stock-summary-header-row {
   display: flex;
   align-items: flex-end;
@@ -65,7 +51,7 @@
 .daily-stock-summary-title {
   margin: 0;
   font-size: 1.06rem;
-  font-weight: 650; /* ✅ less */
+  font-weight: 650; 
   letter-spacing: -0.01em;
   color: #0f172a;
 }
@@ -74,10 +60,9 @@
   margin: 0;
   font-size: 0.85rem;
   color: #64748b;
-  font-weight: 450; /* ✅ less */
+  font-weight: 450; 
 }
 
-/* Meta row */
 .daily-stock-summary-meta-row {
   font-size: 0.85rem;
   display: flex;
@@ -88,15 +73,14 @@
 }
 .daily-stock-summary-meta {
   color: #64748b;
-  font-weight: 450; /* ✅ less */
+  font-weight: 450; 
 }
 
-/* ===== Loading / Empty / Error ===== */
 .daily-stock-summary-loading,
 .daily-stock-summary-empty {
   font-size: 0.9rem;
   color: #64748b;
-  font-weight: 450; /* ✅ less */
+  font-weight: 450; 
 }
 
 .daily-stock-summary-error {
@@ -107,62 +91,50 @@
   border: 1px solid #fecaca;
   color: #991b1b;
   font-size: 0.9rem;
-  font-weight: 500; /* ✅ less */
+  font-weight: 500; 
 }
 
-/* ===== Controls (FILTER BAR) — ONE ROW, NO OVERFLOW ===== */
 .daily-stock-summary-controls {
   display: flex;
   flex-direction: row;
   align-items: center;
-
   gap: 10px;
   padding: 10px 12px;
-
-  border-radius: 12px; /* less curve */
-  background: #f8fafc; /* shade #1 */
+  border-radius: 12px;
+  background: #f8fafc;
   border: 1px solid #e2e8f0;
-
-  /* Shadow #1 (filter only) */
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
-
   width: 100%;
-  overflow: hidden; /* ✅ prevents tiny overflow from causing scrollbar */
+  overflow: hidden; 
 }
 
 .daily-stock-summary-controls > * {
-  min-width: 0; /* ✅ allow shrink */
+  min-width: 0; 
 }
 
 .daily-stock-summary-date-label {
   font-size: 0.85rem;
   color: #64748b;
   white-space: nowrap;
-  font-weight: 450; /* ✅ less */
+  font-weight: 450; 
 }
 
-/* Inputs/selects inside controls:
-   DO NOT allow content-width to create overflow */
 .daily-stock-summary-controls .input,
 .daily-stock-summary-controls select,
 .daily-stock-summary-controls input {
   width: auto !important;
   max-width: 100% !important;
-
   min-height: 36px;
   border-radius: 10px;
   border: 1px solid #cbd5e1;
   background: #ffffff;
-
   padding: 8px 10px;
   font-size: 0.9rem;
   color: #0f172a;
-  font-weight: 450; /* ✅ less */
-
+  font-weight: 450; 
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
-
-  flex: 0 1 220px; /* ✅ shrink before overflowing */
+  flex: 0 1 220px; 
 }
 
 .daily-stock-summary-controls .input:focus,
@@ -172,24 +144,21 @@
   box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.22);
 }
 
-/* Date input: compact */
 .daily-stock-summary-date-input {
   flex: 0 1 180px !important;
   min-width: 160px;
 }
 
-/* Search should grow but still never overflow */
 .daily-stock-summary-search-input {
   flex: 1 1 320px !important;
   min-width: 220px;
 }
 
-/* Buttons in controls bar */
 .daily-stock-summary-controls .btn {
   border-radius: 10px;
   min-height: 36px;
   padding: 8px 12px;
-  font-weight: 550; /* ✅ less */
+  font-weight: 550;
 }
 .daily-stock-summary-controls .btn.btn-primary,
 .daily-stock-summary-controls .btn.btn-accent {
@@ -203,66 +172,50 @@
   filter: brightness(1.05);
 }
 
-/* ===== Table wrapper (TABLE CARD) ===== */
 .daily-stock-summary-table-wrapper {
   max-width: 100%;
-  border-radius: 12px; /* less curve */
-  background: #ffffff; /* shade #2 */
+  border-radius: 12px;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
-
-  /* Shadow #2 (table only) */
   box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
-
-  /* ✅ no horizontal scroll on normal screens */
   overflow-x: hidden;
 }
 
-/* Allow scrolling only on small screens */
 @media (max-width: 900px) {
   .daily-stock-summary-table-wrapper {
     overflow-x: auto;
   }
 }
 
-/* ===== Table ===== */
 .daily-stock-summary-table {
   width: 100%;
   border-collapse: collapse;
   border-spacing: 0;
   background: transparent;
-
   font-size: 0.88rem;
-
-  /* ✅ helps fit without horizontal scroll */
   table-layout: fixed;
 }
 
-/* ===== Header (VISIBLE collapsed + expanded) ===== */
 .daily-stock-summary-table thead th {
   padding: 9px 10px;
   text-align: center;
   vertical-align: middle;
-
   background: #f1f5f9;
   color: #0f172a;
-
-  font-weight: 600; /* ✅ less */
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-
   border-bottom: 1px solid #e2e8f0;
 }
 
-/* Expanded 2nd header row */
 .daily-stock-summary-table thead tr:nth-child(2) th {
   background: #ffffff;
   color: #0f172a;
-  font-weight: 550; /* ✅ less */
+  font-weight: 550;
   border-bottom: 1px solid #e2e8f0;
 }
 
-/* rounded top corners */
 .daily-stock-summary-table thead tr:first-child th:first-child {
   border-top-left-radius: 12px;
   text-align: left;
@@ -277,7 +230,6 @@
   border-bottom-right-radius: 12px;
 }
 
-/* Header wrap */
 .daily-stock-summary-th-wrap {
   display: inline-flex;
   flex-direction: column;
@@ -288,12 +240,11 @@
   min-width: 0;
 }
 .daily-stock-summary-th-title {
-  font-weight: 600; /* ✅ less */
+  font-weight: 600;
   line-height: 1.15;
   color: inherit;
 }
 
-/* Header filters */
 .daily-stock-summary-th-filter {
   height: 32px;
   padding: 0 10px;
@@ -302,14 +253,13 @@
   background: #ffffff;
   color: #0f172a;
   font-size: 0.85rem;
-  font-weight: 550; /* ✅ less */
+  font-weight: 550;
   outline: none;
   width: 100%;
   max-width: 150px;
   min-width: 0;
 }
 
-/* Expand button */
 .dss-expandable-th,
 .dss-group-th {
   cursor: pointer;
@@ -323,7 +273,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  font-weight: 600; /* ✅ less */
+  font-weight: 600;
   color: #0f172a !important;
 }
 .dss-caret {
@@ -331,7 +281,6 @@
   opacity: 0.8;
 }
 
-/* Optional subhead pills */
 .dss-subhead {
   margin-top: 6px;
   display: grid;
@@ -345,27 +294,23 @@
   border-radius: 10px;
   padding: 4px 8px;
   font-size: 0.78rem;
-  font-weight: 600; /* ✅ less */
+  font-weight: 600;
   color: #0f172a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* ===== Body ===== */
 .daily-stock-summary-table tbody td {
   padding: 9px 10px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-
   border-bottom: 1px solid #eef2f7;
   color: #0f172a;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-
-  font-weight: 450; /* ✅ less */
+  font-weight: 450;
 }
 
 .daily-stock-summary-table tbody td:first-child {
@@ -376,34 +321,32 @@
   background: #f8fafc;
 }
 
-/* Item column */
 .daily-stock-summary-item {
-  min-width: 0; /* ✅ remove min-width to avoid overflow */
+  min-width: 0;
 }
 .daily-stock-summary-item-code {
-  font-weight: 600; /* ✅ less */
+  font-weight: 600;
   color: #0f172a;
 }
 .daily-stock-summary-item-name {
   font-size: 0.82rem;
   color: #64748b;
   margin-top: 2px;
-  font-weight: 450; /* ✅ less */
+  font-weight: 450;
 }
 
-/* ===== Group header row ===== */
 .daily-stock-summary-group-row {
   cursor: pointer;
 }
 .daily-stock-summary-group-row td {
   background: #f8fafc;
-  font-weight: 650; /* ✅ less */
+  font-weight: 650;
   border-top: 1px solid #e2e8f0;
   border-bottom: 1px solid #e2e8f0;
 }
 .daily-stock-summary-group-header {
   padding: 9px 10px;
-  font-weight: 650; /* ✅ less */
+  font-weight: 650;
   font-size: 0.92rem;
 }
 .daily-stock-summary-group-icon {
@@ -413,15 +356,13 @@
   float: right;
   font-size: 0.85rem;
   opacity: 0.75;
-  font-weight: 450; /* ✅ less */
+  font-weight: 450;
 }
 
-/* Child row indent */
 .daily-stock-summary-row-child .daily-stock-summary-item-code {
   padding-left: 18px;
 }
 
-/* Expanded cells layout */
 .dss-expanded-cell {
   padding-top: 10px;
 }
@@ -438,101 +379,32 @@
 }
 .dss-sub-th {
   font-size: 0.85rem;
-  font-weight: 600; /* ✅ less */
-  white-space: nowrap;
+  font-weight: 600;
 }
 
-
-/* ===== FIX: keep controls INSIDE the rounded filter bar ===== */
 .daily-stock-summary-controls {
-  flex-wrap: wrap;          /* ✅ allow wrapping */
-  overflow: visible;        /* ✅ don't clip children / dropdowns */
-  row-gap: 10px;            /* nicer when wrapped */
+  flex-wrap: wrap;
+  overflow: visible;
+  row-gap: 10px;
 }
 
-/* Make fields actually respect their flex cell (no "content width" surprises) */
 .daily-stock-summary-controls .input,
 .daily-stock-summary-controls select,
 .daily-stock-summary-controls input {
-  width: 100% !important;   /* ✅ fill the flex item */
-  flex: 1 1 180px;          /* ✅ can shrink + wrap */
-  min-width: 140px;         /* ✅ smaller so they don't overflow */
+  width: 100% !important;
+  flex: 1 1 180px;
+  min-width: 140px;
 }
 
-/* Search should still be bigger, but not force overflow */
 .daily-stock-summary-search-input {
   flex: 2 1 260px !important;
   min-width: 180px;
 }
 
-/* Buttons shouldn't stretch weirdly, and must stay "pill" height */
 .daily-stock-summary-controls .btn {
-  flex: 0 0 auto;           /* ✅ don't stretch full width */
+  flex: 0 0 auto;
   white-space: nowrap;
   height: 36px;
   display: inline-flex;
   align-items: center;
-}
-
-/* ==========================================================
-   CLEAN TABS BAR (Removes the massive white box)
-   ========================================================== */
-
-/* Target the wrapper around the buttons */
-.theme-tabs {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start !important; /* Forces left alignment */
-  gap: 12px;
-  
-  /* Remove the giant white box */
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  
-  /* Align perfectly with the Daily Stock Summary content */
-  padding: 10px 10px 0 10px !important;
-  margin: 0 !important; 
-  
-  height: auto !important;
-  width: 100%;
-}
-
-/* Tab Buttons Polishing */
-.theme-tabs .theme-tab-btn {
-  padding: 8px 20px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  height: 38px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  
-  /* Subtle border for structure */
-  border: 1px solid #cbd5e1 !important;
-}
-
-/* Active Tab (Dark Navy) */
-.theme-tabs .theme-tab-btn.active {
-  background: #0f172a !important; 
-  color: white !important;
-  border-color: #0f172a !important;
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15) !important;
-}
-
-/* Inactive Tab (White Pill) */
-.theme-tabs .theme-tab-btn:not(.active) {
-  background: #ffffff !important;
-  color: #475569 !important;
-}
-
-/* Hover effect for inactive tabs */
-.theme-tabs .theme-tab-btn:not(.active):hover {
-  background: #f8fafc !important;
-  color: #0f172a !important;
-  border-color: #94a3b8 !important;
 }

@@ -9,33 +9,56 @@ const cors = require("cors");
 const dotenv = require("dotenv"); // this will help us to load and safly handle the token and api key
 const multer = require("multer"); // this multer helps us to handle the massive messay data which we are sending from the frontent by using our bulk upload.
 const FormData = require("form-data");
+const helmet = require("helmet"); // Security headers to hide our server details from outer people
 
 dotenv.config();
 
 // *** Express App
 const app = express();
 
-// *** Cors Policy --> telling our backend it is safe to handle the request from these urls.
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://mithila-foods-inventory-1.onrender.com",
-    ],
-  })
-);
-
-
-app.use(express.json()); // helps our server to read the files.
-
-const upload = multer(); // multer setup. Upload our files in the ram memory
+app.use(helmet());
 
 // *** Get the all Credential from .env to connect with the ERP
 const {
   ERP_BASE_URL,
   ERP_API_KEY,
   ERP_API_SECRET,
+  FRONTEND_URL
 } = process.env;
+
+// *** Cors Policy --> telling our backend it is safe to handle the request from these urls.
+const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+if (FRONTEND_URL) {
+  allowedOrigins.push(FRONTEND_URL);
+}
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    }
+  })
+)
+
+
+app.use(express.json()); // helps our server to read the files.
+
+const upload = multer({
+  limits: {
+    fileSize: 10 * 1024 * 1024, // Limiting the size to 10 Mb/
+  }
+}); // multer setup. Upload our files in the ram memory
+
+// If we deploy this and forget to add our API keys to the server, kill the server immediately before affect our webapp
+if (!ERP_BASE_URL || !ERP_API_KEY || !ERP_API_SECRET) {
+  console.error("❌ CRITICAL ERROR: Missing ERPNext environment variables. Check your .env file!");
+  process.exit(1); 
+}
 
 // *** This gies us access to erp and we do not have write the api keys for every api hit
 const erpClient = axios.create({
@@ -215,12 +238,12 @@ app.post("/api/submit", async (req, res) => {
 
 
 // ============================================================================
-// 2) METHOD ROUTES (ERPNext /api/method)
+// 2) METHOD ROUTES
 // ============================================================================
 
-// Generic POST proxy for ERPNext whitelisted methods.
-// Frontend calls: POST /api/method/frappe.client.set_value   body: {...}
-// Backend calls:  POST ERP /api/method/frappe.client.set_value
+
+
+// ============ This api helps us to trigger some specific event like uploading a pdf, or chnaging a specific value without loadin whole doc =========== //
 app.post("/api/method/:methodPath", async (req, res) => {
   const { methodPath } = req.params;
 
@@ -238,10 +261,8 @@ app.post("/api/method/:methodPath", async (req, res) => {
   }
 });
 
-// Generic GET proxy for ERPNext whitelisted methods.
-// This is mainly used for PDF downloads because it supports binary response.
-// Frontend calls: GET /api/method/frappe.utils.print_format.download_pdf?doctype=...&name=...
-// Backend calls:  GET ERP /api/method/frappe.utils.print_format.download_pdf?...
+
+// ============ This api helps us to trigger some specific event like downloading a pdf, or getting a specific value without loadin whole doc =========== //
 app.get("/api/method/:methodPath", async (req, res) => {
   const { methodPath } = req.params;
 
@@ -269,13 +290,14 @@ app.get("/api/method/:methodPath", async (req, res) => {
   }
 });
 
+
+
 // ============================================================================
 // 3) CANCEL DOCUMENT
 // ============================================================================
 
-// Cancel a document using frappe.client.cancel
-// Frontend calls: POST /api/cancel_doc  body: {doctype, name}
-// Backend calls:  POST ERP /api/method/frappe.client.cancel
+
+// ============ This api helps us to chacle any doc type like cancling the PO =========== //
 app.post("/api/cancel_doc", async (req, res) => {
   const { doctype, name } = req.body;
 
@@ -292,13 +314,14 @@ app.post("/api/cancel_doc", async (req, res) => {
   }
 });
 
+
+
 // ============================================================================
-// 4) REPORT PROXY (ERPNext Query Report)
+// 4) REPORT PROXY
 // ============================================================================
 
-// Run query report using GET.
-// Frontend calls: GET /api/report/Stock%20Balance?company=...&from_date=...&to_date=...
-// Backend calls:  GET ERP /api/method/frappe.desk.query_report.run
+
+// ============ This helps us to get some specific report like general ledger. WE use this when filter are short and simple =========== //
 app.get("/api/report/:reportName", async (req, res) => {
   const { reportName } = req.params;
 
@@ -323,9 +346,8 @@ app.get("/api/report/:reportName", async (req, res) => {
   }
 });
 
-// Run query report using POST.
-// Frontend calls: POST /api/report/run  body: { report_name, filters }
-// Backend calls:  POST ERP /api/method/frappe.desk.query_report.run
+
+// ============ This api helps us run reports iwth the complex filters =========== //
 app.post("/api/report/run", async (req, res) => {
   try {
     const { report_name, filters } = req.body || {};
@@ -349,16 +371,15 @@ app.post("/api/report/run", async (req, res) => {
   }
 });
 
+
+
 // ============================================================================
-// 5) FILE UPLOAD PROXY (ERPNext upload_file)
+// 5) FILE UPLOAD
 // ============================================================================
 
-// Upload a file and attach it to a document in ERPNext.
-// Frontend sends multipart/form-data with fields:
-// - file (binary)
-// - doctype
-// - docname
-// - is_private
+
+
+// ============ This api helps us to upload a file and attech this file to a document. Same as we are atteching the supplier PI with PO =========== //
 app.post("/api/upload", upload.single("file"), async (req, res) => {
   try {
     // Make sure file is present
@@ -371,7 +392,7 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
       return res.status(400).json({ error: "doctype and docname are required" });
     }
 
-    // Create form-data payload exactly as ERPNext expects
+    
     const form = new FormData();
 
     // ERPNext expects field name "file"
@@ -386,9 +407,9 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
     form.append("is_private", String(is_private));
     form.append("file_name", req.file.originalname);
 
-    // Call ERPNext upload API directly (not using erpClient because it needs multipart headers)
     const url = `${ERP_BASE_URL}/api/method/upload_file`;
 
+    // We are using the token again because our client deal with limited JSON data. WE can use the client but that could also cause the errors.
     const r = await axios.post(url, form, {
       headers: {
         Authorization: `token ${ERP_API_KEY}:${ERP_API_SECRET}`,
@@ -406,19 +427,15 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
       .json({ error: err.response?.data || err.message });
   }
 });
-// server.js (Updated /api/reports/reorder route)
 
+
+// ============ This api helps us to get the reoder level from every item. =========== //
 app.get("/api/reports/reorder", async (req, res) => {
   const { warehouse } = req.query;
   if (!warehouse) return res.status(400).json({ error: "Warehouse required" });
 
   try {
     // 1. Fetch Items that have reorder levels configured
-    // We query the PARENT 'Item' DocType and filter by the child table field 'reorder_levels'
-    // NOTE: This fetches ALL items first. If you have 10k+ items, we might need a different strategy,
-    // but for most setups, fetching the item master list is fast enough.
-    
-    // We fetch key fields plus the child table 'reorder_levels'
     const itemResponse = await erpClient.get(`/resource/Item`, {
       params: {
         fields: JSON.stringify(["name", "item_name", "item_group", "reorder_levels"]),
@@ -434,7 +451,6 @@ app.get("/api/reports/reorder", async (req, res) => {
     const reportData = [];
 
     // 2. Filter in Node.js for the specific warehouse
-    // (It is harder to filter child tables inside the main parent query in ERPNext API)
     const relevantItems = [];
     const itemCodes = [];
 
@@ -460,7 +476,6 @@ app.get("/api/reports/reorder", async (req, res) => {
     if (itemCodes.length === 0) return res.json([]);
 
     // 3. Fetch Bin Levels (Current Stock) for these items
-    // Since we filtered the list down to only items with reorder rules, this list is smaller.
     const bins = await erpClient.get(`/resource/Bin`, {
       params: {
         fields: JSON.stringify(["item_code", "actual_qty"]),
@@ -492,13 +507,13 @@ app.get("/api/reports/reorder", async (req, res) => {
 
   } catch (err) {
     console.error("Reorder Report Error:", err.response?.data || err.message);
-    // Send detailed error to frontend for debugging
     res.status(500).json({ 
         error: "Failed to generate report",
         details: err.response?.data || err.message 
     });
   }
 });
+
 
 
 // ============================================================================

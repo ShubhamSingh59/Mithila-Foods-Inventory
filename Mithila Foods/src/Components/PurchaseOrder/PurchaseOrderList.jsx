@@ -1,23 +1,39 @@
 // PurchaseOrderList/jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  getDoctypeList,
-  submitDoc,
+  getSuppliers,
+  getItemsForPO,
+  getItemSuppliers,
+  getTransporters,
+  
+} from "../api/master"
+import {
+  createPurchaseOrder,
+  updatePurchaseOrder,
+  deletePurchaseOrder,
   getPurchaseOrderWithItems,
-  getDoc,
+  setPurchaseOrderTransporter,
+  MF_PO_FIELDS,
+  MF_STATUS_OPTIONS,
+  sendPurchaseOrderEmail,
+  getPurchaseOrderPdfUrl,
   createPaymentEntryForPurchaseInvoice,
   cancelPurchaseOrder,
   setPurchaseOrderStatus,
   setPurchaseOrderMfStatus,
-  MF_PO_FIELDS,
-  MF_STATUS_OPTIONS,
+  closePurchaseOrder,
+} from "../api/purchase"
+import {
+  submitDoc,
+  getDoc,
   createDoc,
   uploadFileToDoc,
-  closePurchaseOrder,
   mapLimit,
-  getTransporters,
-  setPurchaseOrderTransporter,
-} from "../erpBackendApi";
+  getDoctypeList,
+} from "../api/core";
+import {
+  getItemRateFromPriceList,
+} from "../api/stock";
 
 import "./PurchaseOrderList.css";
 
@@ -73,7 +89,6 @@ function getSequentialStatusOptions(currentStatus) {
 }
 
 function PurchaseOrderList({ onEditPo }) {
-  // -------------------- State --------------------
   const [orders, setOrders] = useState([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
@@ -92,7 +107,6 @@ function PurchaseOrderList({ onEditPo }) {
   const [qcPassLoading, setQcPassLoading] = useState("");
   const [qcFailLoading, setQcFailLoading] = useState("");
 
-  // Loaders for Invoice Actions
   const [invoiceLoading, setInvoiceLoading] = useState("");
   const [submitPoLoading, setSubmitPoLoading] = useState("");
   const [payLoading, setPayLoading] = useState("");
@@ -100,8 +114,6 @@ function PurchaseOrderList({ onEditPo }) {
 
   const [mfFilter, setMfFilter] = useState("");
   const [qcEdit, setQcEdit] = useState(null);
-
-  // Advance Pay Modal
   const [advancePayModal, setAdvancePayModal] = useState(null);
 
   const [receivedPO, setReceivedPO] = useState({});
@@ -201,7 +213,7 @@ function PurchaseOrderList({ onEditPo }) {
           "transaction_date",
           "status",
           "grand_total",
-          "advance_paid", // ✅ Important: We need this to calculate remaining balance
+          "advance_paid", 
           "per_received",
           "per_billed",
           "creation",
@@ -393,8 +405,6 @@ function PurchaseOrderList({ onEditPo }) {
   async function handleSubmitPoFromList(po) { setError(""); setMessage(""); setSubmitPoLoading(po.name); try { await submitDoc("Purchase Order", po.name); setMessage(`Purchase Order submitted: ${po.name}`); await loadOrders(page, mfFilter); } catch (err) { console.error(err); setError(err.response?.data?.error?.message || err.message || "Failed to submit Purchase Order"); } finally { setSubmitPoLoading(""); } }
 
   // -------------------- INVOICE HANDLERS --------------------
-
-  // ✅ FIX 1: Handle Create Invoice with correct "Accepted Quantity"
   async function handleCreateInvoice(po) {
     setError("");
     setMessage("");
@@ -402,10 +412,8 @@ function PurchaseOrderList({ onEditPo }) {
     try {
       const today = new Date().toISOString().slice(0, 10);
 
-      // Attempt to find the Receipt logic
       let prName = receivedPO[po.name]?.prName;
       if (!prName) {
-        // Fallback: search API for PR linked to this PO
         const linkedPrs = await getDoctypeList("Purchase Receipt", {
           filters: JSON.stringify([["purchase_order", "=", po.name], ["docstatus", "=", 1]]),
           fields: JSON.stringify(["name"]),
@@ -418,12 +426,10 @@ function PurchaseOrderList({ onEditPo }) {
       let invoiceItems = [];
 
       if (prName) {
-        // ✅ CASE A: Create Invoice from Purchase Receipt
-        // This ensures we get the Accepted Qty (it.qty), NOT the Total Received.
         const prDoc = await getDoc("Purchase Receipt", prName);
         invoiceItems = (prDoc.items || []).map((it) => ({
           item_code: it.item_code,
-          qty: it.qty, // ✅ This is "Accepted Quantity" in PR
+          qty: it.qty, 
           rate: it.rate,
           purchase_order: po.name,
           purchase_receipt: prName,
@@ -431,11 +437,10 @@ function PurchaseOrderList({ onEditPo }) {
           pr_detail: it.name,
         }));
       } else {
-        // CASE B: Direct Invoice from PO
         const poDoc = await getPurchaseOrderWithItems(po.name);
         invoiceItems = (poDoc.items || []).map((it) => ({
           item_code: it.item_code,
-          qty: it.qty, // Fallback to Ordered Qty
+          qty: it.qty, 
           rate: it.rate,
           purchase_order: po.name,
           po_detail: it.name,
@@ -544,7 +549,6 @@ function PurchaseOrderList({ onEditPo }) {
     }
   }
 
-  // ✅ FIX 2: Handle Pay & Close (Subtract Advance)
   async function handlePayAndClose(po) {
     setError("");
     setMessage("");
@@ -573,7 +577,6 @@ function PurchaseOrderList({ onEditPo }) {
 
       const unpaidInvoices = invoices.filter((inv) => Number(inv.outstanding_amount) > 0);
 
-      // ✅ LOGIC UPDATE: Calculate what needs to be paid (Net of Advances)
       const advanceAlreadyPaid = Number(po.advance_paid || 0);
       let totalToPayNow = 0;
 
@@ -582,16 +585,12 @@ function PurchaseOrderList({ onEditPo }) {
 
           let amountForThisInvoice = Number(pi.outstanding_amount);
 
-          // Deduct Advance Logic
           if (advanceAlreadyPaid > 0 && amountForThisInvoice > 0) {
             const deduction = Math.min(amountForThisInvoice, advanceAlreadyPaid);
             amountForThisInvoice -= deduction;
-            // reduce our local tracker for multiple invoice scenarios
-            // advanceAlreadyPaid -= deduction; 
           }
 
           if (amountForThisInvoice > 0) {
-            // Create payment for the REMAINING balance only
             await createPaymentEntryForPurchaseInvoice({
               ...pi,
               outstanding_amount: amountForThisInvoice
@@ -610,7 +609,6 @@ function PurchaseOrderList({ onEditPo }) {
         setMessage("Invoice was already paid.");
       }
 
-      // Close Logic remains same
       const receivedInfo = receivedPO[po.name] || {};
       const percentFromErp = po?.[MF_PO_FIELDS.stockPercent] != null && po?.[MF_PO_FIELDS.stockPercent] !== "" ? Number(po[MF_PO_FIELDS.stockPercent]) : undefined;
       const allGood = receivedInfo.allGood !== undefined ? receivedInfo.allGood : percentFromErp != null ? percentFromErp >= 99.999 : true;
@@ -921,7 +919,6 @@ function PurchaseOrderList({ onEditPo }) {
         </>
       )}
 
-      {/* ✅ ADVANCE PAYMENT MODAL */}
       {advancePayModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: 400 }}>

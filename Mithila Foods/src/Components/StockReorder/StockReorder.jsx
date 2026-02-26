@@ -1,34 +1,15 @@
 // src/Components/StockReorder.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getDoctypeList } from "../erpBackendApi";
+import { getDoctypeList } from "../api/core";
 import "./StockReorder.css";
 import { useOrg } from "../Context/OrgContext";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
-/**
- * Stock Reorder (Read-only dashboard)
- * ----------------------------------
- * Goal:
- * - Show items that have a reorder level set (from "Item Reorder" child table)
- * - Compare Current Stock (Bin.actual_qty) vs Reorder Level
- * - Group by Item Group (category sections)
- *
- * Rules:
- * - Warehouse is FIXED: DEFAULT_WAREHOUSE (no selector in UI)
- * - Reorder threshold is taken from:
- *   - warehouse_reorder_level (preferred)
- *   - if reorder_level is 0, fallback to warehouse_reorder_qty
- *
- * UI features:
- * - Search by item code or name
- * - Expand/collapse categories
- * - Sort by Difference (Current - Reorder) without re-fetching
- * - Refresh (re-fetch)
- */
 
-const DEFAULT_WAREHOUSE = "Raw Material - MF";
 
-const CHILD_PAGE_SIZE = 2000; // pagination for Item Reorder child table
-const CHUNK_SIZE = 150;       // chunk size for "IN" filters (Item / Bin)
+const CHILD_PAGE_SIZE = 2000;
+const CHUNK_SIZE = 150;
 
 function chunkArray(arr, size = 150) {
   const out = [];
@@ -37,29 +18,33 @@ function chunkArray(arr, size = 150) {
 }
 
 function StockReorder() {
-  // Brand Chnage
   const { activeOrg, orgs, changeOrg } = useOrg();
-  // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Search
   const [search, setSearch] = useState("");
-
-  // Grouped table rows (category headers + item rows)
   const [rows, setRows] = useState([]);
-
-  // Flat item rows (kept so we can re-sort without refetch)
   const [flatItems, setFlatItems] = useState([]);
-
-  // Expand/collapse per category key (category = item_group)
   const [expandedGroups, setExpandedGroups] = useState({});
-
-  // Sort by Difference column (Current - Reorder)
   const [diffSortDir, setDiffSortDir] = useState("desc");
   const diffSortDirRef = useRef(diffSortDir);
 
-  // Keep a ref so sorting does NOT re-trigger loadData fetch
+  useEffect(() => {
+    diffSortDirRef.current = diffSortDir;
+  }, [diffSortDir]);
+
+  const targetWarehouses = useMemo(() => {
+    const base = ["Raw Material - MF"];
+    if (activeOrg === "Mithila Foods") return [...base, "Finished Goods Mithila - MF"];
+    if (activeOrg === "Prepto") return [...base, "Finished Goods Prepto - MF"];
+    if (activeOrg === "Howrah Foods") return [...base, "Finished Goods Howrah - MF"];
+
+    // If Parent (F2D) is selected, look at everything
+    if (activeOrg === "F2D TECH PRIVATE LIMITED") {
+      return [...base, "Finished Goods Mithila - MF", "Finished Goods Prepto - MF", "Finished Goods Howrah - MF"];
+    }
+    return base;
+  }, [activeOrg]);
+
   useEffect(() => {
     diffSortDirRef.current = diffSortDir;
   }, [diffSortDir]);
@@ -69,14 +54,7 @@ function StockReorder() {
     [diffSortDir]
   );
 
-  /**
-   * Convert flat item rows into:
-   * - category header rows (Item Group)
-   * - item rows under each category
-   * Also:
-   * - sorts items inside each category by Difference (asc/desc)
-   * - keeps/initializes expanded state per category
-   */
+
   const buildRowsFromFlat = useCallback((flat, prevExpanded = {}, sortDir = "desc") => {
     const groups = new Map(); // item_group -> items[]
     (flat || []).forEach((r) => {
@@ -123,13 +101,6 @@ function StockReorder() {
     return { finalRows, expandedNext };
   }, []);
 
-  /**
-   * Load data from ERPNext:
-   * 1) Item Reorder (child table) for DEFAULT_WAREHOUSE
-   * 2) Item meta: item_name + item_group (from Item)
-   * 3) Bin qty: actual_qty (from Bin)
-   * 4) Build final flat rows and grouped rows
-   */
   const loadData = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -138,9 +109,6 @@ function StockReorder() {
     setExpandedGroups({});
 
     try {
-      // ------------------------------------------------------------
-      // 1) Fetch Item Reorder rows for DEFAULT_WAREHOUSE
-      // ------------------------------------------------------------
       const reorderRows = [];
       let start = 0;
 
@@ -149,15 +117,14 @@ function StockReorder() {
         const part = await getDoctypeList("Item Reorder", {
           parent: "Item", // required for child table permissions
           fields: JSON.stringify([
-            "parent", // Item code
+            "parent",
             "warehouse",
             "warehouse_reorder_level",
             "warehouse_reorder_qty",
             "material_request_type"
           ]),
           filters: JSON.stringify([
-            ["Item Reorder", "warehouse", "=", DEFAULT_WAREHOUSE],
-            ["Item Reorder", "warehouse_reorder_level", ">", 0],
+            ["Item Reorder", "warehouse", "in", targetWarehouses], ["Item Reorder", "warehouse_reorder_level", ">", 0],
           ]),
           limit_page_length: CHILD_PAGE_SIZE,
           limit_start: start,
@@ -167,10 +134,10 @@ function StockReorder() {
         if (!part || part.length < CHILD_PAGE_SIZE) break;
 
         start += CHILD_PAGE_SIZE;
-        if (start > 200000) break; // safety
+        if (start > 200000) break;
       }
 
-      // If nothing found, fallback to reorder_qty > 0 (some setups only fill qty)
+      // If nothing found, fallback to reorder_qty > 0 
       if (reorderRows.length === 0) {
         start = 0;
         while (true) {
@@ -184,8 +151,7 @@ function StockReorder() {
               "material_request_type"
             ]),
             filters: JSON.stringify([
-              ["Item Reorder", "warehouse", "=", DEFAULT_WAREHOUSE],
-              ["Item Reorder", "warehouse_reorder_qty", ">", 0],
+              ["Item Reorder", "warehouse", "in", targetWarehouses], ["Item Reorder", "warehouse_reorder_qty", ">", 0],
             ]),
             limit_page_length: CHILD_PAGE_SIZE,
             limit_start: start,
@@ -199,7 +165,6 @@ function StockReorder() {
         }
       }
 
-      // Deduplicate per item_code (parent) and keep max reorder values
       const reorderMap = new Map(); // item_code -> { reorder_level, reorder_qty }
       (reorderRows || []).forEach((r) => {
         const code = r?.parent;
@@ -224,9 +189,6 @@ function StockReorder() {
         return;
       }
 
-      // ------------------------------------------------------------
-      // 2) Fetch Item meta for those items (name + group)
-      // ------------------------------------------------------------
       const itemMetaMap = new Map(); // item_code -> { item_name, item_group }
 
       for (const part of chunkArray(itemCodes, CHUNK_SIZE)) {
@@ -246,17 +208,13 @@ function StockReorder() {
         });
       }
 
-      // ------------------------------------------------------------
-      // 3) Fetch current qty from Bin for DEFAULT_WAREHOUSE
-      // ------------------------------------------------------------
       const binQtyMap = new Map(); // item_code -> actual_qty
 
       for (const part of chunkArray(itemCodes, CHUNK_SIZE)) {
         const bins = await getDoctypeList("Bin", {
           fields: JSON.stringify(["item_code", "actual_qty"]),
           filters: JSON.stringify([
-            ["Bin", "warehouse", "=", DEFAULT_WAREHOUSE],
-            ["Bin", "item_code", "in", part],
+            ["Bin", "warehouse", "in", targetWarehouses], ["Bin", "item_code", "in", part],
           ]),
           limit_page_length: 10000,
         });
@@ -268,9 +226,6 @@ function StockReorder() {
         });
       }
 
-      // ------------------------------------------------------------
-      // 4) Build flat rows (one per item)
-      // ------------------------------------------------------------
       const flat = itemCodes
         .map((code) => {
           const meta = itemMetaMap.get(code) || { item_name: code, item_group: "Unknown" };
@@ -278,7 +233,6 @@ function StockReorder() {
 
           const rr = reorderMap.get(code) || { reorder_level: 0, reorder_qty: 0, material_request_type: "Purchase" };
 
-          // If reorder_level is 0 but reorder_qty exists, we use reorder_qty as fallback threshold
           const reorder_level =
             Number(rr.reorder_level || 0) || Number(rr.reorder_qty || 0);
 
@@ -293,16 +247,12 @@ function StockReorder() {
           };
         })
         .filter((r) => Number(r.reorder_level || 0) > 0) // keep only configured items
-        .filter((r) =>
-          activeOrg === "F2D TECH PRIVATE LIMITED" ||
-          r.brand === activeOrg ||
-          String(r.item_group).toLowerCase().includes("raw")
-        );
+        .filter((r) => {
+          if (activeOrg === "F2D TECH PRIVATE LIMITED") return true;
+          return r.brand === activeOrg;
+        });
       setFlatItems(flat);
 
-      // ------------------------------------------------------------
-      // 5) Build grouped rows using CURRENT sort dir (no refetch on toggle)
-      // ------------------------------------------------------------
       const { finalRows, expandedNext } = buildRowsFromFlat(flat, {}, diffSortDirRef.current);
       setRows(finalRows);
       setExpandedGroups(expandedNext);
@@ -312,16 +262,13 @@ function StockReorder() {
     } finally {
       setLoading(false);
     }
-  }, [buildRowsFromFlat, activeOrg]);
+  }, [buildRowsFromFlat, activeOrg, targetWarehouses]);
 
   // Initial load
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  /* ============================================================
-     Derived UI: search + expand/collapse
-     ============================================================ */
   const lowerSearch = search.trim().toLowerCase();
 
   // When searching, keep category headers only if they have matches
@@ -361,7 +308,6 @@ function StockReorder() {
     return out;
   }, [rows, lowerSearch]);
 
-  // Apply expand/collapse only when NOT searching
   const visibleRows = useMemo(() => {
     return displayRows.filter((r) => {
       if (r.is_category_header) return true;
@@ -371,9 +317,6 @@ function StockReorder() {
     });
   }, [displayRows, expandedGroups, lowerSearch]);
 
-  /* ============================================================
-     Actions
-     ============================================================ */
   const toggleCategory = (key) => {
     setExpandedGroups((prev) => ({ ...prev, [key]: !(prev[key] !== false) }));
   };
@@ -382,7 +325,6 @@ function StockReorder() {
     setDiffSortDir((prevDir) => {
       const next = prevDir === "desc" ? "asc" : "desc";
 
-      // Re-sort from existing flatItems (no fetch)
       if (flatItems && flatItems.length) {
         setExpandedGroups((prevExpanded) => {
           const { finalRows, expandedNext } = buildRowsFromFlat(flatItems, prevExpanded, next);
@@ -395,9 +337,36 @@ function StockReorder() {
     });
   };
 
-  /* ============================================================
-     Small display helpers
-     ============================================================ */
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(`Stock Reorder Report`, 14, 15);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Brand: ${activeOrg} | Date: ${new Date().toLocaleDateString()}`, 14, 22);
+
+    const tableData = [];
+    visibleRows.forEach(r => {
+      if (r.is_category_header) {
+        tableData.push([{ content: ` ${r.category_label}`, colSpan: 5, styles: { fillColor: [240, 240, 240], fontStyle: 'bold' } }]);
+      } else {
+        tableData.push([r.item_name, r.current_qty, r.reorder_level, r.difference, r.material_request_type]);
+      }
+    });
+
+    autoTable(doc, {
+      startY: 28,
+      head: [['Item', 'Current Qty', 'Reorder Level', 'Difference', 'Request Type']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [15, 23, 42] },
+      styles: { fontSize: 9 },
+    });
+
+    const safeOrgName = String(activeOrg || "All_Brands").replace(/\s+/g, '_');
+    doc.save(`Reorder_List_${safeOrgName}.pdf`);
+  };
+
   const Num = ({ v }) => {
     const n = Number(v || 0);
     return <span>{Number.isFinite(n) ? n : 0}</span>;
@@ -416,7 +385,7 @@ function StockReorder() {
         <div className="stock-reorder-header">
           <h2 className="stock-reorder-title">Stock Reorder</h2>
           <p className="stock-reorder-subtitle">
-            Items with reorder level (stock checked in: <b>{DEFAULT_WAREHOUSE}</b>)
+            Item Reorder Levels
           </p>
         </div>
 
@@ -451,7 +420,9 @@ function StockReorder() {
           >
             Sort: {diffSortLabel}
           </button>
-
+          <button type="button" className="btn btn-secondary" onClick={downloadPDF} disabled={loading || visibleRows.length === 0}>
+            Download PDF
+          </button>
           <button
             type="button"
             className="btn btn-primary btn-sm"
@@ -463,7 +434,6 @@ function StockReorder() {
         </div>
       </div>
 
-      {/* Messages */}
       {error && <p className="alert alert-error">{error}</p>}
       {loading && <p className="text-muted">Loading reorder levels...</p>}
       {!loading && !error && visibleRows.length === 0 && (
@@ -510,7 +480,7 @@ function StockReorder() {
                   <tr key={`${r.item_code}-${idx}`} className="stock-reorder-row">
                     <td className="stock-reorder-item">
                       <div className="stock-reorder-item-name">{r.item_name}</div>
-                      <div className="stock-reorder-item-sub text-muted">{r.item_code}</div>
+                      {/*<div className="stock-reorder-item-sub text-muted">{r.item_code}</div>*/}
                     </td>
 
                     <td className="stock-reorder-num">
@@ -525,7 +495,7 @@ function StockReorder() {
                       <Diff v={r.difference} />
                     </td>
 
-                    <td className="stock-reorder-num" style={{ fontSize: "13px", opacity: 0.85 }}>
+                    <td className="stock-reorder-num">
                       {r.material_request_type}
                     </td>
                   </tr>
