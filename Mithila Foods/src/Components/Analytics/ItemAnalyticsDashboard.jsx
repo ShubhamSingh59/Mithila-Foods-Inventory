@@ -1,7 +1,8 @@
 // src/Components/SupplierAnalytics/ItemAnalyticsDashboard.jsx
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import "./ItemAnalytics.css";
-import { getItemAnalyticsData, getAllItems } from "../erpBackendApi";
+import { getItemAnalyticsData }  from "../api/purchase"
+import { getAllItems } from "../api/master";
 
 const fmtMoney = (n) => `₹ ${Number(n || 0).toLocaleString("en-IN")}`;
 const fmtDate = (d) => {
@@ -170,7 +171,6 @@ export default function ItemAnalyticsDashboard() {
     let totalSellQty = 0;
     let totalSellVal = 0;
 
-    // ✅ Customer Aggregation Logic
     const customerMap = {};
 
     salesHistory.forEach(x => {
@@ -208,7 +208,6 @@ export default function ItemAnalyticsDashboard() {
     // Supplier Volume Data (Top 5)
     const supplierVolumeData = [...supplierLeaderboard].sort((a, b) => b.totalQty - a.totalQty).slice(0, 5);
 
-    // ✅ Customer Volume Data (Top 5)
     const customerVolumeData = Object.values(customerMap)
       .filter(c => c.totalQty > 0) // Filter out pure return customers or zero vol
       .sort((a, b) => b.totalQty - a.totalQty)
@@ -222,7 +221,7 @@ export default function ItemAnalyticsDashboard() {
       lastBuyRate, avgBuyRate, stdBuyRate,
       lastSellRate, avgSellRate, stdSellRate,
       supplierLeaderboard, supplierVolumeData,
-      customerVolumeData, // ✅ New Data
+      customerVolumeData, 
       buyGraph, sellGraph, salesHistory
     };
   }, [data]);

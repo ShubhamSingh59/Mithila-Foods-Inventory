@@ -27,7 +27,7 @@ export default function MfgTabsView() {
             className={`mfg-tab ${mfgTab === MFG_TABS.MANUFACTURE ? "active" : ""}`}
             onClick={() => setMfgTab(MFG_TABS.MANUFACTURE)}
           >
-            Manufacture Entry
+            Packaging Entry
           </button>
 
           <button

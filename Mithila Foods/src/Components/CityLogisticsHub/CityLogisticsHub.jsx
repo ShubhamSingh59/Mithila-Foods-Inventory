@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { getLogisticsByCity, getDoctypeFieldOptions } from "../erpBackendApi";
+import { getLogisticsByCity } from "../api/purchase";
+import {getDoctypeFieldOptions} from "../api/core"
 import { MapPin, Truck, Package, Phone, User, AlertCircle } from "lucide-react";
 import "./CityLogisticsHub.css";
 
@@ -145,7 +146,6 @@ export default function CityLogisticsHub() {
                      <div className="hub-route-box">
                        <strong>Servicing:</strong>
                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                         {/* ✅ Rendering the Array of Objects */}
                          {Array.isArray(trans.custom_service_areas) && trans.custom_service_areas.length > 0 ? (
                            trans.custom_service_areas.map((row, i) => (
                              <span key={i} style={{ 

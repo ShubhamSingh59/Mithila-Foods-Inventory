@@ -1,5 +1,5 @@
 import React from "react";
-import "./SupplierAnalytics.css"; // ✅ Import new CSS
+import "./SupplierAnalytics.css";
 import PurchasePayablesWidget from "../Analytics/PurchasePayablesWidget";
 import PurchaseOrderPipelineWidget from "../Analytics/PurchaseOrderPipelineWidget";
 import PurchaseReceiptQualityWidget from "../Analytics/PurchaseReceiptQualityWidget";

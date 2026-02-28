@@ -1,45 +1,42 @@
 // src/StockTransfer.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  getDoctypeList,          // use generic list to fetch items
-  getWarehouses,           // fetch warehouse list
-  getBinForItemWarehouse,  // fetch live stock (Bin) for item + warehouse
-  createDoc,               // create ERPNext document (Stock Entry)
-  submitDoc,               // submit ERPNext document (docstatus = 1)
-  getCompanies,            // fetch companies list
-} from "../erpBackendApi";
+  getBinForItemWarehouse,
+} from "../api/stock";
+import {
+  createDoc,
+  submitDoc,
+  getDoctypeList,
+} from "../api/core";
+import {
+  getCompanies,
+  getWarehouses
+} from "../api/master"
 import "./StockTransfer.css";
 
 function StockTransfer() {
-  // Master data lists used in dropdowns
   const [items, setItems] = useState([]);          // all items
   const [warehouses, setWarehouses] = useState([]); // all warehouses
   const [companies, setCompanies] = useState([]);   // all companies
 
-  // Header form fields
   const [company, setCompany] = useState("");
 
-  // Default posting date = today in YYYY-MM-DD (local date)
   const [postingDate, setPostingDate] = useState(
     new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
       .toISOString()
       .slice(0, 10)
   );
 
-  // Warehouses for transfer
   const [fromWarehouse, setFromWarehouse] = useState("");
   const [toWarehouse, setToWarehouse] = useState("");
 
-  // Line items for transfer
   const [rows, setRows] = useState([createEmptyRow(0)]);
 
-  // UI state
   const [loadingInit, setLoadingInit] = useState(false); // loading master data
   const [saving, setSaving] = useState(false);           // creating/submitting entry
   const [error, setError] = useState("");                // page level error
   const [message, setMessage] = useState("");            // success message
 
-  // Create a blank row structure (used for Add Item and initial row)
   function createEmptyRow(id) {
     return {
       id,
@@ -52,9 +49,6 @@ function StockTransfer() {
     };
   }
 
-  // ---------------------------------------------
-  // Initial load: items + warehouses + companies
-  // ---------------------------------------------
   useEffect(() => {
     async function load() {
       setLoadingInit(true);
@@ -69,9 +63,7 @@ function StockTransfer() {
             limit_page_length: 5000,
             order_by: "modified desc",
           }),
-          // Load warehouses (non-group warehouses in your helper)
           getWarehouses(),
-          // Load companies
           getCompanies(),
         ]);
 
@@ -79,9 +71,6 @@ function StockTransfer() {
         setWarehouses(whData || []);
         setCompanies(companiesData || []);
 
-        // Auto-select company to reduce manual work
-        // 1) If only one company exists, select it
-        // 2) Else try using first warehouse company as default
         if (!company) {
           if ((companiesData || []).length === 1) {
             setCompany(companiesData[0].name);
@@ -101,12 +90,7 @@ function StockTransfer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ---------------------------------------------
-  // Fetch current stock (Bin) for a row
-  // Runs when item changes or fromWarehouse changes
-  // ---------------------------------------------
   async function refreshBinForRow(rowId, itemCode, sourceWh) {
-    // If item or warehouse not selected, clear current qty and row errors
     if (!itemCode || !sourceWh) {
       setRows((prev) =>
         prev.map((r) =>
@@ -222,9 +206,7 @@ function StockTransfer() {
     });
   }
 
-  // ---------------------------------------------
-  // Submit: create Stock Entry (Material Transfer) and submit it
-  // ---------------------------------------------
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
@@ -287,7 +269,6 @@ function StockTransfer() {
 
   return (
     <div className="stock-transfer">
-      {/* Page header */}
       <div className="stock-transfer-header">
         <div className="stock-transfer-title-block">
           <h2 className="stock-transfer-title">Stock Transfer (Any Item)</h2>
@@ -296,13 +277,11 @@ function StockTransfer() {
           </p>
         </div>
 
-        {/* Small count text on right side */}
         <div className="stock-transfer-pill">
           {rows.length} line item{rows.length !== 1 ? "s" : ""}
         </div>
       </div>
 
-      {/* Page level messages */}
       {loadingInit && (
         <div className="stock-transfer-loading text-muted">
           Loading items / warehouses...
@@ -313,9 +292,7 @@ function StockTransfer() {
         <div className="alert alert-success stock-transfer-message">{message}</div>
       )}
 
-      {/* Main form */}
       <form onSubmit={handleSubmit} className="stock-transfer-form">
-        {/* Top header fields */}
         <div className="stock-transfer-form-grid">
           <div className="stock-transfer-field-group">
             <label className="form-label stock-transfer-field-label">Company</label>
@@ -376,7 +353,6 @@ function StockTransfer() {
           </div>
         </div>
 
-        {/* Items section header */}
         <div className="stock-transfer-items-header">
           <h3 className="stock-transfer-items-title">Items</h3>
           <button type="button" onClick={addRow} className="btn btn-accent btn-sm">
@@ -384,7 +360,6 @@ function StockTransfer() {
           </button>
         </div>
 
-        {/* Line item cards */}
         <div className="stock-transfer-rows">
           {rows.map((row, index) => (
             <div key={row.id} className="stock-transfer-row-card">
@@ -436,7 +411,6 @@ function StockTransfer() {
                 </div>
               </div>
 
-              {/* Per-row loading or error */}
               {(row.loadingRow || row.rowError) && (
                 <div className="stock-transfer-row-footer">
                   {row.loadingRow && (
@@ -453,7 +427,6 @@ function StockTransfer() {
           ))}
         </div>
 
-        {/* Submit button */}
         <div className="stock-transfer-submit-row">
           <button
             type="submit"
@@ -468,22 +441,15 @@ function StockTransfer() {
   );
 }
 
-// ---------------------------------------------
-// ItemSearchDropdown
-// A custom searchable dropdown to pick an item.
-// It shows item code + item name + UOM.
-// ---------------------------------------------
 function ItemSearchDropdown({ items, value, onSelect, placeholder }) {
   const [open, setOpen] = useState(false); // dropdown open/close
   const [q, setQ] = useState("");          // search text inside dropdown
   const ref = useRef(null);                // wrapper ref for outside click close
 
-  // Selected item object (used to display current value)
   const selected = useMemo(() => {
     return items.find((x) => x.name === value) || null;
   }, [items, value]);
 
-  // Filter items list by typed query
   const filtered = useMemo(() => {
     const s = (q || "").trim().toLowerCase();
 
@@ -495,11 +461,9 @@ function ItemSearchDropdown({ items, value, onSelect, placeholder }) {
           return code.includes(s) || name.includes(s);
         });
 
-    // Limit results to keep dropdown fast
     return base.slice(0, 80);
   }, [items, q]);
 
-  // Close dropdown if user clicks outside the control
   useEffect(() => {
     function onDown(e) {
       if (!ref.current) return;
@@ -511,7 +475,6 @@ function ItemSearchDropdown({ items, value, onSelect, placeholder }) {
 
   return (
     <div className="stdrop" ref={ref}>
-      {/* Main control button */}
       <button
         type="button"
         className={`stdrop-control ${open ? "is-open" : ""}`}
@@ -533,7 +496,6 @@ function ItemSearchDropdown({ items, value, onSelect, placeholder }) {
         <div className="stdrop-caret">▾</div>
       </button>
 
-      {/* Dropdown panel */}
       {open && (
         <div className="stdrop-popover">
           {/* Search field inside dropdown */}

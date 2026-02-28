@@ -1,23 +1,24 @@
 // src/Components/OpeningStockEntry.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  // ✅ Must include: name, item_name, stock_uom, item_group, valuation_rate (if you want the fallback)
-  getItemsForBOM,
-  getPriceLists,
-  getItemRateFromPriceList,
-  getItemWarehouseValuationRate,
-  getCompanies,
   createDoc,
   submitDoc,
-} from "../erpBackendApi";
+} from "../api/core";
+import {
+  getItemRateFromPriceList,
+  getItemWarehouseValuationRate,
+  getPriceLists,
+} from "../api/stock";
+import {
+  getItemsForBOM,
+  getCompanies,
+} from "../api/master"
 import { useOrg } from "../Context/OrgContext";
 import "./OpeningStockEntry.css";
 
 /**
  * Opening Stock Entry
  * -------------------
- * This screen creates Opening Stock using a single Stock Reconciliation document.
- *
  * There are 2 ways:
  * 1) Manual Entry (table rows)  -> select item, auto-picks warehouse + price list, auto-fills rate
  * 2) Bulk Upload (CSV/TSV/XLSX) -> parse file, validate items, auto-pick warehouse & rate if missing
@@ -34,7 +35,7 @@ function getWarehouseForBrand(brandName) {
   if (b.includes("prepto")) return "Finished Goods Prepto - MF";
   if (b.includes("howrah")) return "Finished Goods Howrah - MF";
   if (b.includes("mithila")) return "Finished Goods Mithila - MF";
-  return "Finished Goods - MF";
+  return "";
 }
 
 function pickWarehouseForItem(item, brand) {
@@ -43,7 +44,6 @@ function pickWarehouseForItem(item, brand) {
   return isProduct ? getWarehouseForBrand(brand) : RAW_WH;
 }
 
-// ✅ Use a NON-group child account here in ERPNext
 const DEFAULT_DIFFERENCE_ACCOUNT = "Temporary Opening - MF";
 
 // Price List display names you want to use
@@ -87,10 +87,6 @@ function pickPriceListName(target, priceLists) {
   return found?.name || target || "";
 }
 
-/* ============================================================
-   BULK HELPERS (CSV/TSV/XLSX)
-   ============================================================ */
-
 /** normalize a header to stable keys like "item-code", "valuation-rate", etc. */
 function normalizeKey(k) {
   return String(k ?? "")
@@ -101,7 +97,6 @@ function normalizeKey(k) {
     .replace(/_+/g, "-");
 }
 
-/** looser compare: remove everything except [a-z0-9] */
 function looseKey(k) {
   return String(k || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 }
@@ -114,13 +109,11 @@ function looseKey(k) {
 function pickFirstSmart(row, aliases) {
   if (!row) return "";
 
-  // 1) direct match
   for (const k of aliases || []) {
     const v = row[k];
     if (v !== undefined && v !== null && String(v).trim() !== "") return v;
   }
 
-  // 2) loose match
   const map = new Map();
   Object.keys(row).forEach((k) => map.set(looseKey(k), k));
 
@@ -198,7 +191,6 @@ function parseDelimited(text) {
   return rows;
 }
 
-/** Accept multiple header spellings in bulk files */
 const BULK_COL = {
   itemCode: ["item-code", "item_code", "item", "item-id", "itemid", "item-name", "itemname", "code"],
   qty: ["qty", "quantity", "opening-qty", "opening-stock", "stock", "count"],
@@ -267,9 +259,6 @@ async function runWithLimit(items, limit, workerFn, onProgress) {
   return out;
 }
 
-/* ============================================================
-   SEARCHABLE ITEM DROPDOWN (same style as other screens)
-   ============================================================ */
 function ItemSearchDropdown({ items, value, onSelect, placeholder, className = "" }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -377,7 +366,6 @@ function ItemSearchDropdown({ items, value, onSelect, placeholder, className = "
 }
 
 function OpeningStockEntry() {
-  // Master data
   const { orgs, activeOrg } = useOrg(); // Get orgs from context
   const [items, setItems] = useState([]);
   const [manualBrand, setManualBrand] = useState(
@@ -386,7 +374,6 @@ function OpeningStockEntry() {
   const [priceLists, setPriceLists] = useState([]);
   const [companies, setCompanies] = useState([]);
 
-  // Header fields
   const [company, setCompany] = useState("");
   const [postingDate, setPostingDate] = useState(
     new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
@@ -394,19 +381,15 @@ function OpeningStockEntry() {
       .slice(0, 10)
   );
 
-  // Manual rows
   const [rows, setRows] = useState([createEmptyRow(0)]);
 
-  // UI status
   const [loadingInit, setLoadingInit] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  // Tabs: Manual / Bulk
   const [activeTab, setActiveTab] = useState("manual"); // "manual" | "bulk"
 
-  // Bulk state
   const fileRef = useRef(null);
   const [bulkParsing, setBulkParsing] = useState(false);
   const [bulkCreating, setBulkCreating] = useState(false);
@@ -415,7 +398,6 @@ function OpeningStockEntry() {
   const [bulkResults, setBulkResults] = useState([]); // results after create
   const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0 });
 
-  /** Quick lookup: item_code -> item object */
   const itemByCode = useMemo(() => {
     const m = new Map();
     (items || []).forEach((it) => {
@@ -423,7 +405,6 @@ function OpeningStockEntry() {
     });
     return m;
   }, [items]);
-  /** 1. Filtered Item List Logic **/
   const brandFilteredItems = useMemo(() => {
     return items.filter(it => {
       const isProduct = String(it.item_group || "").toLowerCase().includes("product");
@@ -442,9 +423,7 @@ function OpeningStockEntry() {
       return true; // Keep shared raw materials visible for everyone
     });
   }, [items, manualBrand]);
-  /* ---------------------------
-     Initial load of master data
-     --------------------------- */
+
   useEffect(() => {
     async function init() {
       setLoadingInit(true);
@@ -471,9 +450,6 @@ function OpeningStockEntry() {
     init();
   }, []);
 
-  /* ============================================================
-     MANUAL MODE HELPERS
-     ============================================================ */
 
   function addRow() {
     setRows((prev) => [
@@ -516,7 +492,6 @@ function OpeningStockEntry() {
 
       updated.price_list = pl;
 
-      // 1) Price List rate
       if (pl) {
         const priceRow = await getItemRateFromPriceList(updated.item_code, pl);
         const pr = Number(priceRow?.price_list_rate);
@@ -524,12 +499,10 @@ function OpeningStockEntry() {
         if (Number.isFinite(pr) && pr > 0) {
           updated.rate = String(pr);
         } else {
-          // 2) Item valuation_rate
           const vr = Number(item?.valuation_rate);
           if (Number.isFinite(vr) && vr > 0) {
             updated.rate = String(vr);
           } else {
-            // 3) Bin valuation_rate by warehouse
             const wh = updated.warehouse || RAW_WH;
             const bin = await getItemWarehouseValuationRate(updated.item_code, wh);
             const br = Number(bin?.valuation_rate);
@@ -563,13 +536,21 @@ function OpeningStockEntry() {
     if (!item) return;
 
     const nextWh = pickWarehouseForItem(item, manualBrand); // Use dynamic brand WH
+    const safeUOM = item.stock_uom || item.uom || item.default_uom || "";
+    const baseRow = {
+      ...rows.find((r) => r.id === rowId),
+      item_code: itemCode,
+      item_group: item.item_group,
+      uom: safeUOM, // <--- UOM is saved here!
+      warehouse: nextWh,
+      rate: "",
+      rowError: ""
+    };
+    setRows((prev) => prev.map((r) => r.id === rowId ? { ...baseRow, loadingRate: true } : r));
 
-    setRows((prev) => prev.map((r) => r.id === rowId ? {
-      ...r, item_code: itemCode, item_group: item.item_group, uom: item.stock_uom, warehouse: nextWh, rate: "", rowError: ""
-    } : r));
+    const updatedWithRate = await fetchRateForRow(baseRow);
 
-    const updated = await fetchRateForRow({ ...rows.find(r => r.id === rowId), item_code: itemCode, warehouse: nextWh });
-    setRows((prev) => prev.map((r) => r.id === rowId ? updated : r));
+    setRows((prev) => prev.map((r) => r.id === rowId ? updatedWithRate : r));
   }
   //async function handleRowItemChange(rowId, itemCode) {
   //  const item = items.find((it) => it.name === itemCode);
@@ -679,9 +660,6 @@ function OpeningStockEntry() {
     }
   }
 
-  /* ============================================================
-     BULK MODE HELPERS
-     ============================================================ */
 
   function clearBulkFile() {
     if (fileRef.current) fileRef.current.value = "";
@@ -801,7 +779,6 @@ function OpeningStockEntry() {
     setBulkCreating(true);
 
     try {
-      // We only show progress for lines missing rate
       const needRateTotal = bulkLines.filter(
         (l) => !(Number.isFinite(l.rate) && l.rate > 0)
       ).length;
@@ -812,14 +789,12 @@ function OpeningStockEntry() {
         bulkLines,
         4,
         async (l) => {
-          // If file gave rate, keep it
           if (Number.isFinite(l.rate) && l.rate > 0) return { ...l, _rateNote: "" };
 
           const finished = isFinishedGroup(l.item_group);
           const targetPL = finished ? PL_SELLING : PL_BUYING;
           const pl = pickPriceListName(targetPL, priceLists);
 
-          // "fake row" so we can reuse fetchRateForRow()
           const tmp = {
             item_code: l.item_code,
             item_group: l.item_group,
@@ -845,7 +820,6 @@ function OpeningStockEntry() {
         }
       );
 
-      // Build Stock Reconciliation payload
       const itemsPayload = enriched.map((r) => ({
         item_code: r.item_code,
         warehouse: r.warehouse,
@@ -869,7 +843,6 @@ function OpeningStockEntry() {
 
       await submitDoc("Stock Reconciliation", name);
 
-      // Build per-line results for UI
       const results = enriched.map((r) => ({
         rowNo: r.rowNo,
         item_code: r.item_code,
@@ -894,7 +867,6 @@ function OpeningStockEntry() {
 
       setError(msg);
 
-      // Show failed results (so user can see what got attempted)
       if (bulkLines.length) {
         setBulkResults(
           bulkLines.map((r) => ({
@@ -915,9 +887,6 @@ function OpeningStockEntry() {
     }
   }
 
-  /* ============================================================
-     UI
-     ============================================================ */
   return (
     <div className="opening-stock">
       {/* Page header */}
@@ -934,7 +903,6 @@ function OpeningStockEntry() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="opening-stock-tabs">
         <button
           type="button"
@@ -953,16 +921,12 @@ function OpeningStockEntry() {
         </button>
       </div>
 
-      {/* Top-level messages */}
       {loadingInit && (
         <p className="text-muted opening-stock-loading">Loading items, price lists...</p>
       )}
       {error && <p className="alert alert-error">{error}</p>}
       {message && <p className="alert alert-success">{message}</p>}
 
-      {/* ============================================================
-         MANUAL TAB
-         ============================================================ */}
       {activeTab === "manual" && (
         <form onSubmit={handleSubmit} className="opening-stock-form">
           {/* Company + Posting Date */}
@@ -993,7 +957,6 @@ function OpeningStockEntry() {
             </div>
           </div>
 
-          {/* Rows header */}
           <div className="opening-stock-rows-header">
             <h3 className="opening-stock-rows-title">Items</h3>
             <button
@@ -1006,7 +969,6 @@ function OpeningStockEntry() {
             </button>
           </div>
 
-          {/* Manual table */}
           <div className="table-container opening-stock-table-wrapper">
             <table className="table opening-stock-table opening-stock-table-manual">
               <thead>
@@ -1024,7 +986,6 @@ function OpeningStockEntry() {
               <tbody>
                 {rows.map((row) => (
                   <tr key={row.id}>
-                    {/* Item dropdown */}
                     <td>
                       <ItemSearchDropdown
                         items={items}
@@ -1034,15 +995,12 @@ function OpeningStockEntry() {
                       />
                     </td>
 
-                    {/* Warehouse is auto-picked (read-only) */}
                     <td>
                       <span className="text-muted">{row.warehouse || RAW_WH}</span>
                     </td>
 
-                    {/* UOM from item */}
                     <td>{row.uom || "—"}</td>
 
-                    {/* Qty */}
                     <td>
                       <input
                         type="number"
@@ -1054,12 +1012,10 @@ function OpeningStockEntry() {
                       />
                     </td>
 
-                    {/* Price list auto-picked */}
                     <td>
                       <span className="text-muted">{row.price_list || "—"}</span>
                     </td>
 
-                    {/* Rate + Auto button */}
                     <td>
                       <div className="opening-stock-rate-cell">
                         <input
@@ -1081,7 +1037,6 @@ function OpeningStockEntry() {
                       {row.rowError && <div className="opening-stock-row-error">{row.rowError}</div>}
                     </td>
 
-                    {/* Remove row */}
                     <td>
                       <button
                         type="button"
@@ -1098,7 +1053,6 @@ function OpeningStockEntry() {
             </table>
           </div>
 
-          {/* Submit */}
           <div className="opening-stock-submit-row">
             <button type="submit" disabled={saving || loadingInit} className="btn btn-primary">
               {saving ? "Saving..." : "Create Opening Stock"}
@@ -1107,9 +1061,6 @@ function OpeningStockEntry() {
         </form>
       )}
 
-      {/* ============================================================
-         BULK TAB
-         ============================================================ */}
       {activeTab === "bulk" && (
         <div className="opening-stock-bulk">
           {/* Bulk: same company/date controls */}
@@ -1140,7 +1091,6 @@ function OpeningStockEntry() {
             </div>
           </div>
 
-          {/* Bulk header */}
           <div className="opening-stock-bulk-head">
             <h3 className="opening-stock-rows-title">Bulk Upload (Opening Stock)</h3>
             <button type="button" onClick={resetBulk} className="btn btn-secondary btn-sm">
@@ -1148,7 +1098,6 @@ function OpeningStockEntry() {
             </button>
           </div>
 
-          {/* Bulk upload + actions */}
           <div className="opening-stock-bulk-grid">
             <div className="field-group">
               <label className="form-label">Upload file (.xlsx / .csv / .tsv)</label>
@@ -1197,7 +1146,6 @@ function OpeningStockEntry() {
             </div>
           </div>
 
-          {/* Bulk results table */}
           {bulkResults.length > 0 && (
             <div className="table-container opening-stock-table-wrapper" style={{ marginTop: 14 }}>
               <table className="table opening-stock-table opening-stock-table-bulk">

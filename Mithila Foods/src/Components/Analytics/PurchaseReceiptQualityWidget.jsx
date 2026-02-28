@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import DonutChart from "../Charts/DonutChart";
-import { getPurchaseReceiptQualitySummary } from "../erpBackendApi";
+import { getPurchaseReceiptQualitySummary } from "../api/purchase";
 
 function formatQty(n) {
   const num = Number(n) || 0;

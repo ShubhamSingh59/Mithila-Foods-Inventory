@@ -4,17 +4,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Paperclip, ExternalLink, QrCode } from "lucide-react";
 import { 
   getDoc, 
-  getItemsBySupplier,      // ✅ Imported New Function
-  getRecentPOsBySupplier   // ✅ Imported New Function
-} from "../erpBackendApi"; 
+} from "../api/core"; 
+import { 
+  getItemsBySupplier,      
+  getRecentPOsBySupplier   
+} from "../api/purchase"; 
 import "./SupplierDetailPage.css";
 
 // Analytics Widgets
 import PurchasePayablesWidget from "../../Components/Analytics/PurchasePayablesWidget";
 import PurchaseOrderPipelineWidget from "../../Components/Analytics/PurchaseOrderPipelineWidget";
 import PurchaseReceiptQualityWidget from "../../Components/Analytics/PurchaseReceiptQualityWidget";
-
-// --- Helpers ---
 
 // Secure Image Proxy URL generator
 const getProxyUrl = (path) => {
@@ -62,10 +62,9 @@ export default function SupplierDetailPage() {
   const navigate = useNavigate();
   const supplierName = useMemo(() => decodeURIComponent(id || ""), [id]);
 
-  // --- State ---
   const [supplier, setSupplier] = useState(null);
-  const [items, setItems] = useState([]);        // ✅ State for Items
-  const [recentPOs, setRecentPOs] = useState([]); // ✅ State for Recent POs
+  const [items, setItems] = useState([]);        
+  const [recentPOs, setRecentPOs] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
@@ -117,14 +116,12 @@ export default function SupplierDetailPage() {
   return (
     <div className="supplier-detail-page">
       
-      {/* --- ANALYTICS --- */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
          <PurchasePayablesWidget supplierName={supplierName} />
          <PurchaseOrderPipelineWidget supplierName={supplierName} />
          <PurchaseReceiptQualityWidget supplierName={supplierName} />
       </div>
 
-      {/* --- HEADER --- */}
       <div className="supplier-detail-topbar">
         <button className="btn supplier-detail-back" onClick={() => navigate(-1)}>← Back</button>
         <div className="supplier-detail-topbar__title">
@@ -135,9 +132,7 @@ export default function SupplierDetailPage() {
 
       {err && <div className="alert alert-error">{err}</div>}
 
-      {/* --- INFO SECTIONS --- */}
       <div className="supplier-detail-grid supplier-detail-grid--2">
-        {/* Left: General */}
         <section className="supplier-detail-card">
           <div className="supplier-detail-card__header">Identity & Contact</div>
           <div className="supplier-detail-card__body supplier-detail-grid supplier-detail-grid--2">
@@ -159,7 +154,6 @@ export default function SupplierDetailPage() {
           </div>
         </section>
 
-        {/* Right: Financials */}
         <section className="supplier-detail-card">
           <div className="supplier-detail-card__header">Financials & Compliance</div>
           <div className="supplier-detail-card__body supplier-detail-grid supplier-detail-grid--2">
@@ -177,7 +171,6 @@ export default function SupplierDetailPage() {
         </section>
       </div>
 
-      {/* --- ATTACHMENTS & QR --- */}
       <section className="supplier-detail-card">
          <div className="supplier-detail-card__header">Documents & Payment QR</div>
          <div className="supplier-detail-card__body supplier-detail-grid supplier-detail-grid--3">
@@ -205,7 +198,6 @@ export default function SupplierDetailPage() {
          </div>
       </section>
 
-      {/* --- ✅ NEW SECTION: ITEMS & RECENT ORDERS --- */}
       <div className="supplier-detail-grid supplier-detail-grid--2">
          
          {/* 1. Items Supplied Table */}

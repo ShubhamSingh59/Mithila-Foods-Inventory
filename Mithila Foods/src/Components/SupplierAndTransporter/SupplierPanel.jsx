@@ -1,14 +1,10 @@
 // src/Components/SupplierAndTransporter/SupplierPanel.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { QrCode, X } from "lucide-react"; 
-import { getSuppliersForList, getSupplierStatusOptions } from "../erpBackendApi"; 
+import { getSuppliersForList, getSupplierStatusOptions } from "../api/master"; 
 import "./SupplierPanel.css";
 import SupplierTiles from "../SupplierAndTransporterDashoard/SupplierTiles"; 
 import { useNavigate } from "react-router-dom";
-
-// ------------------------------
-// Helper Components & Functions
-// ------------------------------
 
 function SupplierEmailCell({ value }) {
   if (!value) return <span className="supplier-email-none">No Email</span>;
@@ -32,9 +28,7 @@ function htmlToPlainTextPreserveLines(html) {
     .trim();
 }
 
-// ------------------------------
-// Image Preview Modal
-// ------------------------------
+
 function ImageModal({ src, onClose }) {
   if (!src) return null;
   return (
@@ -57,26 +51,19 @@ function ImageModal({ src, onClose }) {
   );
 }
 
-// ------------------------------
-// Generic List Panel
-// ------------------------------
 function ListPanel({ config }) {
-  // Raw Data State
   const [items, setItems] = useState([]);
   const [statusOptions, setStatusOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Filters State
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [highlightId, setHighlightId] = useState("");
 
-  // QR Preview State
   const [previewImage, setPreviewImage] = useState(null);
 
-  // Column Visibility State
   const defaultKeys = useMemo(() => 
     config.columns.filter(col => col.defaultVisible).map(col => col.key),
   [config.columns]);
@@ -88,7 +75,6 @@ function ListPanel({ config }) {
   const [visibleKeys, setVisibleKeys] = useState(defaultKeys);
   const [isShowingAll, setIsShowingAll] = useState(false);
 
-  // Toggle Logic
   const toggleViewMode = () => {
     if (isShowingAll) {
       setVisibleKeys(defaultKeys);
@@ -99,7 +85,6 @@ function ListPanel({ config }) {
     }
   };
 
-  // Load Data Effect
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -125,10 +110,8 @@ function ListPanel({ config }) {
       }
     }
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Filtering Logic
   const categoryOptions = useMemo(() => {
     if (!config.useCategoryFilter || !config.categoryField) return [];
     const set = new Set();
@@ -141,15 +124,12 @@ function ListPanel({ config }) {
   const filteredItems = useMemo(() => {
     const term = search.trim().toLowerCase();
     return (items || []).filter((it) => {
-      // Status
       if (config.useStatusFilter && config.statusField && statusFilter !== "all") {
         if ((it[config.statusField] || "") !== statusFilter) return false;
       }
-      // Category
       if (config.useCategoryFilter && config.categoryField && categoryFilter !== "all") {
         if ((it[config.categoryField] || "") !== categoryFilter) return false;
       }
-      // Search
       if (term) {
         const haystack = [it[config.idField], ...(config.searchFields || []).map((f) => it[f])]
           .filter(Boolean)
@@ -169,17 +149,13 @@ function ListPanel({ config }) {
     }
   };
 
-  // ✅ PROXY LOGIC FOR QR CODES
   const handleQrClick = (e, url) => {
     e.stopPropagation(); 
     
     if (!url) return;
 
-    // 1. Get your Node Backend URL (e.g., localhost:4000) from .env
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
-    // 2. Construct the Proxy URL
-    // Sends the ERP relative path (e.g. /files/qr.png) to your backend
     const proxyUrl = `${BACKEND_URL}/api/proxy-image?path=${encodeURIComponent(url)}`;
 
     console.log("Opening QR via Proxy:", proxyUrl);
@@ -190,10 +166,8 @@ function ListPanel({ config }) {
     <>
       <SupplierTiles />
       
-      {/* Modal Layer */}
       {previewImage && <ImageModal src={previewImage} onClose={() => setPreviewImage(null)} />}
 
-      {/* Controls Row */}
       <form className="supplier-search-row" onSubmit={(e) => e.preventDefault()}>
         <div className="supplier-search-input-wrapper">
           <span className="supplier-search-icon">🔍</span>
@@ -245,7 +219,6 @@ function ListPanel({ config }) {
         </div>
       </form>
 
-      {/* Header */}
       <div className="supplier-list-header">
         <div className="supplier-list-title-block">
           <h2 className="supplier-list-title">{config.title}</h2>
@@ -261,7 +234,6 @@ function ListPanel({ config }) {
       {error && <div className="alert alert-error">{error}</div>}
       {loading && <div className="supplier-loading text-muted">Loading {config.pluralLabel}…</div>}
 
-      {/* Table Area */}
       {!loading && !error && (
         <>
           {filteredItems.length === 0 ? (
@@ -273,10 +245,8 @@ function ListPanel({ config }) {
               <table className="table supplier-table">
                 <thead>
                   <tr>
-                    {/* Only show ID column if config is true (it is false now) */}
                     {config.showIdColumn && <th>ID</th>}
 
-                    {/* Filter headers based on visibleKeys */}
                     {config.columns
                       .filter(col => visibleKeys.includes(col.key))
                       .map((col) => (
@@ -303,7 +273,6 @@ function ListPanel({ config }) {
                           </td>
                         )}
 
-                        {/* Filter cells based on visibleKeys */}
                         {config.columns
                           .filter(col => visibleKeys.includes(col.key))
                           .map((col) => (
@@ -344,9 +313,6 @@ function ListPanel({ config }) {
   );
 }
 
-// ------------------------------
-// CONFIGURATION
-// ------------------------------
 const SUPPLIER_CONFIG = {
   title: "Supplier List",
   pluralLabel: "suppliers",
@@ -371,7 +337,6 @@ const SUPPLIER_CONFIG = {
     "custom_contact_person", "custom_status", "pan", "gstin"
   ],
 
-  // ✅ Column Config: "defaultVisible" controls what shows initially
   columns: [
     { 
       header: "Supplier Name", 
@@ -389,7 +354,7 @@ const SUPPLIER_CONFIG = {
     },
     { 
       header: "Payment QR", 
-      key: "custom_payment_qr", // ✅ NEW QR COLUMN
+      key: "custom_payment_qr", 
       className: "col-qr", 
       defaultVisible: true, // 3. Visible by default
     },

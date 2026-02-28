@@ -8,25 +8,22 @@ import ErrorBoundary from "./Components/ErrorBoundary";
 
 // Views (Screens)
 import PurchaseOrderView from "./views/PurchaseOrderView";
-import Analytics from "./Components/Analytics";
+//import Analytics from "./Components/Analytics";
 import MfWorkflow from "./Components/MfWorkflow/MfWorkflow";
 import MfgTabsView from "./views/MfgTabsView";
 import StockSummaryTabsView from "./views/StockSummaryTabsView";
 import StockReorder from "./Components/StockReorder/StockReorder";
 import SalesReturnTabsView from "./views/SalesReturnTabsView";
 import SalesOrderView from "./views/SalesOrderView";
-
-// ✅ 1. Import the 3 Supplier Views
-import SupplierTabView from "./views/SupplierListView"; // View 1: Directory
-import PurchaseTrackerView from "./views/PurchaseTrackerView"; // View 2: Operations
-import SupplierIntelligenceView from "./views/SupplierIntelligenceView"; // View 3: Intelligence
+import SupplierTabView from "./views/SupplierListView"; 
+import PurchaseTrackerView from "./views/PurchaseTrackerView"; 
+import SupplierIntelligenceView from "./views/SupplierIntelligenceView";
 
 // CSS
 import "./App.css";
 import { OrgProvider } from "./Components/Context/OrgContext";
 
-// --- KeepAlive Wrapper (Updated) ---
-// ✅ Updated to accept 'triggerPaths' (array) for views with multiple sub-routes
+// --- KeepAlive Wrapper 
 const KeepAlivePage = ({ triggerPath, triggerPaths, children }) => {
   const location = useLocation();
 
@@ -34,7 +31,6 @@ const KeepAlivePage = ({ triggerPath, triggerPaths, children }) => {
   if (triggerPath) {
     isActive = location.pathname.startsWith(triggerPath);
   } else if (triggerPaths) {
-    // Check if current URL starts with ANY of the provided paths
     isActive = triggerPaths.some(path => location.pathname.startsWith(path));
   }
 
@@ -71,7 +67,6 @@ export default function App() {
       <Router>
         <div
           className="app-shell"
-          // 64px is the collapsed width defined in CSS
           style={{ "--sidebar-width": sidebarOpen ? "250px" : "64px" }}
         >
           {/* Sidebar */}
@@ -123,9 +118,7 @@ export default function App() {
                 </div>
               </KeepAlivePage>
 
-              {/* ✅ 5. SUPPLIER VIEWS (Split into 3 Sections) 
-                We use 'triggerPaths' array because each view handles multiple tabs.
-            */}
+              {/* 5. SUPPLIER VIEWS (Split into 3 Sections) */}
 
               {/* View 1: Directory (Suppliers & Transporters) */}
               <KeepAlivePage triggerPaths={["/suppliers/list", "/suppliers/transporters", "/suppliers/create"]}>
@@ -150,11 +143,11 @@ export default function App() {
 
 
               {/* 6. ANALYTICS VIEWS (General) */}
-              <KeepAlivePage triggerPath="/analytics">
+              {/*<KeepAlivePage triggerPath="/analytics">
                 <div className="app-panel app-panel-primary">
                   <Analytics />
                 </div>
-              </KeepAlivePage>
+              </KeepAlivePage>*/}
 
               {/* ROUTING: Redirects & 404 */}
               <Routes>

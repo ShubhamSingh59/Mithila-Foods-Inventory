@@ -7,15 +7,18 @@ export default function SalesOrderRecentList(props) {
     customers = [],
     listLimit = 10,
     loadingInvoices = false,
-    reloadRecentInvoices = () => {},
+    reloadRecentInvoices = () => { },
     invoiceCustomerFilter = "",
-    setInvoiceCustomerFilter = () => {},
+    setInvoiceCustomerFilter = () => { },
 
     filteredRecentInvoices = [],
     recentInvoices = [],
+    orgs = [],
+    activeOrg,
+    changeOrg,
 
     postingDateSortLabel = "",
-    setPostingDateSort = () => {},
+    setPostingDateSort = () => { },
     sortedRecentInvoices = [],
 
     payingInvoice = "", // invoice name that is currently being marked paid
@@ -24,9 +27,9 @@ export default function SalesOrderRecentList(props) {
     editingDraftName = "", // which draft is currently open in the form
 
     // Actions passed from parent
-    handleEditDraft = () => {},
-    handleSubmitDraft = () => {},
-    handleMarkPaid = () => {},
+    handleEditDraft = () => { },
+    handleSubmitDraft = () => { },
+    handleMarkPaid = () => { },
   } = props || {};
 
   return (
@@ -77,7 +80,21 @@ export default function SalesOrderRecentList(props) {
             ))}
           </select>
         </div>
-
+        <div className="sales-recent-filter">
+          <label className="sales-recent-filter-label" style={{ fontSize: "12px", color: "#666", display: "block", marginBottom: "4px" }}>Brand</label>
+          <select
+            className="select"
+            value={activeOrg || "F2D TECH PRIVATE LIMITED"}
+            onChange={(e) => changeOrg(e.target.value)}
+            disabled={loadingInvoices}
+          >
+            {orgs.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="sales-recent-count text-muted">
           Showing <b>{(filteredRecentInvoices || []).length}</b> /{" "}
           <b>{(recentInvoices || []).length}</b>
@@ -123,7 +140,7 @@ export default function SalesOrderRecentList(props) {
                     {/* Invoice name */}
                     <td className="sales-recent-name-cell">
                       {inv.name}{" "}
-                      
+
                     </td>
 
                     <td className="sales-recent-customer-cell">{inv.customer}</td>

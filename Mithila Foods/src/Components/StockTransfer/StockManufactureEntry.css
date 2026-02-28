@@ -1,10 +1,4 @@
 /* src/CSS/StockManufactureEntry.css */
-
-/* ==============================
-   App wrapper overrides
-   App.jsx wraps screens inside .app-panel.
-   For this screen we remove that outer card look.
-   ============================== */
 .app-panel:has(.stock-mfg) {
   padding: 0 !important;
   background: transparent !important;

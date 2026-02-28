@@ -1,7 +1,8 @@
 // src/Components/SupplierAnalytics/SupplierTracker.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import "./SupplierTracker.css";
-import { getSupplierTrackerData, getSuppliers } from "../erpBackendApi";
+import {getSupplierTrackerData} from "../api/purchase"
+import { getSuppliers } from "../api/master";
 
 const fmtMoney = (n) => `₹ ${Number(n || 0).toLocaleString("en-IN")}`;
 const fmtPct = (n) => `${Number(n || 0).toFixed(1)}%`;

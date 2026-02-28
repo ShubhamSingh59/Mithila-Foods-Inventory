@@ -51,7 +51,70 @@ export async function getSupplierStatusOptions() { // This wil helps us to make 
   if (!statusField || !statusField.options) return [];
   return statusField.options.split("\n").map((o) => o.trim()).filter(Boolean);
 }
+const SUPPLIER_STATUS_FIELD = "custom_status"; // e.g. "custom_supplier_status"
 
+export async function getSupplierDashboardStatsByStatus() {
+  // 1) Get all allowed statuses from meta (Select options)
+  const statusOptions = await getSupplierStatusOptions(); // already in your file
+
+  // 2) Fetch suppliers (minimal fields) in pages
+  const pageSize = 1000;
+  let start = 0;
+  let all = [];
+
+  while (true) {
+    const rows = await getDoctypeList("Supplier", {
+      fields: JSON.stringify(["name", "supplier_group", SUPPLIER_STATUS_FIELD]),
+      filters: JSON.stringify([
+        ["Supplier", "supplier_group", "!=", "Transporter"]
+      ]),
+      limit_page_length: pageSize,
+      limit_start: start,
+      order_by: "modified desc",
+    });
+
+    all = all.concat(rows || []);
+    if (!rows || rows.length < pageSize) break;
+    start += pageSize;
+  }
+
+  // 3) Compute totals
+  const total = all.length;
+
+  const groups = new Set();
+  const statusCounts = new Map();
+
+  // Initialize counts for all known statuses
+  (statusOptions || []).forEach((s) => statusCounts.set(s, 0));
+
+  // Optional bucket for missing/unknown status values
+  const UNKNOWN = "Unspecified";
+
+  for (const s of all) {
+    if (s.supplier_group) groups.add(s.supplier_group);
+
+    const valRaw = s?.[SUPPLIER_STATUS_FIELD];
+    const val = (valRaw && String(valRaw).trim()) || UNKNOWN;
+
+    // If meta options didn't include it, still count it
+    statusCounts.set(val, (statusCounts.get(val) || 0) + 1);
+  }
+
+  // Keep order: meta options first, then any extras (like Unspecified)
+  const orderedStatusEntries = [];
+  (statusOptions || []).forEach((opt) => {
+    orderedStatusEntries.push([opt, statusCounts.get(opt) || 0]);
+    statusCounts.delete(opt);
+  });
+  // append remaining (Unspecified / unexpected)
+  for (const [k, v] of statusCounts.entries()) orderedStatusEntries.push([k, v]);
+
+  return {
+    total,
+    categories: groups.size,
+    statuses: orderedStatusEntries.map(([status, count]) => ({ status, count })),
+  };
+}
 export async function getTransporters() {
   return getDoctypeList("Supplier", {
     fields: JSON.stringify(["name", "supplier_name"]),
@@ -63,7 +126,34 @@ export async function getTransporters() {
     order_by: "supplier_name asc",
   });
 }
+export async function getTransporterDashboardStatsByStatus() {
+  const rows = await getDoctypeList("Supplier", {
+    fields: JSON.stringify(["custom_status"]),
+    filters: JSON.stringify([
+      ["Supplier", "is_transporter", "=", 1] // ✅ Fix: Count everyone checked as Transporter
+    ]),
+    limit_page_length: 5000
+  });
 
+  const statusCounts = {};
+  let activeCount = 0;
+
+  rows.forEach(r => {
+    // ✅ Fix: Normalize status to prevent duplicates ("Active" vs "active")
+    let s = (r.custom_status || "Unspecified").trim();
+    s = s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+
+    statusCounts[s] = (statusCounts[s] || 0) + 1;
+
+    if (s === 'Active') activeCount++;
+  });
+
+  return {
+    total: rows.length, // Should now reflect 8
+    active: activeCount,
+    statuses: Object.keys(statusCounts).map(k => ({ status: k, count: statusCounts[k] }))
+  };
+}
 export async function fetchTransporterServiceAreas(transporterIds) {
   if (!transporterIds || transporterIds.length === 0) return {};
   try {
@@ -165,7 +255,7 @@ export async function getItemsForBOM() {
   return getDoctypeList("Item", {
     fields: JSON.stringify([
       "name", "item_name", "stock_uom", "item_group", "valuation_rate",
-      "last_purchase_rate", "brand"
+      "last_purchase_rate", "brand", "standard_rate", "last_purchase_rate",
     ]),
     limit_page_length: 1000,
   });

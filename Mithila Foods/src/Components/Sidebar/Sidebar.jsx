@@ -82,10 +82,10 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
           <NavItem to="/suppliers/analytics" label="Reports" icon={TrendingUp} />
         </div>
 
-        <div className="app-nav-group">
+        {/*<div className="app-nav-group">
           <div className="app-nav-group-label">General Analytics</div>
           <NavItem to="/analytics" label="Dashboard" icon={BarChart2} />
-        </div>
+        </div>*/}
 
       </nav>
 

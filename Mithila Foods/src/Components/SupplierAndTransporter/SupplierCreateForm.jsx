@@ -5,7 +5,7 @@ import {
   getDoctypeList, 
   uploadFileToDoc, 
   updateDoc 
-} from "../erpBackendApi";
+} from "../api/core";
 import "./SupplierForm.css";
 
 export default function SupplierCreateForm({ isTransporter = false }) {
@@ -13,10 +13,8 @@ export default function SupplierCreateForm({ isTransporter = false }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
-  // Master Data State
   const [supplierGroups, setSupplierGroups] = useState([]);
 
-  // Form Data State
   const [formData, setFormData] = useState({
     supplier_name: "",
     supplier_group: isTransporter ? "Transporter" : "",
@@ -36,16 +34,13 @@ export default function SupplierCreateForm({ isTransporter = false }) {
     custom_credit_limit: "",
     payment_terms: "",
     
-    // Transporter specific
     custom_vehicle_type: "",
     
     country: "India"
   });
 
-  // Child Table for Transporter Service Areas
   const [serviceAreas, setServiceAreas] = useState([{ city: "" }]);
 
-  // File State (We store the File objects here)
   const [files, setFiles] = useState({
     custom_payment_qr: null,
     custom_gst_attach: null,
@@ -54,16 +49,13 @@ export default function SupplierCreateForm({ isTransporter = false }) {
     custom_fssai_attach: null
   });
 
-  // Load Supplier Groups on mount
   useEffect(() => {
     async function loadMasterData() {
       try {
         if (!isTransporter) {
           const groups = await getDoctypeList("Supplier Group");
           setSupplierGroups(groups || []);
-          // Set default if available and not set
           if (groups.length > 0 && !formData.supplier_group) {
-             // Try to find 'Raw Material' or pick first
              const def = groups.find(g => g.name === "Raw Material") ? "Raw Material" : groups[0].name;
              setFormData(prev => ({ ...prev, supplier_group: def }));
           }
@@ -75,13 +67,11 @@ export default function SupplierCreateForm({ isTransporter = false }) {
     loadMasterData();
   }, [isTransporter]);
 
-  // Handle Text Inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle File Inputs
   const handleFileChange = (e) => {
     const { name, files: selectedFiles } = e.target;
     if (selectedFiles && selectedFiles[0]) {
@@ -89,7 +79,6 @@ export default function SupplierCreateForm({ isTransporter = false }) {
     }
   };
 
-  // Handle Child Table (Transporter only)
   const handleCityChange = (index, val) => {
     const list = [...serviceAreas];
     list[index].city = val;
@@ -111,23 +100,19 @@ export default function SupplierCreateForm({ isTransporter = false }) {
     try {
       if (!formData.supplier_name) throw new Error(`${isTransporter ? 'Transporter' : 'Supplier'} Name is required`);
 
-      // 1. Prepare Base Payload
       const payload = {
         doctype: "Supplier",
         ...formData,
         is_transporter: isTransporter ? 1 : 0
       };
 
-      // Add child table if transporter
       if (isTransporter) {
         payload.custom_service_areas = serviceAreas.filter(a => a.city.trim() !== "");
       }
 
-      // 2. Create the Document
       const res = await createDoc("Supplier", payload);
       const newName = res.data.name;
 
-      // 3. Handle File Uploads (Create -> Upload -> Update Field)
       const fileKeys = Object.keys(files);
       const updates = {};
       let hasUpdates = false;
@@ -135,7 +120,6 @@ export default function SupplierCreateForm({ isTransporter = false }) {
       for (const key of fileKeys) {
         if (files[key]) {
           try {
-            // Upload
             const uploadRes = await uploadFileToDoc({
               doctype: "Supplier",
               docname: newName,
@@ -143,18 +127,15 @@ export default function SupplierCreateForm({ isTransporter = false }) {
               is_private: 0 // Public so it can be viewed easily
             });
             
-            // Get URL and prep update
             const fileUrl = uploadRes.data.message.file_url;
             updates[key] = fileUrl;
             hasUpdates = true;
           } catch (uploadErr) {
             console.error(`Failed to upload ${key}`, uploadErr);
-            // We continue even if one file fails
           }
         }
       }
 
-      // 4. Update Document with File URLs if any files were uploaded
       if (hasUpdates) {
         await updateDoc("Supplier", newName, updates);
       }
@@ -248,7 +229,6 @@ export default function SupplierCreateForm({ isTransporter = false }) {
         {/* --- SECTION 3: FINANCIALS & UPLOADS --- */}
         <div className="sf-section-label" style={{marginTop: 30}}>Financials & Compliance</div>
         <div className="sf-grid">
-          {/* Text Fields */}
           <div className="sf-field">
             <label className="sf-label">GSTIN</label>
             <input className="sf-input" name="gstin" value={formData.gstin} onChange={handleChange} />

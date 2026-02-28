@@ -1,13 +1,15 @@
 // src/SalesReturnSummary.jsx
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
-  getCustomers,
-  getCompanies,
-  getFinishedItemsForSales,
   getDoctypeList,
   getDoc,
   mapLimit,
-} from "../erpBackendApi";
+} from "../api/core";
+import{
+  getCustomers,
+  getCompanies,
+  getFinishedItemsForSales,
+} from "../api/master"
 import { useOrg } from "../Context/OrgContext"; 
 import "./SalesReturnSummary.css";
 

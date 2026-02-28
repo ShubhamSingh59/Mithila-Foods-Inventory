@@ -3,7 +3,7 @@ import { Building2, Tags, BadgeCheck, Ban, PauseCircle } from "lucide-react";
 import StatCard from "./StatCard";
 import "./SupplierTiles.css";
 
-import { getSupplierDashboardStatsByStatus } from "../erpBackendApi";
+import { getSupplierDashboardStatsByStatus } from "../api/master";
 
 const ACCENT_ROTATION = ["accent-0", "accent-1", "accent-2", "accent-3", "accent-4", "accent-5"];
 

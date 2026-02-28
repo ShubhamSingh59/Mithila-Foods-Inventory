@@ -6,7 +6,7 @@ import TransporterPanel from "../Components/SupplierAndTransporter/TransporterPa
 import SupplierDetailPage from "../Components/SupplierDetailPage/SupplierDetailPage";
 import TransporterDetailPage from "../Components/TransporterDetailPage/TransporterDetailPage";
 import PurchaseRegisterList from "../Components/PurchaseTracker/PurchaseRegisterList";
-import SupplierTabs from "../Components/SuppliersTabs/SupplierTabs";
+//import SupplierTabs from "../Components/SuppliersTabs/SupplierTabs";
 import SupplierCreateForm from "../Components/SupplierAndTransporter/SupplierCreateForm";
 import TransporterCreateForm from "../Components/SupplierAndTransporter/TransporterCreateForm";
 

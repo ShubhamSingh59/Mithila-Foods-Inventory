@@ -3,20 +3,28 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { useOrg } from "../Context/OrgContext";
 import { makeFlowId, makeFlowTag, RAW_WH, WIP_WH, FG_WH, WASTAGE_WH } from "./mfFlowConfig";
 import {
-  getCompanies,
-  getDoctypeList,
   getDoc,
   createDoc,
   submitDoc,
-  getBinForItemWarehouse,
-  getBoms,
-  getBomDocWithItems,
+  mapLimit,
+  getDoctypeList,
+} from "../api/core"
+import {
   getFinishedItems,
   getItemsForBOM,
-  mapLimit,
+  getCompanies,
+} from "../api/master"
+import {
+  getBoms,
+  getBomDocWithItems,
   listMfFlowStockEntries,
   getMfFlowWipBalances,
-} from "../erpBackendApi";
+} from "../api/mfg"
+import {
+  getBinForItemWarehouse,
+
+} from "../api/stock";
+
 import "./mfWorkflowTheme.css";
 function getWarehouseForBrand(brandName) {
   const b = String(brandName || "").trim().toLowerCase();
@@ -1059,11 +1067,14 @@ function ManufactureFromWipTab({ company, flowTag, orgs, activeOrg, changeOrg, o
                   </td>
                   <td>{WIP_WH}</td>
                   <td>
-                    {!r.fromBom && (
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => removeRow(r.id)}>
-                        Remove
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => removeRow(r.id)}
+                      title="Remove this item"
+                    >
+                      Remove
+                    </button>
                   </td>
                 </tr>
               ))}

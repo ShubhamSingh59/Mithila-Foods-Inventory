@@ -1,9 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getDoc } from "../erpBackendApi";
+import { getDoc } from "../api/core";
 import "./TransporterDetailPage.css";
 
-// --- Helper Functions ---
 function notSpecified(v) {
   if (v === null || v === undefined || v === "") return "Not specified";
   return String(v);
@@ -61,7 +60,6 @@ export default function TransporterDetailPage() {
       try {
         setErr("");
         setLoading(true);
-        // ✅ Fetch from Supplier
         const d = await getDoc("Supplier", supplierId);
         if (!alive) return;
         setDoc(d);
@@ -81,15 +79,12 @@ export default function TransporterDetailPage() {
     };
   }, [supplierId]);
 
-  // --- Data Mapping ---
   const displayName = doc?.supplier_name || doc?.name || supplierId;
   const contactPerson = doc?.custom_contact_person || "—";
   const status = doc?.custom_status || "—";
 
-  // ✅ Mapped correct custom fields
   const vehicleType = doc?.custom_vehicle_type || ""; 
   
-  // ✅ UPDATED: Handle Child Table Array
   const serviceAreas = doc?.custom_service_areas || []; 
 
   // Contact Info
@@ -154,7 +149,6 @@ export default function TransporterDetailPage() {
             {loading ? "…" : notSpecified(vehicleType)}
           </Field>
 
-          {/* ✅ UPDATED: Render Service Areas from Child Table */}
           <div className="tp-field">
             <div className="tp-field__label">Service Areas</div>
             <div className="tp-field__value">
@@ -175,7 +169,6 @@ export default function TransporterDetailPage() {
         </div>
       </section>
 
-      {/* 3. Contact Information */}
       <section className="tp-card tp-card--cyan">
         <div className="tp-card__header">
           <span className="tp-card__icon">👤</span>
@@ -219,7 +212,6 @@ export default function TransporterDetailPage() {
         </div>
       </section>
 
-      {/* 4. Business Information */}
       <section className="tp-card tp-card--blue">
         <div className="tp-card__header">
           <span className="tp-card__icon">💼</span>

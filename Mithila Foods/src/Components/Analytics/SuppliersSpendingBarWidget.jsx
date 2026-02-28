@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import BarChart from "../Charts/BarChart";
-import { getSuppliersByPurchaseOrderSpending } from "../erpBackendApi";
+import { getSuppliersByPurchaseOrderSpending } from "../api/purchase";
 
 function formatINR(n) {
     const num = Number(n) || 0;

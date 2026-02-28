@@ -278,7 +278,7 @@ function getWarehouseForBrand(brandName) {
   if (b.includes("prepto")) return "Finished Goods Prepto - MF";
   if (b.includes("howrah")) return "Finished Goods Howrah - MF";
   if (b.includes("mithila")) return "Finished Goods Mithila - MF";
-  return "Finished Goods - MF"; // default fallback
+  return "Select the Brand"; // default fallback
 }
 
 function looseKey(k) {
@@ -1084,6 +1084,323 @@ export default function SalesOrder() {
    * - group by invoice-id
    * - create Sales Invoice + submit
    */
+  //async function handleBulkCreate() {
+  //  setError("");
+  //  setMessage("");
+  //  setBulkResults([]);
+
+  //  if (!company) return setError("Company is required.");
+  //  if (!customer) return setError("Customer is required.");
+  //  if (!bulkLines.length) return setError("No parsed lines. Upload a file first.");
+  //  if (!bulkPostingDate) return setError("Select a Bulk Posting Date.");
+
+  //  const { allowAsin, requireAsin } = getCustomerMapConfig(customer);
+
+  //  const resolvedLines = bulkLines.map((l) => {
+  //    let item_code = resolveItemCodeForCustomer({
+  //      customerName: customer,
+  //      sku: l.sku,
+  //      asin: l.asin,
+  //    });
+
+  //    // optional fallback: SKU is actually Item Code
+  //    if (!item_code && l.sku && (items || []).some((it) => it.name === l.sku)) {
+  //      item_code = l.sku;
+  //    }
+
+  //    return { ...l, item_code };
+  //  });
+
+  //  // Separate mapping failures (so user sees exactly what failed)
+  //  const preResults = [];
+  //  const usableLines = [];
+
+  //  for (const l of resolvedLines) {
+  //    const missingAsinButRequired = requireAsin && !l.asin;
+  //    const missingSkuButRequired = !allowAsin && !l.sku;
+
+  //    if (missingAsinButRequired) {
+  //      preResults.push({
+  //        invoice_id: l.invoice_id,
+  //        sku: l.sku,
+  //        asin: l.asin,
+  //        qty: l.qty,
+  //        item_code: "",
+  //        status: "FAILED",
+  //        si_name: "",
+  //        message: "ASIN is compulsory for this customer. This row is missing ASIN.",
+  //      });
+  //      continue;
+  //    }
+
+  //    if (!l.item_code) {
+  //      preResults.push({
+  //        invoice_id: l.invoice_id,
+  //        sku: l.sku,
+  //        asin: l.asin,
+  //        qty: l.qty,
+  //        item_code: "",
+  //        status: "FAILED",
+  //        si_name: "",
+  //        message: missingSkuButRequired
+  //          ? "Customer requires SKU mapping but SKU is missing in this row."
+  //          : "No Item match for this Customer (ASIN→SKU mapping failed).",
+  //      });
+  //    } else {
+  //      usableLines.push(l);
+  //    }
+  //  }
+
+  //  if (!usableLines.length) {
+  //    setBulkResults(preResults);
+  //    setError("All rows failed (item mapping missing). Fix SKU/ASIN mapping fields in Item and re-upload.");
+  //    return;
+  //  }
+
+  //  // Group by invoice-id
+  //  const groupsMap = new Map();
+  //  for (const l of usableLines) {
+  //    const key = l.invoice_id;
+  //    const g = groupsMap.get(key) || { invoice_id: l.invoice_id, lines: [] };
+  //    g.lines.push(l);
+  //    groupsMap.set(key, g);
+  //  }
+  //  const groups = Array.from(groupsMap.values()).sort((a, b) => a.invoice_id.localeCompare(b.invoice_id));
+
+  //  setBulkCreating(true);
+  //  setBulkProgress({ done: 0, total: groups.length });
+
+  //  const allResults = [];
+
+  //  try {
+  //    await runWithLimit(
+  //      groups,
+  //      2,
+  //      async (g) => {
+  //        const posting = bulkPostingDate;
+  //        const due = posting;
+
+  //        const poDate =
+  //          (g.lines || [])
+  //            .map((x) => x.purchase_date)
+  //            .filter(Boolean)
+  //            .sort()[0] || "";
+
+  //        //const itemsPayload = g.lines.map((l) => ({
+  //        //  item_code: l.item_code,
+  //        //  qty: l.qty,
+  //        //  rate: l.rate,
+  //        //  warehouse: getWarehouseForBrand(l.brand),
+  //        //  //warehouse: FIXED_WAREHOUSE,
+  //        //}));
+  //        const isEasyShip = customer.toLowerCase().includes("easyship") || customer.toLowerCase().includes("easy ship");
+
+  //        const itemsPayload = [];
+
+  //        g.lines.forEach((l) => {
+  //          const rowWarehouse = getWarehouseForBrand(l.brand);
+
+  //          itemsPayload.push({
+  //            item_code: l.item_code,
+  //            qty: l.qty,
+  //            rate: l.rate,
+  //            warehouse: rowWarehouse,
+  //          });
+
+  //          if (isEasyShip) {
+  //            const itemDetails = items.find((it) => it.name === l.item_code);
+
+  //            if (itemDetails) {
+  //              if (itemDetails.custom_es_courier_bag) {
+  //                itemsPayload.push({
+  //                  item_code: itemDetails.custom_es_courier_bag,
+  //                  qty: l.qty,
+  //                  rate: 0,
+  //                  warehouse: rowWarehouse,
+  //                });
+  //              }
+  //              if (itemDetails.custom_es_packaging_label) {
+  //                itemsPayload.push({
+  //                  item_code: itemDetails.custom_es_packaging_label,
+  //                  qty: l.qty,
+  //                  rate: 0,
+  //                  warehouse: rowWarehouse,
+  //                });
+  //              }
+  //            }
+  //          }
+  //        });
+  //        const markAll = (status, msg, siName = "") => {
+  //          g.lines.forEach((l) => {
+  //            allResults.push({
+  //              invoice_id: g.invoice_id,
+  //              sku: l.sku,
+  //              asin: l.asin,
+  //              qty: l.qty,
+  //              item_code: l.item_code,
+  //              status,
+  //              si_name: siName,
+  //              message: msg,
+  //            });
+  //          });
+  //        };
+
+  //        try {
+  //          const created = await createSalesInvoice({
+  //            customer,
+  //            company,
+  //            posting_date: posting,
+  //            due_date: due,
+  //            //warehouse: FIXED_WAREHOUSE,
+  //            items: itemsPayload,
+  //            po_no: g.invoice_id,
+  //            po_date: poDate,
+  //            remarks: `Imported from sheet. invoice-id=${g.invoice_id}`,
+  //          });
+
+  //          const siName = created?.data?.name || "";
+
+  //          try {
+  //            if (siName) await submitDoc("Sales Invoice", siName);
+  //            markAll("OK", "Created & submitted", siName);
+  //          } catch (subErr) {
+  //            if (siName) {
+  //              try {
+  //                await fetch("/api/method/frappe.client.delete", {
+  //                  method: "POST",
+  //                  headers: { "Content-Type": "application/json" },
+  //                  body: JSON.stringify({ doctype: "Sales Invoice", name: siName })
+  //                });
+  //              } catch (delErr) {
+  //                console.error("Failed to delete draft", delErr);
+  //              }
+  //            }
+  //            markAll("FAILED", `Stock/Validation Error: ${extractErrMsg(subErr)}`, "");
+  //            return;
+  //          }
+
+  //          //markAll("OK", "Created & submitted", siName);
+  //        } catch (err) {
+  //          const msg = extractErrMsg(err);
+
+  //          if (TRY_SINGLE_LINE_FALLBACK) {
+  //            for (const l of g.lines) {
+  //              try {
+  //                const rowWarehouse = getWarehouseForBrand(l.brand);
+  //                const fallbackPayload = [
+  //                  {
+  //                    item_code: l.item_code,
+  //                    qty: l.qty,
+  //                    rate: l.rate,
+  //                    warehouse: rowWarehouse,
+  //                  }
+  //                ];
+
+  //                if (isEasyShip) {
+  //                  const itemDetails = items.find(it => it.name === l.item_code);
+  //                  if (itemDetails?.custom_es_courier_bag) {
+  //                    fallbackPayload.push({ item_code: itemDetails.custom_es_courier_bag, qty: l.qty, rate: 0, warehouse: rowWarehouse });
+  //                  }
+  //                  if (itemDetails?.custom_es_packaging_label) {
+  //                    fallbackPayload.push({ item_code: itemDetails.custom_es_packaging_label, qty: l.qty, rate: 0, warehouse: rowWarehouse });
+  //                  }
+  //                }
+
+  //                const created1 = await createSalesInvoice({
+  //                  customer,
+  //                  company,
+  //                  posting_date: posting,
+  //                  due_date: due,
+  //                  items: fallbackPayload,
+  //                  po_no: g.invoice_id,
+  //                  po_date: l.purchase_date,
+  //                  remarks: `Fallback single-line import. invoice-id=${g.invoice_id} sku=${l.sku} asin=${l.asin}`,
+  //                });
+
+  //                const si1 = created1?.data?.name || "";
+
+  //                try {
+  //                  if (si1) await submitDoc("Sales Invoice", si1);
+  //                  allResults.push({
+  //                    invoice_id: g.invoice_id,
+  //                    sku: l.sku,
+  //                    asin: l.asin,
+  //                    qty: l.qty,
+  //                    item_code: l.item_code,
+  //                    status: "OK",
+  //                    si_name: si1,
+  //                    message: "Created & submitted (fallback single-line)",
+  //                  });
+  //                } catch (subErr) {
+  //                  if (si1) {
+  //                    try {
+  //                      await fetch("/api/method/frappe.client.delete", {
+  //                        method: "POST",
+  //                        headers: { "Content-Type": "application/json" },
+  //                        body: JSON.stringify({ doctype: "Sales Invoice", name: si1 })
+  //                      });
+  //                    } catch (e) { }
+  //                  }
+  //                  allResults.push({
+  //                    invoice_id: g.invoice_id,
+  //                    sku: l.sku,
+  //                    asin: l.asin,
+  //                    qty: l.qty,
+  //                    item_code: l.item_code,
+  //                    status: "PARTIAL",
+  //                    si_name: si1,
+  //                    message: `Stock/Validation Error: ${extractErrMsg(subErr)}`,
+  //                  });
+  //                  continue;
+  //                }
+
+  //                allResults.push({
+  //                  invoice_id: g.invoice_id,
+  //                  sku: l.sku,
+  //                  asin: l.asin,
+  //                  qty: l.qty,
+  //                  item_code: l.item_code,
+  //                  status: "OK",
+  //                  si_name: si1,
+  //                  message: "Created & submitted (fallback single-line)",
+  //                });
+  //              } catch (lineErr) {
+  //                allResults.push({
+  //                  invoice_id: g.invoice_id,
+  //                  sku: l.sku,
+  //                  asin: l.asin,
+  //                  qty: l.qty,
+  //                  item_code: l.item_code,
+  //                  status: "FAILED",
+  //                  si_name: "",
+  //                  message: extractErrMsg(lineErr),
+  //                });
+  //              }
+  //            }
+  //          } else {
+  //            markAll("FAILED", msg, "");
+  //          }
+  //        }
+  //      },
+  //      (done) => setBulkProgress((p) => ({ ...p, done }))
+  //    );
+
+  //    const finalResults = [...preResults, ...allResults];
+  //    setBulkResults(finalResults);
+
+  //    const ok = finalResults.filter((x) => x.status === "OK").length;
+  //    const partial = finalResults.filter((x) => x.status === "PARTIAL").length;
+  //    const failed = finalResults.filter((x) => x.status === "FAILED").length;
+
+  //    setMessage(`Bulk import finished. OK: ${ok}, PARTIAL: ${partial}, FAILED: ${failed}.`);
+  //    if (failed > 0) setError("Some lines failed. Check the results table.");
+
+  //    await reloadRecentInvoices();
+  //    clearFile();
+  //  } finally {
+  //    setBulkCreating(false);
+  //  }
+  //}
   async function handleBulkCreate() {
     setError("");
     setMessage("");
@@ -1186,19 +1503,12 @@ export default function SalesOrder() {
               .filter(Boolean)
               .sort()[0] || "";
 
-          //const itemsPayload = g.lines.map((l) => ({
-          //  item_code: l.item_code,
-          //  qty: l.qty,
-          //  rate: l.rate,
-          //  warehouse: getWarehouseForBrand(l.brand),
-          //  //warehouse: FIXED_WAREHOUSE,
-          //}));
           const isEasyShip = customer.toLowerCase().includes("easyship") || customer.toLowerCase().includes("easy ship");
 
           const itemsPayload = [];
 
           g.lines.forEach((l) => {
-            const rowWarehouse = getWarehouseForBrand(l.brand);
+            const rowWarehouse = getWarehouseForBrand(activeOrg);
 
             itemsPayload.push({
               item_code: l.item_code,
@@ -1230,6 +1540,7 @@ export default function SalesOrder() {
               }
             }
           });
+
           const markAll = (status, msg, siName = "") => {
             g.lines.forEach((l) => {
               allResults.push({
@@ -1251,7 +1562,6 @@ export default function SalesOrder() {
               company,
               posting_date: posting,
               due_date: due,
-              //warehouse: FIXED_WAREHOUSE,
               items: itemsPayload,
               po_no: g.invoice_id,
               po_date: poDate,
@@ -1262,19 +1572,31 @@ export default function SalesOrder() {
 
             try {
               if (siName) await submitDoc("Sales Invoice", siName);
+              markAll("OK", "Created & submitted", siName);
             } catch (subErr) {
-              markAll("PARTIAL", `Created but submit failed: ${extractErrMsg(subErr)}`, siName);
-              return;
+              // ✅ CLEANUP: If submit fails (e.g. out of stock), delete the draft instantly!
+              if (siName) {
+                try {
+                  await fetch("/api/method/frappe.client.delete", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ doctype: "Sales Invoice", name: siName })
+                  });
+                } catch (delErr) {
+                  console.error("Failed to delete draft", delErr);
+                }
+              }
+              markAll("FAILED", `Stock/Validation Error: ${extractErrMsg(subErr)}`, "");
+              return; // Move to the next group
             }
 
-            markAll("OK", "Created & submitted", siName);
           } catch (err) {
             const msg = extractErrMsg(err);
 
             if (TRY_SINGLE_LINE_FALLBACK) {
               for (const l of g.lines) {
                 try {
-                  const rowWarehouse = getWarehouseForBrand(l.brand);
+                  const rowWarehouse = getWarehouseForBrand(activeOrg);
                   const fallbackPayload = [
                     {
                       item_code: l.item_code,
@@ -1309,30 +1631,39 @@ export default function SalesOrder() {
 
                   try {
                     if (si1) await submitDoc("Sales Invoice", si1);
-                  } catch (subErr) {
                     allResults.push({
                       invoice_id: g.invoice_id,
                       sku: l.sku,
                       asin: l.asin,
                       qty: l.qty,
                       item_code: l.item_code,
-                      status: "PARTIAL",
+                      status: "OK",
                       si_name: si1,
-                      message: `Created but submit failed: ${extractErrMsg(subErr)}`,
+                      message: "Created & submitted (fallback single-line)",
                     });
-                    continue;
+                  } catch (subErr) {
+                    // ✅ CLEANUP FOR FALLBACK TOO
+                    if (si1) {
+                      try {
+                        await fetch("/api/method/frappe.client.delete", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ doctype: "Sales Invoice", name: si1 })
+                        });
+                      } catch (e) { }
+                    }
+                    allResults.push({
+                      invoice_id: g.invoice_id,
+                      sku: l.sku,
+                      asin: l.asin,
+                      qty: l.qty,
+                      item_code: l.item_code,
+                      status: "FAILED",
+                      si_name: "",
+                      message: `Stock/Validation Error: ${extractErrMsg(subErr)}`,
+                    });
                   }
 
-                  allResults.push({
-                    invoice_id: g.invoice_id,
-                    sku: l.sku,
-                    asin: l.asin,
-                    qty: l.qty,
-                    item_code: l.item_code,
-                    status: "OK",
-                    si_name: si1,
-                    message: "Created & submitted (fallback single-line)",
-                  });
                 } catch (lineErr) {
                   allResults.push({
                     invoice_id: g.invoice_id,
@@ -1361,7 +1692,7 @@ export default function SalesOrder() {
       const partial = finalResults.filter((x) => x.status === "PARTIAL").length;
       const failed = finalResults.filter((x) => x.status === "FAILED").length;
 
-      setMessage(`Bulk import finished. OK: ${ok}, PARTIAL: ${partial}, FAILED: ${failed}.`);
+      setMessage(`Bulk import finished. OK: ${ok}, FAILED: ${failed}.`);
       if (failed > 0) setError("Some lines failed. Check the results table.");
 
       await reloadRecentInvoices();
@@ -1370,7 +1701,6 @@ export default function SalesOrder() {
       setBulkCreating(false);
     }
   }
-
   return (
     <div className="sales-order">
       {/* Page header */}
@@ -1761,6 +2091,9 @@ export default function SalesOrder() {
           setInvoiceCustomerFilter={setInvoiceCustomerFilter}
           filteredRecentInvoices={filteredRecentInvoices}
           recentInvoices={recentInvoices}
+          orgs={orgs}
+          activeOrg={activeOrg}
+          changeOrg={changeOrg}
           postingDateSortLabel={postingDateSortLabel}
           setPostingDateSort={setPostingDateSort}
           sortedRecentInvoices={sortedRecentInvoices}
