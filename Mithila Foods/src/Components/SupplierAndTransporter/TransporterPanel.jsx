@@ -214,7 +214,7 @@ export default function TransporterPanel() {
         onRowOpen: (row) => {
           const name = row?.name;
           if (!name) return;
-          navigate(`/suppliers/transporters/${encodeURIComponent(row.name)}`);
+          navigate(`/suppliers/directory/transporters/${encodeURIComponent(row.name)}`);
         },
       }}
     />

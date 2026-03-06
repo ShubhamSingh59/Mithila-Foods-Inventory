@@ -14,9 +14,7 @@ export default function StockSummaryTabsView() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", width: "100%" }}>
-      {/* ✅ 1. Removed .app-panel wrapper
-        ✅ 2. Using the clean .theme-tabs class 
-      */}
+
       <div className="theme-tabs">
         <button
           type="button"
@@ -35,9 +33,6 @@ export default function StockSummaryTabsView() {
         </button>
       </div>
 
-      {/* ✅ Removed .app-panel wrappers around the components so they 
-           can sit flush against the edges of the main window.
-      */}
       <div style={{ display: tab === STOCK_TABS.RM_PRODUCTS ? "block" : "none", flex: 1 }}>
         <DailyStockSummary />
       </div>

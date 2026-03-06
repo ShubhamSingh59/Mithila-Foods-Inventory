@@ -407,7 +407,7 @@ export default function SupplierPanel() {
         onRowOpen: (row) => {
           const name = row?.name;
           if (!name) return;
-          navigate(`/suppliers/list/${encodeURIComponent(row.name)}`);
+          navigate(`/suppliers/directory/list/${encodeURIComponent(row.name)}`);
         },
       }}
     />

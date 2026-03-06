@@ -77,9 +77,9 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
 
         <div className="app-nav-group">
           <div className="app-nav-group-label">Supplier & Transporter</div>
-          <NavItem to="/suppliers/list" label="Lists" icon={Users} />
-          <NavItem to="/suppliers/purchase-tracker" label="Tracker" icon={Truck} />
-          <NavItem to="/suppliers/analytics" label="Reports" icon={TrendingUp} />
+          <NavItem to="/suppliers/directory" label="Lists" icon={Users} />
+          <NavItem to="/suppliers/operations" label="Tracker" icon={Truck} />
+          <NavItem to="/suppliers/intelligence" label="Reports" icon={TrendingUp} />
         </div>
 
         {/*<div className="app-nav-group">

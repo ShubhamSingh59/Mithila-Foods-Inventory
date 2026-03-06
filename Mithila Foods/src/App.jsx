@@ -15,13 +15,14 @@ import StockSummaryTabsView from "./views/StockSummaryTabsView";
 import StockReorder from "./Components/StockReorder/StockReorder";
 import SalesReturnTabsView from "./views/SalesReturnTabsView";
 import SalesOrderView from "./views/SalesOrderView";
-import SupplierTabView from "./views/SupplierListView"; 
-import PurchaseTrackerView from "./views/PurchaseTrackerView"; 
+import SupplierTabView from "./views/SupplierListView";
+import PurchaseTrackerView from "./views/PurchaseTrackerView";
 import SupplierIntelligenceView from "./views/SupplierIntelligenceView";
 
 // CSS
 import "./App.css";
 import { OrgProvider } from "./Components/Context/OrgContext";
+import StockReorderTabsView from "./views/StockReorderTabsView";
 
 // --- KeepAlive Wrapper 
 const KeepAlivePage = ({ triggerPath, triggerPaths, children }) => {
@@ -84,7 +85,7 @@ export default function App() {
               </KeepAlivePage>
 
               <KeepAlivePage triggerPath="/stock/reorder">
-                <StockReorder />
+                <StockReorderTabsView />
               </KeepAlivePage>
 
               {/* 2. PURCHASE VIEWS */}
@@ -121,21 +122,21 @@ export default function App() {
               {/* 5. SUPPLIER VIEWS (Split into 3 Sections) */}
 
               {/* View 1: Directory (Suppliers & Transporters) */}
-              <KeepAlivePage triggerPaths={["/suppliers/list", "/suppliers/transporters", "/suppliers/create"]}>
+              <KeepAlivePage triggerPath="/suppliers/directory">
                 <section className="app-panel app-panel-primary">
                   <SupplierTabView />
                 </section>
               </KeepAlivePage>
 
               {/* View 2: Operations (Tracker & Logistics) */}
-              <KeepAlivePage triggerPaths={["/suppliers/purchase-tracker", "/suppliers/logistics-hub"]}>
+              <KeepAlivePage triggerPath="/suppliers/operations">
                 <section className="app-panel app-panel-primary">
                   <PurchaseTrackerView />
                 </section>
               </KeepAlivePage>
 
               {/* View 3: Intelligence (Scorecard & Trends) */}
-              <KeepAlivePage triggerPaths={["/suppliers/analytics", "/suppliers/item-trends"]}>
+              <KeepAlivePage triggerPath="/suppliers/intelligence">
                 <section className="app-panel app-panel-primary">
                   <SupplierIntelligenceView />
                 </section>
