@@ -1,7 +1,7 @@
 // src/Components/OtherReorder.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getDoctypeList } from "../api/core";
-import "./StockReorder.css"; 
+import { getDoctypeList, getDoc, updateDoc } from "../api/core";
+import "./StockReorder.css";
 import { useOrg } from "../Context/OrgContext";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -19,6 +19,9 @@ function OtherReorder() {
   const { activeOrg, orgs, changeOrg } = useOrg();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [editingItem, setEditingItem] = useState(null);
+  const [editLevel, setEditLevel] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState([]);
   const [flatItems, setFlatItems] = useState([]);
@@ -49,7 +52,7 @@ function OtherReorder() {
   );
 
   const buildRowsFromFlat = useCallback((flat, prevExpanded = {}, sortDir = "desc") => {
-    const groups = new Map(); 
+    const groups = new Map();
     (flat || []).forEach((r) => {
       const g = r.item_group || "Unknown";
       if (!groups.has(g)) groups.set(g, []);
@@ -101,8 +104,9 @@ function OtherReorder() {
 
       while (true) {
         const part = await getDoctypeList("Item Reorder", {
-          parent: "Item", 
+          parent: "Item",
           fields: JSON.stringify([
+            "name",
             "parent",
             "warehouse",
             "warehouse_reorder_level",
@@ -129,6 +133,7 @@ function OtherReorder() {
           const part = await getDoctypeList("Item Reorder", {
             parent: "Item",
             fields: JSON.stringify([
+              "name",
               "parent",
               "warehouse",
               "warehouse_reorder_level",
@@ -159,6 +164,9 @@ function OtherReorder() {
         const qty = Number(r.warehouse_reorder_qty || 0);
         const reqType = r.material_request_type || "Purchase";
         const prev = reorderMap.get(code) || { reorder_level: 0, reorder_qty: 0 };
+        if (lvl >= prev.reorder_level) {
+          prev.reorder_id = r.name;
+        }
         reorderMap.set(code, {
           reorder_level: Math.max(prev.reorder_level, lvl),
           reorder_qty: Math.max(prev.reorder_qty, qty),
@@ -174,7 +182,7 @@ function OtherReorder() {
         return;
       }
 
-      const itemMetaMap = new Map(); 
+      const itemMetaMap = new Map();
 
       for (const part of chunkArray(itemCodes, CHUNK_SIZE)) {
         const items = await getDoctypeList("Item", {
@@ -196,7 +204,7 @@ function OtherReorder() {
         });
       }
 
-      const binQtyMap = new Map(); 
+      const binQtyMap = new Map();
 
       for (const part of chunkArray(itemCodes, CHUNK_SIZE)) {
         const bins = await getDoctypeList("Bin", {
@@ -231,15 +239,16 @@ function OtherReorder() {
             reorder_level,
             difference: current_qty - reorder_level,
             material_request_type: rr.material_request_type,
+            reorder_id: rr.reorder_id,
           };
         })
         .filter((r) => Number(r.reorder_level || 0) > 0)
         .filter((r) => {
           // Keep unbranded items visible mainly when F2D is selected
           if (activeOrg === "F2D TECH PRIVATE LIMITED") return true;
-          return r.brand === activeOrg; 
+          return r.brand === activeOrg;
         });
-        
+
       setFlatItems(flat);
 
       const { finalRows, expandedNext } = buildRowsFromFlat(flat, {}, diffSortDirRef.current);
@@ -298,7 +307,7 @@ function OtherReorder() {
   const visibleRows = useMemo(() => {
     return displayRows.filter((r) => {
       if (r.is_category_header) return true;
-      if (lowerSearch) return true; 
+      if (lowerSearch) return true;
       if (r.category_key && expandedGroups[r.category_key] === false) return false;
       return true;
     });
@@ -362,6 +371,53 @@ function OtherReorder() {
     const cls = n > 0 ? "diff-pos" : n < 0 ? "diff-neg" : "diff-zero";
     return <span className={`diff ${cls}`}>{Number.isFinite(n) ? n : 0}</span>;
   };
+
+  async function handleSaveReorderLevel(row) {
+    setIsSaving(true);
+    setError("");
+
+    try {
+      let targetId = row.reorder_id;
+
+      if (!targetId) {
+        const itemDoc = await getDoc("Item", row.item_code);
+        const reorderRow = (itemDoc.reorder_levels || []).find((r) =>
+          targetWarehouses.includes(r.warehouse)
+        );
+
+        if (reorderRow && reorderRow.name) {
+          targetId = reorderRow.name;
+        } else {
+          throw new Error(`Cannot save: No reorder setup found for ${row.item_code} in the active warehouse.`);
+        }
+      }
+
+      await updateDoc("Item Reorder", targetId, {
+        warehouse_reorder_level: Number(editLevel)
+      });
+
+      const updatedLevel = Number(editLevel);
+      const updatedDiff = row.current_qty - updatedLevel;
+
+      const newFlat = flatItems.map(r =>
+        r.item_code === row.item_code
+          ? { ...r, reorder_level: updatedLevel, difference: updatedDiff, reorder_id: targetId }
+          : r
+      );
+
+      setFlatItems(newFlat);
+      const { finalRows, expandedNext } = buildRowsFromFlat(newFlat, expandedGroups, diffSortDirRef.current);
+      setRows(finalRows);
+      setExpandedGroups(expandedNext);
+
+      setEditingItem(null);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to update reorder level.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <div className="stock-reorder">
@@ -430,11 +486,12 @@ function OtherReorder() {
           <table className="stock-reorder-table">
             <thead>
               <tr>
-                <th style={{ width: "46%" }}>Item</th>
-                <th style={{ width: "18%" }}>Current Qty</th>
-                <th style={{ width: "18%" }}>Reorder Level</th>
-                <th style={{ width: "18%" }}>Difference</th>
+                <th style={{ width: "35%" }}>Item</th>
+                <th style={{ width: "15%" }}>Current Qty</th>
+                <th style={{ width: "15%" }}>Reorder Level</th>
+                <th style={{ width: "15%" }}>Difference</th>
                 <th style={{ width: "15%" }}>Request Type</th>
+                <th style={{ width: "5%", textAlign: "right" }}>Edit</th>
               </tr>
             </thead>
 
@@ -466,9 +523,57 @@ function OtherReorder() {
                       <div className="stock-reorder-item-name">{r.item_name}</div>
                     </td>
                     <td className="stock-reorder-num"><Num v={r.current_qty} /></td>
-                    <td className="stock-reorder-num"><Num v={r.reorder_level} /></td>
+                    <td className="stock-reorder-num">
+                      {editingItem === r.item_code ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px", justifyContent: "flex-end" }}>
+                          <input
+                            type="number"
+                            className="input"
+                            style={{ width: "60px", padding: "2px 4px", fontSize: "12px", height: "24px" }}
+                            value={editLevel}
+                            onChange={(e) => setEditLevel(e.target.value)}
+                            autoFocus
+                          />
+                        </div>
+                      ) : (
+                        <Num v={r.reorder_level} />
+                      )}
+                    </td>
                     <td className="stock-reorder-num"><Diff v={r.difference} /></td>
                     <td className="stock-reorder-num">{r.material_request_type}</td>
+                    <td style={{ textAlign: "right", verticalAlign: "middle" }}>
+                      {editingItem === r.item_code ? (
+                        <div style={{ display: "flex", gap: "4px", justifyContent: "flex-end" }}>
+                          <button
+                            className="btn btn-primary btn-sm"
+                            style={{ padding: "0 6px", height: "24px" }}
+                            onClick={() => handleSaveReorderLevel(r)}
+                            disabled={isSaving}
+                          >
+                            ✓
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            style={{ padding: "0 6px", height: "24px" }}
+                            onClick={() => setEditingItem(null)}
+                            disabled={isSaving}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          title="Edit Reorder Level"
+                          onClick={() => {
+                            setEditingItem(r.item_code);
+                            setEditLevel(r.reorder_level);
+                          }}
+                        >
+                          ✏️
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
