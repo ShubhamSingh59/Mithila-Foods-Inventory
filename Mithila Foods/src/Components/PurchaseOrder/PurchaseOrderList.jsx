@@ -5,7 +5,7 @@ import {
   getItemsForPO,
   getItemSuppliers,
   getTransporters,
-  
+
 } from "../api/master"
 import {
   createPurchaseOrder,
@@ -213,7 +213,7 @@ function PurchaseOrderList({ onEditPo }) {
           "transaction_date",
           "status",
           "grand_total",
-          "advance_paid", 
+          "advance_paid",
           "per_received",
           "per_billed",
           "creation",
@@ -429,7 +429,7 @@ function PurchaseOrderList({ onEditPo }) {
         const prDoc = await getDoc("Purchase Receipt", prName);
         invoiceItems = (prDoc.items || []).map((it) => ({
           item_code: it.item_code,
-          qty: it.qty, 
+          qty: it.qty,
           rate: it.rate,
           purchase_order: po.name,
           purchase_receipt: prName,
@@ -440,7 +440,7 @@ function PurchaseOrderList({ onEditPo }) {
         const poDoc = await getPurchaseOrderWithItems(po.name);
         invoiceItems = (poDoc.items || []).map((it) => ({
           item_code: it.item_code,
-          qty: it.qty, 
+          qty: it.qty,
           rate: it.rate,
           purchase_order: po.name,
           po_detail: it.name,
@@ -462,6 +462,7 @@ function PurchaseOrderList({ onEditPo }) {
       if (piName) { await submitDoc("Purchase Invoice", piName); }
 
       setMessage(piName ? `Invoice Created & Submitted: ${piName} (Based on ${prName ? "Receipt" : "Order"}). Click 'Pay & Close'.` : `Invoice Created.`);
+      await new Promise(resolve => setTimeout(resolve, 1500));
       await loadOrders(page, mfFilter);
     } catch (err) {
       console.error(err);
@@ -487,6 +488,7 @@ function PurchaseOrderList({ onEditPo }) {
       await submitDoc("Purchase Invoice", piName);
       setDraftPiByPo((prev) => { const next = { ...prev }; delete next[po.name]; return next; });
       setMessage(`Invoice submitted: ${piName}. Click 'Pay & Close' to finish.`);
+      await new Promise(resolve => setTimeout(resolve, 1500));
       await loadOrders(page, mfFilter);
     } catch (err) {
       console.error(err);
@@ -702,7 +704,11 @@ function PurchaseOrderList({ onEditPo }) {
                     const receivedFromMf = mf === "QC In" || mf === "Completed";
                     const isReceived = receivedFromErp || receivedFromMf;
 
-                    const isFullyBilled = perBilled >= 100;
+                    const isFullyBilled =
+                      perBilled >= 99.9 ||
+                      po.status === "Completed" ||
+                      po.status === "Closed" ||
+                      po.status === "To Receive";
                     const advancePaid = Number(po.advance_paid || 0);
 
                     const isQcPassing = qcPassLoading === po.name;
