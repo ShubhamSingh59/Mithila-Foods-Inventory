@@ -83,8 +83,7 @@
   display: flex;
   flex-wrap: wrap; 
   gap: 16px;
-  align-items: flex-end; 
-
+  align-items: flex-start; /* ✅ Fixes vertical label alignment */
   padding: 20px;
   background: var(--bg-subtle);
   border: 1px solid var(--border);
@@ -95,10 +94,13 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 1 1 200px; 
+  flex: 1 1 180px; 
   min-width: 180px;
 }
-
+.prl-filter.double-col {
+  flex: 2 1 340px; 
+  min-width: 340px;
+}
 .prl-filter:has(input[type="date"]) {
   flex: 0 1 180px; 
 }

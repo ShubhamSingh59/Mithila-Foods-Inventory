@@ -167,7 +167,7 @@ export default function PurchaseRegisterList({ title = "Purchase Register" }) {
               {supplierOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
-          <div className="prl-filter">
+          <div className="prl-filter double-col">
             <label className="prl-label">PO Date Range</label>
             <div style={{display:'flex', gap:5}}>
                 <input className="prl-input" type="date" value={f.po_from_date} onChange={(e) => onChange("po_from_date", e.target.value)} />
@@ -181,7 +181,7 @@ export default function PurchaseRegisterList({ title = "Purchase Register" }) {
               {MF_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <div className="prl-filter">
+          <div className="prl-filter double-col">
             <label className="prl-label">Search</label>
             <div style={{display:'flex', gap:5}}>
                 <input className="prl-input" value={f.invoice_q} onChange={(e) => onChange("invoice_q", e.target.value)} placeholder="Invoice..." />

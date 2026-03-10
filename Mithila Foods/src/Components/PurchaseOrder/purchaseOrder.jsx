@@ -258,6 +258,7 @@ function PurchaseOrder() {
       setTransporter(po.custom_transporter || "");
 
       const mappedItems = (po.items || []).map(it => ({
+        name: it.name,
         item_code: it.item_code || "",
         qty: String(it.qty || "1.00"),
         rate: String(it.rate || ""),
