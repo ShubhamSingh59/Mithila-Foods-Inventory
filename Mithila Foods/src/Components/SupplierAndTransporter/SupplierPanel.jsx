@@ -1,9 +1,10 @@
 // src/Components/SupplierAndTransporter/SupplierPanel.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { QrCode, X } from "lucide-react"; 
-import { getSuppliersForList, getSupplierStatusOptions } from "../api/master"; 
+import { QrCode, X } from "lucide-react";
+import { getSuppliersForList, getSupplierStatusOptions } from "../api/master";
+import { BACKEND_URL } from "../api/core";
 import "./SupplierPanel.css";
-import SupplierTiles from "../SupplierAndTransporterDashoard/SupplierTiles"; 
+import SupplierTiles from "../SupplierAndTransporterDashoard/SupplierTiles";
 import { useNavigate } from "react-router-dom";
 
 function SupplierEmailCell({ value }) {
@@ -37,12 +38,12 @@ function ImageModal({ src, onClose }) {
         <button className="modal-close-btn" onClick={onClose}>
           <X size={20} />
         </button>
-        <img 
-          src={src} 
-          alt="Payment QR" 
-          className="modal-image" 
+        <img
+          src={src}
+          alt="Payment QR"
+          className="modal-image"
           onError={(e) => {
-            e.target.onerror = null; 
+            e.target.onerror = null;
             e.target.src = "https://via.placeholder.com/300?text=Image+Load+Failed";
           }}
         />
@@ -64,13 +65,13 @@ function ListPanel({ config }) {
 
   const [previewImage, setPreviewImage] = useState(null);
 
-  const defaultKeys = useMemo(() => 
+  const defaultKeys = useMemo(() =>
     config.columns.filter(col => col.defaultVisible).map(col => col.key),
-  [config.columns]);
+    [config.columns]);
 
-  const allKeys = useMemo(() => 
+  const allKeys = useMemo(() =>
     config.columns.map(col => col.key),
-  [config.columns]);
+    [config.columns]);
 
   const [visibleKeys, setVisibleKeys] = useState(defaultKeys);
   const [isShowingAll, setIsShowingAll] = useState(false);
@@ -149,23 +150,30 @@ function ListPanel({ config }) {
     }
   };
 
-  const handleQrClick = (e, url) => {
-    e.stopPropagation(); 
-    
+  const handleQrClick = async (e, url) => {
+    e.stopPropagation();
     if (!url) return;
+    try {
+      const proxyUrl = `${BACKEND_URL}/api/proxy-image?path=${encodeURIComponent(url)}`;
+      console.log("Fetching QR via Proxy:", proxyUrl);
 
-    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error("Failed to load image from proxy");
 
-    const proxyUrl = `${BACKEND_URL}/api/proxy-image?path=${encodeURIComponent(url)}`;
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      setPreviewImage(objectUrl);
 
-    console.log("Opening QR via Proxy:", proxyUrl);
-    setPreviewImage(proxyUrl);
+    } catch (err) {
+      console.error("Error loading QR:", err);
+      setPreviewImage(`${BACKEND_URL}/api/proxy-image?path=${encodeURIComponent(url)}`);
+    }
   };
 
   return (
     <>
       <SupplierTiles />
-      
+
       {previewImage && <ImageModal src={previewImage} onClose={() => setPreviewImage(null)} />}
 
       <form className="supplier-search-row" onSubmit={(e) => e.preventDefault()}>
@@ -207,15 +215,15 @@ function ListPanel({ config }) {
         )}
 
         <div className="supplier-col-menu-wrapper">
-           <button 
-             type="button" 
-             className={`btn ${isShowingAll ? "btn-primary" : "btn-secondary"}`}
-             onClick={toggleViewMode}
-             style={{ minWidth: '140px' }}
-           >
-             {isShowingAll ? "Show Basic View" : "Show All Details"} 
-             <span style={{ marginLeft: '6px' }}>{isShowingAll ? "✕" : "👁️"}</span>
-           </button>
+          <button
+            type="button"
+            className={`btn ${isShowingAll ? "btn-primary" : "btn-secondary"}`}
+            onClick={toggleViewMode}
+            style={{ minWidth: '140px' }}
+          >
+            {isShowingAll ? "Show Basic View" : "Show All Details"}
+            <span style={{ marginLeft: '6px' }}>{isShowingAll ? "✕" : "👁️"}</span>
+          </button>
         </div>
       </form>
 
@@ -253,8 +261,8 @@ function ListPanel({ config }) {
                         <th key={col.header} className={col.className || ""}>
                           {col.header}
                         </th>
-                    ))}
-                    
+                      ))}
+
                     {config.showFeatures && <th>Features</th>}
                   </tr>
                 </thead>
@@ -278,22 +286,22 @@ function ListPanel({ config }) {
                           .map((col) => (
                             <td key={col.header} className={col.className || ""}>
                               {col.key === "custom_payment_qr" ? (
-                                 // Logic for QR Column
-                                 it[col.key] ? (
-                                    <button 
-                                      className="qr-btn" 
-                                      title="View Payment QR"
-                                      onClick={(e) => handleQrClick(e, it[col.key])}
-                                    >
-                                      <QrCode size={18} />
-                                    </button>
-                                 ) : <span className="text-muted" style={{fontSize:'0.8em', color:'#cbd5e1'}}>—</span>
+                                // Logic for QR Column
+                                it[col.key] ? (
+                                  <button
+                                    className="qr-btn"
+                                    title="View Payment QR"
+                                    onClick={(e) => handleQrClick(e, it[col.key])}
+                                  >
+                                    <QrCode size={18} />
+                                  </button>
+                                ) : <span className="text-muted" style={{ fontSize: '0.8em', color: '#cbd5e1' }}>—</span>
                               ) : (
-                                 // Standard Cell Render
-                                 col.render ? col.render(it) : it[col.key] || "—"
+                                // Standard Cell Render
+                                col.render ? col.render(it) : it[col.key] || "—"
                               )}
                             </td>
-                        ))}
+                          ))}
 
                         {config.showFeatures && (
                           <td className="supplier-cell-features col-features">
@@ -328,7 +336,7 @@ const SUPPLIER_CONFIG = {
 
   idField: "name",
   showIdColumn: false, // ID Hidden
-  showFeatures: false, 
+  showFeatures: false,
 
   searchPlaceholder: "Search by name, ID, phone or email…",
 
@@ -338,35 +346,35 @@ const SUPPLIER_CONFIG = {
   ],
 
   columns: [
-    { 
-      header: "Supplier Name", 
-      key: "supplier_name", 
-      className: "col-supplier-name", 
+    {
+      header: "Supplier Name",
+      key: "supplier_name",
+      className: "col-supplier-name",
       defaultVisible: true, // 1. Visible
-      render: (s) => s.supplier_name || s.name || "—" 
+      render: (s) => s.supplier_name || s.name || "—"
     },
-    { 
-      header: "Category", 
-      key: "supplier_group", 
-      className: "col-category", 
+    {
+      header: "Category",
+      key: "supplier_group",
+      className: "col-category",
       defaultVisible: true, // 2. Visible
-      render: (s) => s.supplier_group || s.supplier_type || "—" 
+      render: (s) => s.supplier_group || s.supplier_type || "—"
     },
-    { 
-      header: "Payment QR", 
-      key: "custom_payment_qr", 
-      className: "col-qr", 
+    {
+      header: "Payment QR",
+      key: "custom_payment_qr",
+      className: "col-qr",
       defaultVisible: true, // 3. Visible by default
     },
-    { 
-      header: "Contact Person", 
-      key: "custom_contact_person", 
+    {
+      header: "Contact Person",
+      key: "custom_contact_person",
       className: "col-contact",
       defaultVisible: true // 4. Visible
     },
-    { 
-      header: "Phone", 
-      key: "mobile_no", 
+    {
+      header: "Phone",
+      key: "mobile_no",
       className: "col-phone",
       defaultVisible: true // 5. Visible
     },
@@ -382,7 +390,7 @@ const SUPPLIER_CONFIG = {
           "—"
         ),
     },
-    
+
     // --- Hidden by default (Shown when "Show All Details" is clicked) ---
     { header: "Email", key: "email_id", className: "col-email", defaultVisible: false, render: (s) => <SupplierEmailCell value={s.email_id} /> },
     { header: "PAN No", key: "pan", className: "col-pan", defaultVisible: false, render: (s) => s.pan || "—" },
