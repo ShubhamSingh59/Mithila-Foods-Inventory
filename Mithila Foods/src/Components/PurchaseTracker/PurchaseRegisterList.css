@@ -2,20 +2,17 @@
 
 /* --- Card Container --- */
 .prl-card {
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  margin-top: 10px;
 }
 
 /* --- Header --- */
 .supplier-detail-card__header.prl-header {
-  padding: 16px 20px;
-  background: var(--bg-panel);
-  border-bottom: 1px solid var(--border);
-  
+  padding: 0 0 16px 0;
+  background: transparent;
+  border-bottom: none;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -52,6 +49,7 @@
   color: white;
   border-color: var(--primary);
 }
+
 .prl-btn:not(.prl-btn-ghost):hover:not(:disabled) {
   background: var(--primary-hover);
 }
@@ -61,6 +59,7 @@
   color: var(--text-main);
   border-color: var(--border);
 }
+
 .prl-btn-ghost:hover:not(:disabled) {
   background: var(--bg-subtle);
 }
@@ -72,7 +71,7 @@
 
 /* --- Body Area --- */
 .supplier-detail-card__body {
-  padding: 20px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -81,9 +80,10 @@
 /* --- Filters Section --- */
 .prl-filters {
   display: flex;
-  flex-wrap: wrap; 
+  flex-wrap: wrap;
   gap: 16px;
-  align-items: flex-start; /* ✅ Fixes vertical label alignment */
+  align-items: flex-start;
+  /* ✅ Fixes vertical label alignment */
   padding: 20px;
   background: var(--bg-subtle);
   border: 1px solid var(--border);
@@ -94,15 +94,17 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex: 1 1 180px; 
+  flex: 1 1 180px;
   min-width: 180px;
 }
+
 .prl-filter.double-col {
-  flex: 2 1 340px; 
+  flex: 2 1 340px;
   min-width: 340px;
 }
+
 .prl-filter:has(input[type="date"]) {
-  flex: 0 1 180px; 
+  flex: 0 1 180px;
 }
 
 .prl-label {
@@ -133,12 +135,12 @@
 
 /* Checkbox Row */
 .prl-filter.prl-check {
-  flex: 1 1 100%; 
+  flex: 1 1 100%;
   flex-direction: row;
   align-items: center;
   gap: 24px;
   padding-top: 12px;
-  border-top: 1px solid rgba(0,0,0,0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
   margin-top: 4px;
 }
 
@@ -188,7 +190,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
-  min-width: 1400px; 
+  min-width: 1400px;
 }
 
 /* Table Header */
@@ -196,16 +198,16 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #f1f5f9; 
-  color: var(--primary); 
+  background: #f1f5f9;
+  color: var(--primary);
   font-size: 0.9rem;
-  font-weight: 800; 
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   text-align: left;
-  padding: 16px 16px; 
+  padding: 16px 16px;
   border-bottom: 2px solid var(--border);
-  white-space: nowrap; 
+  white-space: nowrap;
 }
 
 /* Table Body */
@@ -214,7 +216,7 @@
   border-bottom: 1px solid var(--border);
   color: var(--text-main);
   vertical-align: middle;
-  white-space: nowrap; 
+  white-space: nowrap;
 }
 
 .prl-table tbody tr:hover {
@@ -233,8 +235,14 @@
 }
 
 /* Text Colors */
-.prl-muted { color: var(--text-muted); }
-.prl-bold { font-weight: 700; color: var(--text-main); }
+.prl-muted {
+  color: var(--text-muted);
+}
+
+.prl-bold {
+  font-weight: 700;
+  color: var(--text-main);
+}
 
 /* Item Cell Layout */
 .prl-item {
@@ -248,7 +256,7 @@
   font-weight: 600;
   color: var(--text-main);
   font-size: 0.95rem;
-  white-space: nowrap; 
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -272,9 +280,23 @@
   white-space: nowrap;
 }
 
-.status-to-receive-and-bill { background: #eff6ff; color: #1e40af; border-color: #dbeafe; }
-.status-completed { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
-.status-cancelled { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+.status-to-receive-and-bill {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #dbeafe;
+}
+
+.status-completed {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.status-cancelled {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
 
 /* Empty State */
 .prl-empty {
@@ -298,7 +320,8 @@
   font-size: 0.75rem;
   height: 26px;
   border-radius: 4px;
-  background-color: var(--primary); /* Deep Navy */
+  background-color: var(--primary);
+  /* Deep Navy */
   color: white;
   border: none;
   cursor: pointer;
@@ -314,8 +337,12 @@
 /* --- NEW: Modal Styles --- */
 .prl-modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 23, 42, 0.7); /* Dark semi-transparent */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.7);
+  /* Dark semi-transparent */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -353,6 +380,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

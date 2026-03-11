@@ -2,8 +2,9 @@
 .daily-stock-summary * {
   box-sizing: border-box;
 }
+
 .daily-stock-summary {
-  overflow-x: hidden; 
+  overflow-x: hidden;
 }
 
 .app-panel:has(.daily-stock-summary) {
@@ -12,10 +13,12 @@
   border: none !important;
   box-shadow: none !important;
 }
+
 .app-panel.app-panel-primary:has(.daily-stock-summary),
 .app-panel.app-panel-secondary:has(.daily-stock-summary) {
   background: transparent !important;
 }
+
 .app-main-inner:has(.daily-stock-summary) {
   max-width: none !important;
   margin: 0 !important;
@@ -51,7 +54,7 @@
 .daily-stock-summary-title {
   margin: 0;
   font-size: 1.06rem;
-  font-weight: 650; 
+  font-weight: 650;
   letter-spacing: -0.01em;
   color: #0f172a;
 }
@@ -60,7 +63,7 @@
   margin: 0;
   font-size: 0.85rem;
   color: #64748b;
-  font-weight: 450; 
+  font-weight: 450;
 }
 
 .daily-stock-summary-meta-row {
@@ -71,16 +74,17 @@
   gap: 10px;
   flex-wrap: wrap;
 }
+
 .daily-stock-summary-meta {
   color: #64748b;
-  font-weight: 450; 
+  font-weight: 450;
 }
 
 .daily-stock-summary-loading,
 .daily-stock-summary-empty {
   font-size: 0.9rem;
   color: #64748b;
-  font-weight: 450; 
+  font-weight: 450;
 }
 
 .daily-stock-summary-error {
@@ -91,7 +95,7 @@
   border: 1px solid #fecaca;
   color: #991b1b;
   font-size: 0.9rem;
-  font-weight: 500; 
+  font-weight: 500;
 }
 
 .daily-stock-summary-controls {
@@ -105,18 +109,18 @@
   border: 1px solid #e2e8f0;
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
   width: 100%;
-  overflow: hidden; 
+  overflow: hidden;
 }
 
-.daily-stock-summary-controls > * {
-  min-width: 0; 
+.daily-stock-summary-controls>* {
+  min-width: 0;
 }
 
 .daily-stock-summary-date-label {
   font-size: 0.85rem;
   color: #64748b;
   white-space: nowrap;
-  font-weight: 450; 
+  font-weight: 450;
 }
 
 .daily-stock-summary-controls .input,
@@ -131,10 +135,10 @@
   padding: 8px 10px;
   font-size: 0.9rem;
   color: #0f172a;
-  font-weight: 450; 
+  font-weight: 450;
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  flex: 0 1 220px; 
+  flex: 0 1 220px;
 }
 
 .daily-stock-summary-controls .input:focus,
@@ -160,6 +164,7 @@
   padding: 8px 12px;
   font-weight: 550;
 }
+
 .daily-stock-summary-controls .btn.btn-primary,
 .daily-stock-summary-controls .btn.btn-accent {
   background: #0f172a;
@@ -167,6 +172,7 @@
   color: #ffffff;
   box-shadow: none;
 }
+
 .daily-stock-summary-controls .btn.btn-primary:hover,
 .daily-stock-summary-controls .btn.btn-accent:hover {
   filter: brightness(1.05);
@@ -178,7 +184,7 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
-  overflow-x: hidden;
+  overflow-x: auto;
 }
 
 @media (max-width: 900px) {
@@ -193,7 +199,7 @@
   border-spacing: 0;
   background: transparent;
   font-size: 0.88rem;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .daily-stock-summary-table thead th {
@@ -203,9 +209,10 @@
   background: #f1f5f9;
   color: #0f172a;
   font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-wrap: break-word;
+  line-height: 1.2;
+  min-width: 90px;
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -219,13 +226,17 @@
 .daily-stock-summary-table thead tr:first-child th:first-child {
   border-top-left-radius: 12px;
   text-align: left;
+  min-width: 240px;
 }
+
 .daily-stock-summary-table thead tr:first-child th:last-child {
   border-top-right-radius: 12px;
 }
+
 .daily-stock-summary-table thead tr:last-child th:first-child {
   border-bottom-left-radius: 12px;
 }
+
 .daily-stock-summary-table thead tr:last-child th:last-child {
   border-bottom-right-radius: 12px;
 }
@@ -239,6 +250,7 @@
   width: 100%;
   min-width: 0;
 }
+
 .daily-stock-summary-th-title {
   font-weight: 600;
   line-height: 1.15;
@@ -276,6 +288,7 @@
   font-weight: 600;
   color: #0f172a !important;
 }
+
 .dss-caret {
   font-size: 0.85rem;
   opacity: 0.8;
@@ -288,6 +301,7 @@
   width: 100%;
   min-width: 0;
 }
+
 .dss-subhead-pill {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -324,10 +338,12 @@
 .daily-stock-summary-item {
   min-width: 0;
 }
+
 .daily-stock-summary-item-code {
   font-weight: 600;
   color: #0f172a;
 }
+
 .daily-stock-summary-item-name {
   font-size: 0.82rem;
   color: #64748b;
@@ -338,20 +354,24 @@
 .daily-stock-summary-group-row {
   cursor: pointer;
 }
+
 .daily-stock-summary-group-row td {
   background: #f8fafc;
   font-weight: 650;
   border-top: 1px solid #e2e8f0;
   border-bottom: 1px solid #e2e8f0;
 }
+
 .daily-stock-summary-group-header {
   padding: 9px 10px;
   font-weight: 650;
   font-size: 0.92rem;
 }
+
 .daily-stock-summary-group-icon {
   margin-right: 6px;
 }
+
 .daily-stock-summary-group-toggle {
   float: right;
   font-size: 0.85rem;
@@ -366,17 +386,20 @@
 .dss-expanded-cell {
   padding-top: 10px;
 }
+
 .dss-subgrid {
   display: grid;
   gap: 8px;
   width: 100%;
   align-items: center;
 }
+
 .dss-subcell {
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .dss-sub-th {
   font-size: 0.85rem;
   font-weight: 600;

@@ -653,7 +653,7 @@ function StockManufactureEntry() {
             disabled={saving || loadingBoms || loadingItems}
             className="btn btn-primary"
           >
-            {saving ? "Creating..." : "Create Manufacture Stock Entry"}
+            {saving ? "Creating..." : "Create Packing  Entry"}
           </button>
         </div>
       </form>

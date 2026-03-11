@@ -487,11 +487,11 @@ function OtherReorder() {
             <thead>
               <tr>
                 <th style={{ width: "35%" }}>Item</th>
-                <th style={{ width: "15%" }}>Current Qty</th>
-                <th style={{ width: "15%" }}>Reorder Level</th>
-                <th style={{ width: "15%" }}>Difference</th>
-                <th style={{ width: "15%" }}>Request Type</th>
-                <th style={{ width: "5%", textAlign: "right" }}>Edit</th>
+                <th style={{ width: "10%" }}>Current Qty</th>
+                <th style={{ width: "10%" }}>Reorder Level</th>
+                <th style={{ width: "10%" }}>Difference</th>
+                <th style={{ width: "10%" }}>Request Type</th>
+                <th style={{ width: "20%", textAlign: "center" }}>Edit</th>
               </tr>
             </thead>
 
@@ -541,7 +541,7 @@ function OtherReorder() {
                     </td>
                     <td className="stock-reorder-num"><Diff v={r.difference} /></td>
                     <td className="stock-reorder-num">{r.material_request_type}</td>
-                    <td style={{ textAlign: "right", verticalAlign: "middle" }}>
+                    <td style={{ textAlign: "center", verticalAlign: "middle" }}>
                       {editingItem === r.item_code ? (
                         <div style={{ display: "flex", gap: "4px", justifyContent: "flex-end" }}>
                           <button

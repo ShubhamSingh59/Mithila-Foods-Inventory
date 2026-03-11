@@ -54,7 +54,12 @@ function buildItemSummary(items = []) {
       const code = it.item_code || it.item_name || "";
       const name = it.item_name || "";
       if (!code) return "";
-      return name && name !== code ? `${code} (${name})` : code;
+
+      const displayName = name && name !== code ? `${code} (${name})` : code;
+
+      const qtyStr = it.qty ? ` - Qty: ${Number(it.qty)}` : "";
+
+      return `${displayName}${qtyStr}`;
     })
     .filter(Boolean);
 
@@ -209,6 +214,7 @@ function PurchaseOrderList({ onEditPo }) {
         fields: JSON.stringify([
           "name",
           "supplier",
+          "supplier_name",
           "company",
           "transaction_date",
           "status",
@@ -684,13 +690,13 @@ function PurchaseOrderList({ onEditPo }) {
                     <th>Name</th>
                     <th>Supplier</th>
                     <th>Items</th>
-                    <th>Company</th>
+                    {/*<th>Company</th>*/}
                     <th>Date</th>
                     <th>Status</th>
                     <th>Grand Total</th>
                     <th>Actions</th>
                     <th>Transporter</th>
-                    <th>MF Status</th>
+                    <th>PO Status</th>
                     <th>% Stock In</th>
                   </tr>
                 </thead>
@@ -728,13 +734,13 @@ function PurchaseOrderList({ onEditPo }) {
                     return (
                       <tr key={po.name}>
                         <td className="po-cell-name">{po.name}</td>
-                        <td>{po.supplier}</td>
+                        <td>{po.supplier_name || po.supplier}</td>
                         <td style={{ maxWidth: 420 }}>
                           <span style={{ fontSize: 12, opacity: 0.9 }}>
                             {poItemsSummary[po.name] || "—"}
                           </span>
                         </td>
-                        <td>{po.company}</td>
+                        {/*<td>{po.company}</td>*/}
                         <td>{po.transaction_date}</td>
                         <td>{po.status}</td>
                         <td className="po-cell-money">

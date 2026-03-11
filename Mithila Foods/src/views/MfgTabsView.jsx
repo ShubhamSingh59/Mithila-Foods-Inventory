@@ -19,47 +19,47 @@ export default function MfgTabsView() {
 
   return (
     <>
-      {/* Tabs header */}
-      <div className="app-panel" style={{ paddingBottom: 12 }}>
-        <div className="mfg-tabs">
-          <button
-            type="button"
-            className={`mfg-tab ${mfgTab === MFG_TABS.MANUFACTURE ? "active" : ""}`}
-            onClick={() => setMfgTab(MFG_TABS.MANUFACTURE)}
-          >
-            Packaging Entry
-          </button>
+      {/* Tabs header - Removed "app-panel" to get rid of the white box! */}
+      <div className="theme-tabs">
+        <button
+          type="button"
+          className={`theme-tab-btn ${mfgTab === MFG_TABS.MANUFACTURE ? "active" : ""}`}
+          onClick={() => setMfgTab(MFG_TABS.MANUFACTURE)}
+        >
+          Packaging Entry
+        </button>
 
-          <button
-            type="button"
-            className={`mfg-tab ${mfgTab === MFG_TABS.RECON ? "active" : ""}`}
-            onClick={() => setMfgTab(MFG_TABS.RECON)}
-          >
-            Stock Reconciliation
-          </button>
+        <button
+          type="button"
+          className={`theme-tab-btn ${mfgTab === MFG_TABS.RECON ? "active" : ""}`}
+          onClick={() => setMfgTab(MFG_TABS.RECON)}
+        >
+          Stock Reconciliation
+        </button>
 
-          <button
-            type="button"
-            className={`mfg-tab ${mfgTab === MFG_TABS.TRANSFER ? "active" : ""}`}
-            onClick={() => setMfgTab(MFG_TABS.TRANSFER)}
-          >
-            Stock Transfer
-          </button>
-           <button
-            type="button"
-            className={`mfg-tab ${mfgTab === MFG_TABS.OPENING ? "active" : ""}`}
-            onClick={() => setMfgTab(MFG_TABS.OPENING)}
-          >
-            Opening Stock
-          </button>
-          <button
-            type="button"
-            className={`mfg-tab ${mfgTab === MFG_TABS.RECON_LIST ? "active" : ""}`}
-            onClick={() => setMfgTab(MFG_TABS.RECON_LIST)}
-          >
-            Stock Reconciliation List
-          </button>
-        </div>
+        <button
+          type="button"
+          className={`theme-tab-btn ${mfgTab === MFG_TABS.TRANSFER ? "active" : ""}`}
+          onClick={() => setMfgTab(MFG_TABS.TRANSFER)}
+        >
+          Stock Transfer
+        </button>
+
+        <button
+          type="button"
+          className={`theme-tab-btn ${mfgTab === MFG_TABS.OPENING ? "active" : ""}`}
+          onClick={() => setMfgTab(MFG_TABS.OPENING)}
+        >
+          Opening Stock
+        </button>
+
+        <button
+          type="button"
+          className={`theme-tab-btn ${mfgTab === MFG_TABS.RECON_LIST ? "active" : ""}`}
+          onClick={() => setMfgTab(MFG_TABS.RECON_LIST)}
+        >
+          Stock Reconciliation List
+        </button>
       </div>
 
       {/* Keep all mounted (same as your App.jsx) */}
@@ -74,10 +74,12 @@ export default function MfgTabsView() {
       <div className="app-panel" style={{ display: mfgTab === MFG_TABS.TRANSFER ? "block" : "none" }}>
         <StockTransfer />
       </div>
+
       <div className="app-panel" style={{ display: mfgTab === MFG_TABS.OPENING ? "block" : "none" }}>
         <OpeningStockEntry/>
       </div>
-       <div className="app-panel" style={{ display: mfgTab === MFG_TABS.RECON_LIST ? "block" : "none" }}>
+
+      <div className="app-panel" style={{ display: mfgTab === MFG_TABS.RECON_LIST ? "block" : "none" }}>
         <StockReconciliationList />
       </div>
     </>

@@ -35,7 +35,7 @@ function sortRows(rows, key, direction) {
 const PO_STATUS_OPTIONS = ["", "To Receive and Bill", "To Receive", "To Bill", "Delivered", "Completed", "Closed", "Cancelled"];
 const PI_STATUS_OPTIONS = ["", "Paid", "Unpaid", "Overdue", "Partly Paid"];
 
-export default function PurchaseRegisterList({ title = "Purchase Register" }) {
+export default function PurchaseRegisterList({ title = "Purchase Tracker" }) {
   const [suppliers, setSuppliers] = useState([]);
   const [res, setRes] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -138,7 +138,7 @@ export default function PurchaseRegisterList({ title = "Purchase Register" }) {
   }
 
   return (
-    <section className="supplier-detail-card prl-card">
+    <section >
       <div className="supplier-detail-card__header prl-header">
         <div className="prl-title">{title}</div>
         <div className="prl-actions">
