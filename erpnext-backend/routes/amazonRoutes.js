@@ -529,62 +529,79 @@
 ////        res.status(500).json({ status: "Failed", error: error.message });
 ////    }
 ////});
-
 //// ==========================================
-//// 🏢 FBA LOCATIONS: LIVE REPORTS API ENGINE
+//// 🏢 FBA LOCATIONS: SMART LIVE REPORT ENGINE
 //// ==========================================
 //router.get('/fba-locations', async (req, res) => {
 //    try {
-//        console.log(`\n📄 [GET /fba-locations] Step 1: Requesting Live FC Inventory Report...`);
+//        console.log(`\n📄 [GET /fba-locations] Step 1: Checking for recently completed reports...`);
 
-//        // Step 1: Tell Amazon to generate the report
-//        const createReportRes = await spClient.callAPI({
-//            operation: 'createReport',
+//        let documentId = null;
+
+//        // 1. Look back strictly 24 hours
+//        const yesterday = new Date();
+//        yesterday.setHours(yesterday.getHours() - 24);
+
+//        // 2. The Updated API Call (Notice the brackets [] around the types and statuses)
+//        const recentReportsRes = await spClient.callAPI({
+//            operation: 'getReports',
 //            endpoint: 'reports',
-//            body: {
-//                reportType: 'GET_FBA_FULFILLMENT_CURRENT_INVENTORY_DATA',
-//                marketplaceIds: ['A21TJRUUN4KGV'] // India Marketplace
+//            query: {
+//                reportTypes: ['GET_FBA_FULFILLMENT_CURRENT_INVENTORY_DATA'], 
+//                processingStatuses: ['DONE'],                                 
+//                pageSize: 1, 
+//                createdSince: yesterday.toISOString() 
 //            }
 //        });
 
-//        const reportId = createReportRes.reportId || createReportRes.payload?.reportId;
-//        if (!reportId) throw new Error("Failed to create report. Amazon did not return a Report ID.");
-        
-//        console.log(`⏳ Report ID: ${reportId} created. Waiting for Amazon to process...`);
+//        const recentReports = recentReportsRes.reports || recentReportsRes.payload?.reports || [];
 
-//        // Step 2: Poll Amazon every 5 seconds until the report is DONE
-//        let reportStatus = "IN_PROGRESS";
-//        let documentId = null;
-//        let attempts = 0;
-
-//        // Loop runs until Amazon finishes, or we hit a 60-second timeout
-//        while (reportStatus !== "DONE" && reportStatus !== "FATAL" && reportStatus !== "CANCELLED") {
-//            attempts++;
-//            if (attempts > 12) { 
-//                throw new Error("Report generation timed out. Amazon is taking too long.");
-//            }
-
-//            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-
-//            const statusRes = await spClient.callAPI({
-//                operation: 'getReport',
+//        if (recentReports.length > 0) {
+//            console.log(`♻️ SUCCESS! Found a recent report generated at ${recentReports[0].createdTime}! Skipping the queue.`);
+//            documentId = recentReports[0].reportDocumentId;
+//        } else {
+//            // No recent report found. We have to create a new one.
+//            console.log(`⚠️ No recent report found in the last 24 hours. Asking Amazon to generate a new one...`);
+            
+//            const createReportRes = await spClient.callAPI({
+//                operation: 'createReport',
 //                endpoint: 'reports',
-//                path: { reportId: reportId }
+//                body: {
+//                    reportType: 'GET_FBA_FULFILLMENT_CURRENT_INVENTORY_DATA',
+//                    marketplaceIds: ['A21TJRUUN4KGV']
+//                }
 //            });
 
-//            reportStatus = statusRes.processingStatus || statusRes.payload?.processingStatus;
-//            console.log(`   Attempt ${attempts}: Status is ${reportStatus}...`);
+//            const reportId = createReportRes.reportId || createReportRes.payload?.reportId;
+//            let reportStatus = "IN_PROGRESS";
+//            let attempts = 0;
 
-//            if (reportStatus === "DONE") {
-//                documentId = statusRes.reportDocumentId || statusRes.payload?.reportDocumentId;
+//            // Wait for it to finish (Max 60 seconds)
+//            while (reportStatus !== "DONE" && reportStatus !== "FATAL" && reportStatus !== "CANCELLED") {
+//                attempts++;
+//                if (attempts > 12) throw new Error("Amazon is taking too long to generate the report. Try again in 10 minutes.");
+                
+//                await new Promise(resolve => setTimeout(resolve, 5000));
+                
+//                const statusRes = await spClient.callAPI({
+//                    operation: 'getReport',
+//                    endpoint: 'reports',
+//                    path: { reportId: reportId }
+//                });
+                
+//                reportStatus = statusRes.processingStatus || statusRes.payload?.processingStatus;
+//                console.log(`   Attempt ${attempts}: Status is ${reportStatus}...`);
+                
+//                if (reportStatus === "DONE") {
+//                    documentId = statusRes.reportDocumentId || statusRes.payload?.reportDocumentId;
+//                }
 //            }
 //        }
 
-//        if (!documentId) throw new Error(`Report failed with status: ${reportStatus}`);
+//        if (!documentId) throw new Error("Could not secure a valid Report Document ID.");
 
-//        console.log(`✅ Step 3: Report DONE! Fetching document URL...`);
+//        console.log(`✅ Step 2: Fetching secure document URL...`);
 
-//        // Step 3: Get the secure download URL from Amazon
 //        const docRes = await spClient.callAPI({
 //            operation: 'getReportDocument',
 //            endpoint: 'reports',
@@ -593,36 +610,26 @@
 
 //        const downloadUrl = docRes.url || docRes.payload?.url;
         
-//        // Step 4: Download the raw text file and parse it into clean JSON
-//        console.log(`📥 Downloading and parsing raw file...`);
-        
-//        // Use native fetch to grab the file content
+//        console.log(`📥 Step 3: Downloading and parsing TSV file...`);
 //        const fileResponse = await fetch(downloadUrl);
 //        const rawText = await fileResponse.text();
 
-//        // Amazon sends this specific report as Tab-Separated Values (TSV)
 //        Papa.parse(rawText, {
-//            delimiter: "\t", // Tell the parser to look for tabs, not commas
+//            delimiter: "\t",
 //            header: true,
 //            skipEmptyLines: true,
 //            complete: function(results) {
 //                const parsedData = results.data;
-                
-//                // Map Amazon's ugly column names into the clean keys our React UI expects
 //                const formattedData = parsedData.map(row => ({
 //                    sku: row.sku,
 //                    fc: row['fulfillment-center-id'],
-//                    location: "Amazon FC", // This report doesn't provide city/state, just the FC code
+//                    location: "Amazon FC",
 //                    fulfillable: parseInt(row['sellable-quantity']) || 0,
 //                    reserved: parseInt(row['unsellable-quantity']) || 0 
-//                })).filter(item => item.sku && item.fc); // Filter out any broken rows
+//                })).filter(item => item.sku && item.fc);
 
-//                console.log(`🎉 Success! Parsed ${formattedData.length} FC location records.`);
-                
-//                res.json({
-//                    status: "Success",
-//                    data: formattedData
-//                });
+//                console.log(`🎉 Success! Parsed ${formattedData.length} records.`);
+//                res.json({ status: "Success", data: formattedData });
 //            }
 //        });
 

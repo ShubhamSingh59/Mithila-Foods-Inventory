@@ -879,11 +879,13 @@ function OpeningStockEntry() {
       console.error(err);
       const msg =
         err?.response?.data?.error?.message ||
-        err?.response?.data?.error ||
-        err.message ||
-        "Bulk create failed";
+        err?.response?.data?.message ||
+        err?.response?.data?.exception ||
+        err?.message ||
+        "Failed to create Stock Transfer.";
 
-      setError(msg);
+      // Force it to be a string so React never crashes!
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
 
       if (bulkLines.length) {
         setBulkResults(
