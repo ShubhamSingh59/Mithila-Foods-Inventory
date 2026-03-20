@@ -750,8 +750,18 @@ function OpeningStockEntry() {
           errs.slice(0, 5).join(" | ") + (errs.length > 5 ? ` (+${errs.length - 5} more)` : "")
         );
       }
-
-      setBulkLines(lines);
+      const enrichedLines = await runWithLimit(lines, 4, async (l) => {
+        let current_qty = 0;
+        try {
+          const bin = await getItemWarehouseValuationRate(l.item_code, l.warehouse);
+          current_qty = Number(bin?.actual_qty) || 0;
+        } catch (e) {
+          // Ignore errors, assume 0 if bin doesn't exist
+        }
+        return { ...l, current_qty };
+      });
+      //setBulkLines(lines);
+      setBulkLines(enrichedLines);
     } catch (err) {
       console.error(err);
       setBulkParseError(err.message || "Failed to parse file");
@@ -1145,7 +1155,37 @@ function OpeningStockEntry() {
               ) : null}
             </div>
           </div>
-
+          {bulkLines.length > 0 && bulkResults.length === 0 && (
+            <div className="table-container opening-stock-table-wrapper" style={{ marginTop: 14 }}>
+              <div style={{ padding: "12px 16px", fontWeight: "bold", borderBottom: "1px solid var(--border)", background: "#f8fafc", color: "#0f172a" }}>
+                Upload Preview (Please verify before creating)
+              </div>
+              <table className="table opening-stock-table opening-stock-table-bulk">
+                <thead>
+                  <tr>
+                    <th>Row</th>
+                    <th>Item</th>
+                    <th>Warehouse</th>
+                    <th>Current Qty</th>
+                    <th>Uploaded Qty</th>
+                    <th>Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bulkLines.map((r, idx) => (
+                    <tr key={`preview-${r.rowNo}-${r.item_code}-${idx}`}>
+                      <td>{r.rowNo}</td>
+                      <td style={{ fontWeight: 500 }}>{r.item_code}</td>
+                      <td className="text-muted">{r.warehouse}</td>
+                      <td>{r.current_qty}</td>
+                      <td style={{ fontWeight: "bold", color: "#2563eb" }}>{r.qty}</td>
+                      <td>{Number.isFinite(r.rate) ? r.rate : <span className="text-muted">Auto</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
           {bulkResults.length > 0 && (
             <div className="table-container opening-stock-table-wrapper" style={{ marginTop: 14 }}>
               <table className="table opening-stock-table opening-stock-table-bulk">

@@ -19,11 +19,22 @@ import SupplierTabView from "./views/SupplierListView";
 import PurchaseTrackerView from "./views/PurchaseTrackerView";
 import SupplierIntelligenceView from "./views/SupplierIntelligenceView";
 
+
 // CSS
 import "./App.css";
 import { OrgProvider } from "./Components/Context/OrgContext";
 import StockReorderTabsView from "./views/StockReorderTabsView";
-
+import AmazonOrders from "./Components/Marketplaces/Amazon/AmazonOrders";
+import AmazonShippingTester from "./Components/Marketplaces/Amazon/AmazonShippingTester";
+import FlipkartOrders from "./Components/Marketplaces/Flipkart/FlipkartOrders";
+//import AmazonShipping from "./Components/Marketplaces/Amazon/AmazonShipping";
+//import AmazonShippingHub from "./Components/Marketplaces/Amazon/AmazonShippingHub";
+import AmazonShipmentList from "./Components/Marketplaces/Amazon/AmazonShipmentList";
+import AmazonBulkShipment from "./Components/Marketplaces/Amazon/AmazonBulkShipment";
+import AmazonBulkProcessing from "./Components/Marketplaces/Amazon/AmazonBulkProcessing";
+import FbaInventory from "./Components/Marketplaces/Amazon/FbaInventory";
+import AmazonPayoutWidget from "./Components/Marketplaces/Amazon/AmazonPayoutWidget";
+import FbaLocationStock from "./Components/Marketplaces/Amazon/FbaLocationStock";
 // --- KeepAlive Wrapper 
 const KeepAlivePage = ({ triggerPath, triggerPaths, children }) => {
   const location = useLocation();
@@ -49,7 +60,8 @@ const KeepAlivePage = ({ triggerPath, triggerPaths, children }) => {
 function Check404() {
   const location = useLocation();
   const validPrefixes = [
-    "/stock", "/purchase", "/sales", "/mfg", "/suppliers", "/analytics"
+    // Added "/ecommerce" to the allowed list
+    "/stock", "/purchase", "/sales", "/mfg", "/suppliers", "/analytics", "/ecommerce"
   ];
 
   const isValid = validPrefixes.some(prefix => location.pathname.startsWith(prefix));
@@ -62,7 +74,10 @@ function Check404() {
 export default function App() {
   // Sidebar state
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
+  const [view, setView] = useState('list'); // 'list' or 'bulk'
+  const [selectedOrders, setSelectedOrders] = useState([]);
+  const [shipView, setShipView] = useState('list'); // 'list', 'bulk', or 'processing'
+  const [configuredBulkData, setConfiguredBulkData] = useState([]);
   return (
     <OrgProvider>
       <Router>
@@ -142,7 +157,64 @@ export default function App() {
                 </section>
               </KeepAlivePage>
 
+              {/* 6. E-COMMERCE VIEWS */}
+              <KeepAlivePage triggerPath="/ecommerce/amazon/dashboard">
+                <div className="app-panel">
+                  <AmazonOrders />
+                  <AmazonShippingTester />
+                </div>
+              </KeepAlivePage>
 
+              <KeepAlivePage triggerPath="/ecommerce/amazon/ship">
+                <div className="app-panel">
+                  {shipView === 'list' && (
+                    <AmazonShipmentList
+                      onProceedToBulk={(orders) => {
+                        setSelectedOrders(orders);
+                        setShipView('bulk');
+                      }}
+                    />
+                  )}
+
+                  {shipView === 'bulk' && (
+                    <AmazonBulkShipment
+                      selectedOrders={selectedOrders}
+                      onBack={() => setShipView('list')}
+                      onSchedule={(dataWithDimensions) => {
+                        setConfiguredBulkData(dataWithDimensions);
+                        setShipView('processing'); // Move to the new screen!
+                      }}
+                    />
+                  )}
+
+                  {shipView === 'processing' && (
+                    <AmazonBulkProcessing
+                      ordersToProcess={configuredBulkData}
+                      onDone={() => setShipView('list')} // Sends them back to the start when finished
+                    />
+                  )}
+                </div>
+              </KeepAlivePage>
+              <KeepAlivePage triggerPath="/ecommerce/amazon/fbainventory">
+                <div className="app-panel">
+                  <FbaInventory />
+                </div>
+              </KeepAlivePage>
+              <KeepAlivePage triggerPath="/ecommerce/amazon/payout">
+                <div className="app-panel">
+                  <AmazonPayoutWidget />
+                </div>
+              </KeepAlivePage>
+              <KeepAlivePage triggerPath="/ecommerce/amazon/fbalocations">
+                <div className="app-panel">
+                  <FbaLocationStock/>
+                </div>
+              </KeepAlivePage>
+              <KeepAlivePage triggerPath="/ecommerce/flipkart">
+                <div className="app-panel">
+                  <FlipkartOrders />
+                </div>
+              </KeepAlivePage>
               {/* 6. ANALYTICS VIEWS (General) */}
               {/*<KeepAlivePage triggerPath="/analytics">
                 <div className="app-panel app-panel-primary">

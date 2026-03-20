@@ -1,11 +1,57 @@
 // src/api/core.jsx
 import axios from "axios";
 
-// ------------------------------
-// Base config and shared constants
-// ------------------------------
+//// ------------------------------
+//// Base config and shared constants
+//// ------------------------------
 
+//// --- GLOBAL PATIENCE TIMER LOGIC ---
+//let activeRequests = 0;
+//let slowTimer = null;
+//let timeoutTimer = null;
 
+//// Intercept every outgoing request
+//axios.interceptors.request.use((config) => {
+//  activeRequests++;
+  
+//  if (activeRequests === 1) {
+//    // The very first request started, start the global timers!
+//    // 1. Tell App.jsx things are getting slow (5 seconds)
+//    slowTimer = setTimeout(() => {
+//      window.dispatchEvent(new Event('global-api-slow'));
+//    }, 5000);
+
+//    // 2. Tell App.jsx we timed out (15 seconds)
+//    timeoutTimer = setTimeout(() => {
+//      window.dispatchEvent(new Event('global-api-timeout'));
+//    }, 15000);
+//  }
+//  return config;
+//});
+
+//// Intercept every incoming response (Success or Error)
+//const handleResponseDone = () => {
+//  activeRequests--;
+//  if (activeRequests <= 0) {
+//    activeRequests = 0;
+//    // All requests finished! Clear the timers and tell App.jsx to hide the warning
+//    clearTimeout(slowTimer);
+//    clearTimeout(timeoutTimer);
+//    window.dispatchEvent(new Event('global-api-resolved'));
+//  }
+//};
+
+//axios.interceptors.response.use(
+//  (response) => {
+//    handleResponseDone();
+//    return response;
+//  },
+//  (error) => {
+//    handleResponseDone();
+//    return Promise.reject(error);
+//  }
+//);
+// -----------------------------------
 
 // ======= This is the line which connects our frontend with the backend ========//
 export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";

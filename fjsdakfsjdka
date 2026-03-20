@@ -1,0 +1,1293 @@
+[1mdiff --git a/Mithila Foods/src/App.jsx b/Mithila Foods/src/App.jsx[m
+[1mindex 9e7191f..5321ec5 100644[m
+[1m--- a/Mithila Foods/src/App.jsx[m	
+[1m+++ b/Mithila Foods/src/App.jsx[m	
+[36m@@ -19,10 +19,14 @@[m [mimport SupplierTabView from "./views/SupplierListView";[m
+ import PurchaseTrackerView from "./views/PurchaseTrackerView";[m
+ import SupplierIntelligenceView from "./views/SupplierIntelligenceView";[m
+ [m
+[32m+[m
+ // CSS[m
+ import "./App.css";[m
+ import { OrgProvider } from "./Components/Context/OrgContext";[m
+ import StockReorderTabsView from "./views/StockReorderTabsView";[m
+[32m+[m[32mimport AmazonOrders from "./Components/Marketplaces/Amazon/AmazonOrders";[m
+[32m+[m[32mimport AmazonShippingTester from "./Components/Marketplaces/Amazon/AmazonShippingTester";[m
+[32m+[m[32mimport FlipkartOrders from "./Components/Marketplaces/Flipkart/FlipkartOrders";[m
+ [m
+ // --- KeepAlive Wrapper [m
+ const KeepAlivePage = ({ triggerPath, triggerPaths, children }) => {[m
+[36m@@ -49,7 +53,8 @@[m [mconst KeepAlivePage = ({ triggerPath, triggerPaths, children }) => {[m
+ function Check404() {[m
+   const location = useLocation();[m
+   const validPrefixes = [[m
+[31m-    "/stock", "/purchase", "/sales", "/mfg", "/suppliers", "/analytics"[m
+[32m+[m[32m    // Added "/ecommerce" to the allowed list[m
+[32m+[m[32m    "/stock", "/purchase", "/sales", "/mfg", "/suppliers", "/analytics", "/ecommerce"[m
+   ];[m
+ [m
+   const isValid = validPrefixes.some(prefix => location.pathname.startsWith(prefix));[m
+[36m@@ -142,7 +147,20 @@[m [mexport default function App() {[m
+                 </section>[m
+               </KeepAlivePage>[m
+ [m
+[32m+[m[32m              {/* 6. E-COMMERCE VIEWS */}[m
+[32m+[m[32m              <KeepAlivePage triggerPath="/ecommerce/amazon">[m
+[32m+[m[32m                {/* Wrapping it in your standard panel to match the rest of the app */}[m
+[32m+[m[32m                <div className="app-panel">[m
+[32m+[m[32m                  <AmazonOrders />[m
+[32m+[m[32m                  <AmazonShippingTester />[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m              </KeepAlivePage>[m
+ [m
+[32m+[m[32m              <KeepAlivePage triggerPath="/ecommerce/flipkart">[m
+[32m+[m[32m                <div className="app-panel">[m
+[32m+[m[32m                  <FlipkartOrders/>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m              </KeepAlivePage>[m
+               {/* 6. ANALYTICS VIEWS (General) */}[m
+               {/*<KeepAlivePage triggerPath="/analytics">[m
+                 <div className="app-panel app-panel-primary">[m
+[1mdiff --git a/Mithila Foods/src/Components/Marketplaces/Amazon/AmazonOrders.jsx b/Mithila Foods/src/Components/Marketplaces/Amazon/AmazonOrders.jsx[m
+[1mnew file mode 100644[m
+[1mindex 0000000..58474db[m
+[1m--- /dev/null[m
+[1m+++ b/Mithila Foods/src/Components/Marketplaces/Amazon/AmazonOrders.jsx[m	
+[36m@@ -0,0 +1,265 @@[m
+[32m+[m[32mimport React, { useState, useEffect } from 'react';[m
+[32m+[m[32mimport { BACKEND_URL } from '../../api/core';[m
+[32m+[m
+[32m+[m[32mconst AmazonOrders = () => {[m
+[32m+[m[32m    const [orders, setOrders] = useState([]);[m
+[32m+[m[32m    const [loading, setLoading] = useState(true);[m
+[32m+[m[32m    const [loadingMore, setLoadingMore] = useState(false);[m
+[32m+[m[32m    const [error, setError] = useState(null);[m
+[32m+[m[32m    const [syncTime, setSyncTime] = useState('');[m
+[32m+[m
+[32m+[m[32m    // Custom Pagination State[m
+[32m+[m[32m    const [nextOffset, setNextOffset] = useState(1);[m
+[32m+[m
+[32m+[m[32m    // Filtering & UI State[m
+[32m+[m[32m    const [activeTab, setActiveTab] = useState('All');[m
+[32m+[m[32m    const [expandedOrderId, setExpandedOrderId] = useState(null);[m
+[32m+[m[32m    const [orderItems, setOrderItems] = useState({});[m
+[32m+[m[32m    const [loadingItems, setLoadingItems] = useState(false);[m
+[32m+[m
+[32m+[m[32m    useEffect(() => {[m
+[32m+[m[32m        fetchOrders(); // Initial fetch (Last 3 days)[m
+[32m+[m[32m    }, []);[m
+[32m+[m
+[32m+[m[32m    // Fetch initial batch (Offset 0)[m
+[32m+[m[32m    const fetchOrders = async () => {[m
+[32m+[m[32m        setLoading(true);[m
+[32m+[m[32m        try {[m
+[32m+[m[32m            const response = await fetch(`${BACKEND_URL}/api/amazon/orders?offset=0`);[m
+[32m+[m[32m            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);[m
+[32m+[m
+[32m+[m[32m            const data = await response.json();[m
+[32m+[m[32m            const orderArray = data.amazonData?.Orders || [];[m
+[32m+[m
+[32m+[m[32m            setOrders(orderArray);[m
+[32m+[m[32m            setNextOffset(data.nextOffset); // Prepares the button for offset 3[m
+[32m+[m[32m            setSyncTime(new Date().toLocaleString());[m
+[32m+[m[32m        } catch (err) {[m
+[32m+[m[32m            console.error("Fetch Error:", err);[m
+[32m+[m[32m            setError(err.message);[m
+[32m+[m[32m        } finally {[m
+[32m+[m[32m            setLoading(false);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    // Fetch older records (Previous 3 days)[m
+[32m+[m[32m    const fetchMoreOrders = async () => {[m
+[32m+[m[32m        setLoadingMore(true);[m
+[32m+[m[32m        try {[m
+[32m+[m[32m            const response = await fetch(`${BACKEND_URL}/api/amazon/orders?offset=${nextOffset}`);[m
+[32m+[m[32m            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);[m
+[32m+[m
+[32m+[m[32m            const data = await response.json();[m
+[32m+[m[32m            const newOrders = data.amazonData?.Orders || [];[m
+[32m+[m
+[32m+[m[32m            // Stack older orders underneath the newer ones[m
+[32m+[m[32m            setOrders(prevOrders => [...prevOrders, ...newOrders]);[m
+[32m+[m[32m            setNextOffset(data.nextOffset); // Increments by 3 for the next click[m
+[32m+[m[32m        } catch (err) {[m
+[32m+[m[32m            console.error("Load More Error:", err);[m
+[32m+[m[32m            alert("Failed to load older orders.");[m
+[32m+[m[32m        } finally {[m
+[32m+[m[32m            setLoadingMore(false);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    const handleToggleItems = async (orderId) => {[m
+[32m+[m[32m        if (expandedOrderId === orderId) {[m
+[32m+[m[32m            setExpandedOrderId(null);[m
+[32m+[m[32m            return;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        setExpandedOrderId(orderId);[m
+[32m+[m
+[32m+[m[32m        if (!orderItems[orderId]) {[m
+[32m+[m[32m            setLoadingItems(true);[m
+[32m+[m[32m            try {[m
+[32m+[m[32m                const response = await fetch(`${BACKEND_URL}/api/amazon/order-items/${orderId}`);[m
+[32m+[m[32m                const data = await response.json();[m
+[32m+[m
+[32m+[m[32m                const itemsArray = data.items?.payload?.OrderItems || data.items?.OrderItems || [];[m
+[32m+[m[32m                setOrderItems(prev => ({ ...prev, [orderId]: itemsArray }));[m
+[32m+[m[32m            } catch (err) {[m
+[32m+[m[32m                console.error("Failed to fetch items:", err);[m
+[32m+[m[32m            } finally {[m
+[32m+[m[32m                setLoadingItems(false);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    const filteredOrders = orders.filter(order => {[m
+[32m+[m[32m        if (activeTab === 'All') return true;[m
+[32m+[m[32m        return order.OrderStatus === activeTab;[m
+[32m+[m[32m    });[m
+[32m+[m
+[32m+[m[32m    const getStatusClass = (status) => {[m
+[32m+[m[32m        if (status === 'Shipped') return 'paid';[m
+[32m+[m[32m        if (status === 'Unshipped' || status === 'Pending') return 'unpaid';[m
+[32m+[m[32m        if (status === 'Canceled') return 'draft';[m
+[32m+[m[32m        return 'draft';[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    const getFulfillmentLabel = (channel) => {[m
+[32m+[m[32m        return channel === 'AFN' ? 'Amazon FBA' : 'Easy Ship';[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    if (loading) {[m
+[32m+[m[32m        return ([m
+[32m+[m[32m            <div className="sales-order">[m
+[32m+[m[32m                <div className="sales-recent-loading text-muted text-center">[m
+[32m+[m[32m                    <p>⏳ Syncing recent orders from Amazon...</p>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m        );[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    return ([m
+[32m+[m[32m        <div className="sales-order">[m
+[32m+[m
+[32m+[m[32m            <div className="sales-header">[m
+[32m+[m[32m                <div className="sales-title-block">[m
+[32m+[m[32m                    <h2 className="sales-title">Amazon Operations</h2>[m
+[32m+[m[32m                    <p className="sales-subtitle">[m
+[32m+[m[32m                        Last Sync: {syncTime} &nbsp;•&nbsp;[m
+[32m+[m[32m                        <span className="text-bold"> Loaded: {orders.length}</span> &nbsp;•&nbsp;[m
+[32m+[m[32m                        Showing {activeTab}: {filteredOrders.length}[m
+[32m+[m[32m                    </p>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m                <div className="sales-recent-header-actions">[m
+[32m+[m[32m                    <button className="btn btn-outline btn-sm" onClick={fetchOrders}>[m
+[32m+[m[32m                        ↻ Refresh Sync[m
+[32m+[m[32m                    </button>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m
+[32m+[m[32m            {error && ([m
+[32m+[m[32m                <div className="alert alert-error">[m
+[32m+[m[32m                    ❌ Error: {error}[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            )}[m
+[32m+[m
+[32m+[m[32m            <div className="theme-tabs">[m
+[32m+[m[32m                {['All', 'Pending', 'Unshipped', 'Shipped', 'Canceled'].map(tab => ([m
+[32m+[m[32m                    <button[m
+[32m+[m[32m                        key={tab}[m
+[32m+[m[32m                        className={`theme-tab-btn ${activeTab === tab ? 'active' : ''}`}[m
+[32m+[m[32m                        onClick={() => setActiveTab(tab)}[m
+[32m+[m[32m                    >[m
+[32m+[m[32m                        {tab}[m
+[32m+[m[32m                    </button>[m
+[32m+[m[32m                ))}[m
+[32m+[m[32m            </div>[m
+[32m+[m
+[32m+[m[32m            {filteredOrders.length === 0 ? ([m
+[32m+[m[32m                <div className="sales-recent-empty text-center text-muted">[m
+[32m+[m[32m                    <p>No {activeTab} orders found in this timeframe.</p>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            ) : ([m
+[32m+[m[32m                <div className="table-container">[m
+[32m+[m[32m                    <table className="table">[m
+[32m+[m[32m                        <thead>[m
+[32m+[m[32m                            <tr>[m
+[32m+[m[32m                                <th>Order ID</th>[m
+[32m+[m[32m                                <th>Date</th>[m
+[32m+[m[32m                                <th>Fulfillment</th>[m
+[32m+[m[32m                                <th>Total Value</th>[m
+[32m+[m[32m                                <th>Status</th>[m
+[32m+[m[32m                                <th className="text-right">Items</th>[m
+[32m+[m[32m                            </tr>[m
+[32m+[m[32m                        </thead>[m
+[32m+[m[32m                        <tbody>[m
+[32m+[m[32m                            {filteredOrders.map((order) => ([m
+[32m+[m[32m                                <React.Fragment key={order.AmazonOrderId}>[m
+[32m+[m[32m                                    <tr>[m
+[32m+[m[32m                                        <td className="sales-recent-name-cell">{order.AmazonOrderId}</td>[m
+[32m+[m[32m                                        <td>{new Date(order.PurchaseDate).toLocaleString()}</td>[m
+[32m+[m
+[32m+[m[32m                                        <td>[m
+[32m+[m[32m                                            <span className={`sales-status-pill ${order.FulfillmentChannel === 'AFN' ? 'draft' : 'unpaid'}`}>[m
+[32m+[m[32m                                                {getFulfillmentLabel(order.FulfillmentChannel)}[m
+[32m+[m[32m                                            </span>[m
+[32m+[m[32m                                        </td>[m
+[32m+[m
+[32m+[m[32m                                        <td className="text-bold">[m
+[32m+[m[32m                                            {order.OrderTotal?.Amount || '0.00'} {order.OrderTotal?.CurrencyCode || 'INR'}[m
+[32m+[m[32m                                        </td>[m
+[32m+[m
+[32m+[m[32m                                        <td>[m
+[32m+[m[32m                                            <span className={`sales-status-pill ${getStatusClass(order.OrderStatus)}`}>[m
+[32m+[m[32m                                                {order.OrderStatus}[m
+[32m+[m[32m                                            </span>[m
+[32m+[m[32m                                        </td>[m
+[32m+[m
+[32m+[m[32m                                        <td className="text-right sales-actions-inline">[m
+[32m+[m[32m                                            <button[m
+[32m+[m[32m                                                className="btn btn-outline btn-xs"[m
+[32m+[m[32m                                                onClick={() => handleToggleItems(order.AmazonOrderId)}[m
+[32m+[m[32m                                            >[m
+[32m+[m[32m                                                {expandedOrderId === order.AmazonOrderId ? "Hide SKUs" : "View SKUs"}[m
+[32m+[m[32m                                            </button>[m
+[32m+[m[32m                                        </td>[m
+[32m+[m[32m                                    </tr>[m
+[32m+[m
+[32m+[m[32m                                    {expandedOrderId === order.AmazonOrderId && ([m
+[32m+[m[32m                                        <tr>[m
+[32m+[m[32m                                            <td colSpan="6" className="amazon-expanded-cell">[m
+[32m+[m[32m                                                <div className="sales-panel amazon-expanded-panel">[m
+[32m+[m[32m                                                    <h4 className="sales-return-row-title" style={{ marginBottom: '10px' }}>Order Details & SKUs</h4>[m
+[32m+[m
+[32m+[m[32m                                                    <p className="text-muted" style={{ marginBottom: '15px', fontSize: '0.85rem' }}>[m
+[32m+[m[32m                                                        <strong>Customer Name:</strong> {order.BuyerInfo?.BuyerName || 'Amazon Customer (PII Hidden)'} |[m
+[32m+[m[32m                                                        <strong> Payment Method:</strong> {order.PaymentMethod || 'Standard'}[m
+[32m+[m[32m                                                    </p>[m
+[32m+[m
+[32m+[m[32m                                                    {loadingItems && !orderItems[order.AmazonOrderId] ? ([m
+[32m+[m[32m                                                        <p className="text-muted">Loading SKUs...</p>[m
+[32m+[m[32m                                                    ) : ([m
+[32m+[m[32m                                                        <div className="table-container">[m
+[32m+[m[32m                                                            <table className="table">[m
+[32m+[m[32m                                                                <thead>[m
+[32m+[m[32m                                                                    <tr>[m
+[32m+[m[32m                                                                        <th>Item Title</th>[m
+[32m+[m[32m                                                                        <th>SKU Code</th>[m
+[32m+[m[32m                                                                        <th>Qty</th>[m
+[32m+[m[32m                                                                        <th>Unit Price</th>[m
+[32m+[m[32m                                                                    </tr>[m
+[32m+[m[32m                                                                </thead>[m
+[32m+[m[32m                                                                <tbody>[m
+[32m+[m[32m                                                                    {(orderItems[order.AmazonOrderId] || []).map((item, index) => ([m
+[32m+[m[32m                                                                        <tr key={item.OrderItemId || index}>[m
+[32m+[m[32m                                                                            <td className="text-muted">{item.Title}</td>[m
+[32m+[m[32m                                                                            <td className="text-bold">{item.SellerSKU}</td>[m
+[32m+[m[32m                                                                            <td>{item.QuantityOrdered}</td>[m
+[32m+[m[32m                                                                            <td>{item.ItemPrice?.Amount || '0.00'} {item.ItemPrice?.CurrencyCode}</td>[m
+[32m+[m[32m                                                                        </tr>[m
+[32m+[m[32m                                                                    ))}[m
+[32m+[m[32m                                                                </tbody>[m
+[32m+[m[32m                                                            </table>[m
+[32m+[m[32m                                                        </div>[m
+[32m+[m[32m                                                    )}[m
+[32m+[m[32m                                                </div>[m
+[32m+[m[32m                                            </td>[m
+[32m+[m[32m                                        </tr>[m
+[32m+[m[32m                                    )}[m
+[32m+[m[32m                                </React.Fragment>[m
+[32m+[m[32m                            ))}[m
+[32m+[m[32m                        </tbody>[m
+[32m+[m[32m                    </table>[m
+[32m+[m
+[32m+[m[32m                    <div style={{ padding: '15px', textAlign: 'center', borderTop: '1px solid var(--border)' }}>[m
+[32m+[m[32m                        <button[m
+[32m+[m[32m                            className="btn btn-secondary"[m
+[32m+[m[32m                            onClick={fetchMoreOrders}[m
+[32m+[m[32m                            disabled={loadingMore}[m
+[32m+[m[32m                        >[m
+[32m+[m[32m                            {loadingMore ? "⏳ Loading..." : "Load Previous Day ↓"}[m
+[32m+[m[32m                        </button>[m
+[32m+[m[32m                    </div>[m
+[32m+[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            )}[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m    );[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32mexport default AmazonOrders;[m
+\ No newline at end of file[m
+[1mdiff --git a/Mithila Foods/src/Components/Marketplaces/Amazon/AmazonShippingTester.jsx b/Mithila Foods/src/Components/Marketplaces/Amazon/AmazonShippingTester.jsx[m
+[1mnew file mode 100644[m
+[1mindex 0000000..6abdaef[m
+[1m--- /dev/null[m
+[1m+++ b/Mithila Foods/src/Components/Marketplaces/Amazon/AmazonShippingTester.jsx[m	
+[36m@@ -0,0 +1,112 @@[m
+[32m+[m[32mimport React, { useState } from 'react';[m
+[32m+[m[32mimport { BACKEND_URL } from '../../api/core';[m[41m [m
+[32m+[m
+[32m+[m[32mconst AmazonShippingTester = () => {[m
+[32m+[m[32m  const [orderId, setOrderId] = useState('');[m
+[32m+[m[32m  const [loading, setLoading] = useState(false);[m
+[32m+[m[32m  const [log, setLog] = useState([]);[m
+[32m+[m
+[32m+[m[32m  const addLog = (message) => {[m
+[32m+[m[32m    setLog(prev => [...prev, `${new Date().toLocaleTimeString()} - ${message}`]);[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const handleTestShipment = async () => {[m
+[32m+[m[32m    if (!orderId) {[m
+[32m+[m[32m      alert("Please enter a dummy Order ID first.");[m
+[32m+[m[32m      return;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    setLoading(true);[m
+[32m+[m[32m    addLog(`Initiating SAFE shipment protocol for ${orderId}...`);[m
+[32m+[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      // Calling our safe mock endpoint[m
+[32m+[m[32m      const response = await fetch(`${BACKEND_URL}/api/amazon/test-ship-order`, {[m
+[32m+[m[32m        method: 'POST',[m
+[32m+[m[32m        headers: { 'Content-Type': 'application/json' },[m
+[32m+[m[32m        body: JSON.stringify({ orderId: orderId })[m
+[32m+[m[32m      });[m
+[32m+[m[41m      [m
+[32m+[m[32m      const data = await response.json();[m
+[32m+[m
+[32m+[m[32m      if (data.status === "Failed") {[m
+[32m+[m[32m        addLog(`❌ Error: ${data.error}`);[m
+[32m+[m[32m        return;[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      addLog("✅ Response received. Extracting PDF Base64...");[m
+[32m+[m
+[32m+[m[32m      // Extracting exactly how Amazon structures it[m
+[32m+[m[32m      const base64PDF = data.shippingData?.payload?.Shipment?.Label?.FileContents?.Contents;[m
+[32m+[m
+[32m+[m[32m      if (!base64PDF) {[m
+[32m+[m[32m        addLog("❌ No PDF found in response.");[m
+[32m+[m[32m        return;[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      addLog("📄 Base64 extracted. Converting to physical file...");[m
+[32m+[m
+[32m+[m[32m      // Convert Base64 to a physical PDF Blob[m
+[32m+[m[32m      const binaryString = window.atob(base64PDF);[m
+[32m+[m[32m      const binaryLen = binaryString.length;[m
+[32m+[m[32m      const bytes = new Uint8Array(binaryLen);[m
+[32m+[m[32m      for (let i = 0; i < binaryLen; i++) {[m
+[32m+[m[32m        bytes[i] = binaryString.charCodeAt(i);[m
+[32m+[m[32m      }[m
+[32m+[m[41m      [m
+[32m+[m[32m      const blob = new Blob([bytes], { type: "application/pdf" });[m
+[32m+[m[32m      const link = document.createElement('a');[m
+[32m+[m[32m      link.href = window.URL.createObjectURL(blob);[m
+[32m+[m[32m      link.download = `SAFE_TEST_LABEL_${orderId}.pdf`;[m
+[32m+[m[41m      [m
+[32m+[m[32m      addLog("⬇️ Triggering browser download...");[m
+[32m+[m[32m      link.click();[m
+[32m+[m[41m      [m
+[32m+[m[32m      addLog("🎉 Process complete! Your live account is safe.");[m
+[32m+[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m      console.error(error);[m
+[32m+[m[32m      addLog(`❌ Fatal Error: ${error.message}`);[m
+[32m+[m[32m    } finally {[m
+[32m+[m[32m      setLoading(false);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  return ([m
+[32m+[m[32m    <div className="app-panel">[m
+[32m+[m[32m      <h2 className="sales-title" style={{ color: '#d97706' }}>[m
+[32m+[m[32m        🛡️ Isolated Shipping Sandbox[m
+[32m+[m[32m      </h2>[m
+[32m+[m[32m      <p className="text-muted" style={{ marginBottom: '20px' }}>[m
+[32m+[m[32m        This component tests the PDF generation and download logic without touching the live Amazon API. 100% safe.[m
+[32m+[m[32m      </p>[m
+[32m+[m
+[32m+[m[32m      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>[m
+[32m+[m[32m        <input[m[41m [m
+[32m+[m[32m          type="text"[m[41m [m
+[32m+[m[32m          className="input"[m[41m [m
+[32m+[m[32m          placeholder="Enter any dummy Order ID (e.g. 111-222-333)"[m[41m [m
+[32m+[m[32m          value={orderId}[m
+[32m+[m[32m          onChange={(e) => setOrderId(e.target.value)}[m
+[32m+[m[32m          style={{ maxWidth: '300px' }}[m
+[32m+[m[32m        />[m
+[32m+[m[32m        <button[m[41m [m
+[32m+[m[32m          className="btn btn-primary"[m[41m [m
+[32m+[m[32m          onClick={handleTestShipment}[m
+[32m+[m[32m          disabled={loading}[m
+[32m+[m[32m        >[m
+[32m+[m[32m          {loading ? "Processing..." : "Generate Test Label"}[m
+[32m+[m[32m        </button>[m
+[32m+[m[32m      </div>[m
+[32m+[m
+[32m+[m[32m      <div style={{ background: '#0f172a', color: '#10b981', padding: '15px', borderRadius: '8px', fontFamily: 'monospace', minHeight: '150px' }}>[m
+[32m+[m[32m        <p style={{ margin: '0 0 10px 0', color: '#94a3b8' }}>--- System Terminal ---</p>[m
+[32m+[m[32m        {log.map((entry, idx) => ([m
+[32m+[m[32m          <div key={idx} style={{ marginBottom: '5px' }}>{entry}</div>[m
+[32m+[m[32m        ))}[m
+[32m+[m[32m      </div>[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m  );[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32mexport default AmazonShippingTester;[m
+\ No newline at end of file[m
+[1mdiff --git a/Mithila Foods/src/Components/Marketplaces/Flipkart/FlipkartOrders.jsx b/Mithila Foods/src/Components/Marketplaces/Flipkart/FlipkartOrders.jsx[m
+[1mnew file mode 100644[m
+[1mindex 0000000..19ba74c[m
+[1m--- /dev/null[m
+[1m+++ b/Mithila Foods/src/Components/Marketplaces/Flipkart/FlipkartOrders.jsx[m	
+[36m@@ -0,0 +1,247 @@[m
+[32m+[m[32mimport React, { useState, useEffect } from 'react';[m
+[32m+[m[32mimport { BACKEND_URL } from '../../api/core';[m[41m [m
+[32m+[m
+[32m+[m[32mconst FlipkartOrders = () => {[m
+[32m+[m[32m  const [groupedOrders, setGroupedOrders] = useState([]);[m
+[32m+[m[32m  const [loading, setLoading] = useState(true);[m
+[32m+[m[32m  const [loadingMore, setLoadingMore] = useState(false);[m
+[32m+[m[32m  const [error, setError] = useState(null);[m
+[32m+[m[32m  const [syncTime, setSyncTime] = useState('');[m
+[32m+[m[32m  const [nextOffset, setNextOffset] = useState(1);[m
+[32m+[m[41m  [m
+[32m+[m[32m  const [activeTab, setActiveTab] = useState('All');[m
+[32m+[m[32m  const [expandedOrderId, setExpandedOrderId] = useState(null);[m
+[32m+[m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    fetchOrders();[m
+[32m+[m[32m  }, []);[m
+[32m+[m
+[32m+[m[32m  // Flipkart returns flat items. This helper groups them by Order ID so the UI matches Amazon.[m
+[32m+[m[32m  const groupFlipkartItems = (itemsArray) => {[m
+[32m+[m[32m    const grouped = {};[m
+[32m+[m[32m    itemsArray.forEach(item => {[m
+[32m+[m[32m      if (!grouped[item.orderId]) {[m
+[32m+[m[32m        grouped[item.orderId] = {[m
+[32m+[m[32m          orderId: item.orderId,[m
+[32m+[m[32m          orderDate: item.orderDate,[m
+[32m+[m[32m          status: item.status, // e.g., APPROVED, PACKED, CANCELLED[m
+[32m+[m[32m          paymentType: item.paymentType,[m
+[32m+[m[32m          totalValue: 0,[m
+[32m+[m[32m          fulfillmentType: item.fulfillmentType || 'NON_FA', // FA vs NON_FA[m
+[32m+[m[32m          items: [][m
+[32m+[m[32m        };[m
+[32m+[m[32m      }[m
+[32m+[m[32m      grouped[item.orderId].items.push(item);[m
+[32m+[m[32m      grouped[item.orderId].totalValue += item.priceComponents?.sellingPrice || 0;[m
+[32m+[m[32m    });[m
+[32m+[m[32m    return Object.values(grouped);[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const fetchOrders = async () => {[m
+[32m+[m[32m    setLoading(true);[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      const response = await fetch(`${BACKEND_URL}/api/flipkart/orders?offset=0`);[m
+[32m+[m[32m      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);[m
+[32m+[m[41m      [m
+[32m+[m[32m      const data = await response.json();[m
+[32m+[m[32m      const itemsArray = data.flipkartData?.Items || [];[m
+[32m+[m[41m      [m
+[32m+[m[32m      setGroupedOrders(groupFlipkartItems(itemsArray));[m
+[32m+[m[32m      setNextOffset(data.nextOffset);[m
+[32m+[m[32m      setSyncTime(new Date().toLocaleString());[m
+[32m+[m[32m    } catch (err) {[m
+[32m+[m[32m      console.error("Fetch Error:", err);[m
+[32m+[m[32m      setError(err.message);[m
+[32m+[m[32m    } finally {[m
+[32m+[m[32m      setLoading(false);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const fetchMoreOrders = async () => {[m
+[32m+[m[32m    setLoadingMore(true);[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      const response = await fetch(`${BACKEND_URL}/api/flipkart/orders?offset=${nextOffset}`);[m
+[32m+[m[32m      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);[m
+[32m+[m[41m      [m
+[32m+[m[32m      const data = await response.json();[m
+[32m+[m[32m      const newItemsArray = data.flipkartData?.Items || [];[m
+[32m+[m[32m      const newGrouped = groupFlipkartItems(newItemsArray);[m
+[32m+[m[41m      [m
+[32m+[m[32m      setGroupedOrders(prev => [...prev, ...newGrouped]);[m
+[32m+[m[32m      setNextOffset(data.nextOffset);[m
+[32m+[m[32m    } catch (err) {[m
+[32m+[m[32m      console.error("Load More Error:", err);[m
+[32m+[m[32m      alert("Failed to load older orders.");[m
+[32m+[m[32m    } finally {[m
+[32m+[m[32m      setLoadingMore(false);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const filteredOrders = groupedOrders.filter(order => {[m
+[32m+[m[32m    if (activeTab === 'All') return true;[m
+[32m+[m[32m    if (activeTab === 'Pending' && order.status === 'APPROVED') return true;[m
+[32m+[m[32m    if (activeTab === 'Shipped' && (order.status === 'DISPATCHED' || order.status === 'SHIPPED')) return true;[m
+[32m+[m[32m    if (activeTab === 'Canceled' && order.status === 'CANCELLED') return true;[m
+[32m+[m[32m    return false;[m
+[32m+[m[32m  });[m
+[32m+[m
+[32m+[m[32m  const getStatusClass = (status) => {[m
+[32m+[m[32m    if (status === 'DISPATCHED' || status === 'SHIPPED') return 'paid';[m
+[32m+[m[32m    if (status === 'APPROVED' || status === 'PACKED') return 'unpaid';[m
+[32m+[m[32m    if (status === 'CANCELLED') return 'draft';[m
+[32m+[m[32m    return 'unpaid';[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const getFulfillmentLabel = (type) => {[m
+[32m+[m[32m    return type === 'FA' ? 'Flipkart FBA' : 'Easy Ship';[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  if (loading) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <div className="sales-order">[m
+[32m+[m[32m        <div className="sales-recent-loading text-muted text-center">[m
+[32m+[m[32m          <p>⏳ Syncing recent orders from Flipkart...</p>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </div>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return ([m
+[32m+[m[32m    <div className="sales-order">[m
+[32m+[m[32m      <div className="sales-header">[m
+[32m+[m[32m        <div className="sales-title-block">[m
+[32m+[m[32m          <h2 className="sales-title" style={{ color: '#0284c7' }}>Flipkart Operations</h2>[m
+[32m+[m[32m          <p className="sales-subtitle">[m
+[32m+[m[32m            Last Sync: {syncTime} &nbsp;•&nbsp;[m[41m [m
+[32m+[m[32m            <span className="text-bold"> Loaded: {groupedOrders.length}</span> &nbsp;•&nbsp;[m[41m [m
+[32m+[m[32m            Showing {activeTab}: {filteredOrders.length}[m
+[32m+[m[32m          </p>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m        <div className="sales-recent-header-actions">[m
+[32m+[m[32m          <button className="btn btn-outline btn-sm" onClick={fetchOrders}>[m
+[32m+[m[32m            ↻ Refresh Sync[m
+[32m+[m[32m          </button>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </div>[m
+[32m+[m
+[32m+[m[32m      {error && <div className="alert alert-error">❌ Error: {error}</div>}[m
+[32m+[m
+[32m+[m[32m      <div className="theme-tabs">[m
+[32m+[m[32m        {['All', 'Pending', 'Shipped', 'Canceled'].map(tab => ([m
+[32m+[m[32m          <button[m[41m [m
+[32m+[m[32m            key={tab}[m
+[32m+[m[32m            className={`theme-tab-btn ${activeTab === tab ? 'active' : ''}`}[m
+[32m+[m[32m            onClick={() => setActiveTab(tab)}[m
+[32m+[m[32m          >[m
+[32m+[m[32m            {tab}[m
+[32m+[m[32m          </button>[m
+[32m+[m[32m        ))}[m
+[32m+[m[32m      </div>[m
+[32m+[m
+[32m+[m[32m      {filteredOrders.length === 0 ? ([m
+[32m+[m[32m        <div className="sales-recent-empty text-center text-muted">[m
+[32m+[m[32m          <p>No {activeTab} orders found in this timeframe.</p>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      ) : ([m
+[32m+[m[32m        <div className="table-container">[m
+[32m+[m[32m          <table className="table">[m
+[32m+[m[32m            <thead>[m
+[32m+[m[32m              <tr>[m
+[32m+[m[32m                <th>Order ID</th>[m
+[32m+[m[32m                <th>Date</th>[m
+[32m+[m[32m                <th>Fulfillment</th>[m
+[32m+[m[32m                <th>Total Value</th>[m
+[32m+[m[32m                <th>Status</th>[m
+[32m+[m[32m                <th className="text-right">Actions</th>[m
+[32m+[m[32m              </tr>[m
+[32m+[m[32m            </thead>[m
+[32m+[m[32m            <tbody>[m
+[32m+[m[32m              {filteredOrders.map((order) => ([m
+[32m+[m[32m                <React.Fragment key={order.orderId}>[m
+[32m+[m[32m                  <tr>[m
+[32m+[m[32m                    <td className="sales-recent-name-cell">{order.orderId}</td>[m
+[32m+[m[32m                    <td>{new Date(order.orderDate).toLocaleString()}</td>[m
+[32m+[m[41m                    [m
+[32m+[m[32m                    <td>[m
+[32m+[m[32m                       <span className={`sales-status-pill ${order.fulfillmentType === 'FA' ? 'draft' : 'unpaid'}`}>[m
+[32m+[m[32m                          {getFulfillmentLabel(order.fulfillmentType)}[m
+[32m+[m[32m                       </span>[m
+[32m+[m[32m                    </td>[m
+[32m+[m[41m                    [m
+[32m+[m[32m                    <td className="text-bold">[m
+[32m+[m[32m                      {order.totalValue} INR[m
+[32m+[m[32m                    </td>[m
+[32m+[m[41m                    [m
+[32m+[m[32m                    <td>[m
+[32m+[m[32m                      <span className={`sales-status-pill ${getStatusClass(order.status)}`}>[m
+[32m+[m[32m                        {order.status}[m
+[32m+[m[32m                      </span>[m
+[32m+[m[32m                    </td>[m
+[32m+[m[41m                    [m
+[32m+[m[32m                    <td className="text-right sales-actions-inline">[m
+[32m+[m[32m                      <button[m[41m [m
+[32m+[m[32m                        className="btn btn-outline btn-xs"[m
+[32m+[m[32m                        onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}[m
+[32m+[m[32m                      >[m
+[32m+[m[32m                        {expandedOrderId === order.orderId ? "Hide SKUs" : "View SKUs"}[m
+[32m+[m[32m                      </button>[m
+[32m+[m[32m                    </td>[m
+[32m+[m[32m                  </tr>[m
+[32m+[m
+[32m+[m[32m                  {expandedOrderId === order.orderId && ([m
+[32m+[m[32m                    <tr>[m
+[32m+[m[32m                      <td colSpan="6" className="amazon-expanded-cell">[m
+[32m+[m[32m                        <div className="sales-panel amazon-expanded-panel">[m
+[32m+[m[32m                          <h4 className="sales-return-row-title" style={{ marginBottom: '10px' }}>Order Details & SKUs</h4>[m
+[32m+[m[41m                          [m
+[32m+[m[32m                          <p className="text-muted" style={{ marginBottom: '15px', fontSize: '0.85rem' }}>[m
+[32m+[m[32m                            <strong>Payment Method:</strong> {order.paymentType}[m
+[32m+[m[32m                          </p>[m
+[32m+[m
+[32m+[m[32m                          <div className="table-container">[m
+[32m+[m[32m                            <table className="table">[m
+[32m+[m[32m                              <thead>[m
+[32m+[m[32m                                <tr>[m
+[32m+[m[32m                                  <th>Item Title</th>[m
+[32m+[m[32m                                  <th>SKU Code</th>[m
+[32m+[m[32m                                  <th>Qty</th>[m
+[32m+[m[32m                                  <th>Unit Price</th>[m
+[32m+[m[32m                                </tr>[m
+[32m+[m[32m                              </thead>[m
+[32m+[m[32m                              <tbody>[m
+[32m+[m[32m                                {order.items.map((item, index) => ([m
+[32m+[m[32m                                  <tr key={item.orderItemId || index}>[m
+[32m+[m[32m                                    <td className="text-muted">{item.title}</td>[m
+[32m+[m[32m                                    <td className="text-bold">{item.sku}</td>[m
+[32m+[m[32m                                    <td>{item.quantity}</td>[m
+[32m+[m[32m                                    <td>{item.priceComponents?.sellingPrice} INR</td>[m
+[32m+[m[32m                                  </tr>[m
+[32m+[m[32m                                ))}[m
+[32m+[m[32m                              </tbody>[m
+[32m+[m[32m                            </table>[m
+[32m+[m[32m                          </div>[m
+[32m+[m[32m                        </div>[m
+[32m+[m[32m                      </td>[m
+[32m+[m[32m                    </tr>[m
+[32m+[m[32m                  )}[m
+[32m+[m[32m                </React.Fragment>[m
+[32m+[m[32m              ))}[m
+[32m+[m[32m            </tbody>[m
+[32m+[m[32m          </table>[m
+[32m+[m[41m          [m
+[32m+[m[32m          <div style={{ padding: '15px', textAlign: 'center', borderTop: '1px solid var(--border)' }}>[m
+[32m+[m[32m            <button[m[41m [m
+[32m+[m[32m              className="btn btn-secondary"[m[41m [m
+[32m+[m[32m              onClick={fetchMoreOrders}[m
+[32m+[m[32m              disabled={loadingMore}[m
+[32m+[m[32m            >[m
+[32m+[m[32m              {loadingMore ? "⏳ Loading..." : "Load Previous Day ↓"}[m
+[32m+[m[32m            </button>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      )}[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m  );[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32mexport default FlipkartOrders;[m
+\ No newline at end of file[m
+[1mdiff --git a/Mithila Foods/src/Components/Sidebar/Sidebar.jsx b/Mithila Foods/src/Components/Sidebar/Sidebar.jsx[m
+[1mindex 97e7c10..4bf833b 100644[m
+[1m--- a/Mithila Foods/src/Components/Sidebar/Sidebar.jsx[m	
+[1m+++ b/Mithila Foods/src/Components/Sidebar/Sidebar.jsx[m	
+[36m@@ -8,7 +8,7 @@[m [mimport { // These are all the logos we are using in the sidebar[m
+   BarChart2, Package, Layers,[m
+   ShoppingCart, Truck, Briefcase,[m
+   ClipboardList, Activity,[m
+[31m-  Users, TrendingUp[m
+[32m+[m[32m  Users, TrendingUp, ShoppingBag[m
+ } from "lucide-react";[m
+ [m
+ export default function Sidebar({ isOpen, toggleSidebar }) {[m
+[36m@@ -69,6 +69,12 @@[m [mexport default function Sidebar({ isOpen, toggleSidebar }) {[m
+           <NavItem to="/sales/return" label="Sales Return" icon={Layers} />[m
+         </div>[m
+ [m
+[32m+[m[32m        <div className="app-nav-group">[m
+[32m+[m[32m          <div className="app-nav-group-label">E-Commerce</div>[m
+[32m+[m[32m          <NavItem to="/ecommerce/amazon" label="Amazon Tracker" icon={ShoppingBag} />[m
+[32m+[m[32m          <NavItem to="/ecommerce/flipkart" label="Flipkart Tracker" icon={ShoppingBag} />[m
+[32m+[m[32m        </div>[m
+[32m+[m
+         <div className="app-nav-group">[m
+           <div className="app-nav-group-label">Manufacturing & Adjustments</div>[m
+           <NavItem to="/mfg/transfer" label="Packing & Transfer" icon={ClipboardList} />[m
+[1mdiff --git a/erpnext-backend/package-lock.json b/erpnext-backend/package-lock.json[m
+[1mindex b9970b6..6bf6787 100644[m
+[1m--- a/erpnext-backend/package-lock.json[m
+[1m+++ b/erpnext-backend/package-lock.json[m
+[36m@@ -9,6 +9,7 @@[m
+       "version": "1.0.0",[m
+       "license": "ISC",[m
+       "dependencies": {[m
+[32m+[m[32m        "amazon-sp-api": "^1.2.0",[m
+         "axios": "^1.13.2",[m
+         "cors": "^2.8.6",[m
+         "dotenv": "^17.2.3",[m
+[36m@@ -31,6 +32,17 @@[m
+         "node": ">= 0.6"[m
+       }[m
+     },[m
+[32m+[m[32m    "node_modules/amazon-sp-api": {[m
+[32m+[m[32m      "version": "1.2.0",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/amazon-sp-api/-/amazon-sp-api-1.2.0.tgz",[m
+[32m+[m[32m      "integrity": "sha512-oWm9fvs4psXqkaNcJX5vAvw6oQFGkHHX6lyDJJHqX1PRnF4kN8LyQu97laBRsnjQTnL/FUCDLZ+GYAuZTl/gNQ==",[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "csvtojson": "^2.0.14",[m
+[32m+[m[32m        "fast-xml-parser": "^5.3.1",[m
+[32m+[m[32m        "iconv-lite": "^0.7.0",[m
+[32m+[m[32m        "qs": "^6.14.0"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+     "node_modules/append-field": {[m
+       "version": "1.0.0",[m
+       "resolved": "https://registry.npmjs.org/append-field/-/append-field-1.0.0.tgz",[m
+[36m@@ -202,6 +214,20 @@[m
+         "url": "https://opencollective.com/express"[m
+       }[m
+     },[m
+[32m+[m[32m    "node_modules/csvtojson": {[m
+[32m+[m[32m      "version": "2.0.14",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/csvtojson/-/csvtojson-2.0.14.tgz",[m
+[32m+[m[32m      "integrity": "sha512-F7NNvhhDyob7OsuEGRsH0FM1aqLs/WYITyza3l+hTEEmOK9sGPBlYQZwlVG0ezCojXYpE17lhS5qL6BCOZSPyA==",[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "lodash": "^4.17.21"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "bin": {[m
+[32m+[m[32m        "csvtojson": "bin/csvtojson"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=8.0.0"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+     "node_modules/debug": {[m
+       "version": "4.4.3",[m
+       "resolved": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",[m
+[36m@@ -368,11 +394,11 @@[m
+       }[m
+     },[m
+     "node_modules/express-rate-limit": {[m
+[31m-      "version": "8.2.1",[m
+[31m-      "resolved": "https://registry.npmjs.org/express-rate-limit/-/express-rate-limit-8.2.1.tgz",[m
+[31m-      "integrity": "sha512-PCZEIEIxqwhzw4KF0n7QF4QqruVTcF73O5kFKUnGOyjbCCgizBBiFaYpd/fnBLUMPw/BWw9OsiN7GgrNYr7j6g==",[m
+[32m+[m[32m      "version": "8.3.1",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/express-rate-limit/-/express-rate-limit-8.3.1.tgz",[m
+[32m+[m[32m      "integrity": "sha512-D1dKN+cmyPWuvB+G2SREQDzPY1agpBIcTa9sJxOPMCNeH3gwzhqJRDWCXW3gg0y//+LQ/8j52JbMROWyrKdMdw==",[m
+       "dependencies": {[m
+[31m-        "ip-address": "10.0.1"[m
+[32m+[m[32m        "ip-address": "10.1.0"[m
+       },[m
+       "engines": {[m
+         "node": ">= 16"[m
+[36m@@ -384,6 +410,39 @@[m
+         "express": ">= 4.11"[m
+       }[m
+     },[m
+[32m+[m[32m    "node_modules/fast-xml-builder": {[m
+[32m+[m[32m      "version": "1.1.3",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/fast-xml-builder/-/fast-xml-builder-1.1.3.tgz",[m
+[32m+[m[32m      "integrity": "sha512-1o60KoFw2+LWKQu3IdcfcFlGTW4dpqEWmjhYec6H82AYZU2TVBXep6tMl8Z1Y+wM+ZrzCwe3BZ9Vyd9N2rIvmg==",[m
+[32m+[m[32m      "funding": [[m
+[32m+[m[32m        {[m
+[32m+[m[32m          "type": "github",[m
+[32m+[m[32m          "url": "https://github.com/sponsors/NaturalIntelligence"[m
+[32m+[m[32m        }[m
+[32m+[m[32m      ],[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "path-expression-matcher": "^1.1.3"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+[32m+[m[32m    "node_modules/fast-xml-parser": {[m
+[32m+[m[32m      "version": "5.5.5",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/fast-xml-parser/-/fast-xml-parser-5.5.5.tgz",[m
+[32m+[m[32m      "integrity": "sha512-NLY+V5NNbdmiEszx9n14mZBseJTC50bRq1VHsaxOmR72JDuZt+5J1Co+dC/4JPnyq+WrIHNM69r0sqf7BMb3Mg==",[m
+[32m+[m[32m      "funding": [[m
+[32m+[m[32m        {[m
+[32m+[m[32m          "type": "github",[m
+[32m+[m[32m          "url": "https://github.com/sponsors/NaturalIntelligence"[m
+[32m+[m[32m        }[m
+[32m+[m[32m      ],[m
+[32m+[m[32m      "dependencies": {[m
+[32m+[m[32m        "fast-xml-builder": "^1.1.3",[m
+[32m+[m[32m        "path-expression-matcher": "^1.1.3",[m
+[32m+[m[32m        "strnum": "^2.1.2"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "bin": {[m
+[32m+[m[32m        "fxparser": "src/cli/cli.js"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+     "node_modules/finalhandler": {[m
+       "version": "2.1.1",[m
+       "resolved": "https://registry.npmjs.org/finalhandler/-/finalhandler-2.1.1.tgz",[m
+[36m@@ -611,9 +670,9 @@[m
+       "integrity": "sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ=="[m
+     },[m
+     "node_modules/ip-address": {[m
+[31m-      "version": "10.0.1",[m
+[31m-      "resolved": "https://registry.npmjs.org/ip-address/-/ip-address-10.0.1.tgz",[m
+[31m-      "integrity": "sha512-NWv9YLW4PoW2B7xtzaS3NCot75m6nK7Icdv0o3lfMceJVRfSoQwqD4wEH5rLwoKJwUiZ/rfpiVBhnaF0FK4HoA==",[m
+[32m+[m[32m      "version": "10.1.0",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/ip-address/-/ip-address-10.1.0.tgz",[m
+[32m+[m[32m      "integrity": "sha512-XXADHxXmvT9+CRxhXg56LJovE+bmWnEWB78LB83VZTprKTmaC5QfruXocxzTZ2Kl0DNwKuBdlIhjL8LeY8Sf8Q==",[m
+       "engines": {[m
+         "node": ">= 12"[m
+       }[m
+[36m@@ -631,6 +690,11 @@[m
+       "resolved": "https://registry.npmjs.org/is-promise/-/is-promise-4.0.0.tgz",[m
+       "integrity": "sha512-hvpoI6korhJMnej285dSg6nu1+e6uxs7zG3BYAm5byqDsgJNWwxzM6z6iZiAgQR4TJ30JmBTOwqZUw3WlyH3AQ=="[m
+     },[m
+[32m+[m[32m    "node_modules/lodash": {[m
+[32m+[m[32m      "version": "4.17.23",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.23.tgz",[m
+[32m+[m[32m      "integrity": "sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w=="[m
+[32m+[m[32m    },[m
+     "node_modules/math-intrinsics": {[m
+       "version": "1.1.0",[m
+       "resolved": "https://registry.npmjs.org/math-intrinsics/-/math-intrinsics-1.1.0.tgz",[m
+[36m@@ -681,45 +745,27 @@[m
+         "url": "https://opencollective.com/express"[m
+       }[m
+     },[m
+[31m-    "node_modules/minimist": {[m
+[31m-      "version": "1.2.8",[m
+[31m-      "resolved": "https://registry.npmjs.org/minimist/-/minimist-1.2.8.tgz",[m
+[31m-      "integrity": "sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==",[m
+[31m-      "funding": {[m
+[31m-        "url": "https://github.com/sponsors/ljharb"[m
+[31m-      }[m
+[31m-    },[m
+[31m-    "node_modules/mkdirp": {[m
+[31m-      "version": "0.5.6",[m
+[31m-      "resolved": "https://registry.npmjs.org/mkdirp/-/mkdirp-0.5.6.tgz",[m
+[31m-      "integrity": "sha512-FP+p8RB8OWpF3YZBCrP5gtADmtXApB5AMLn+vdyA+PyxCjrCs00mjyUozssO33cwDeT3wNGdLxJ5M//YqtHAJw==",[m
+[31m-      "dependencies": {[m
+[31m-        "minimist": "^1.2.6"[m
+[31m-      },[m
+[31m-      "bin": {[m
+[31m-        "mkdirp": "bin/cmd.js"[m
+[31m-      }[m
+[31m-    },[m
+     "node_modules/ms": {[m
+       "version": "2.1.3",[m
+       "resolved": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz",[m
+       "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="[m
+     },[m
+     "node_modules/multer": {[m
+[31m-      "version": "2.0.2",[m
+[31m-      "resolved": "https://registry.npmjs.org/multer/-/multer-2.0.2.tgz",[m
+[31m-      "integrity": "sha512-u7f2xaZ/UG8oLXHvtF/oWTRvT44p9ecwBBqTwgJVq0+4BW1g8OW01TyMEGWBHbyMOYVHXslaut7qEQ1meATXgw==",[m
+[32m+[m[32m      "version": "2.1.1",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/multer/-/multer-2.1.1.tgz",[m
+[32m+[m[32m      "integrity": "sha512-mo+QTzKlx8R7E5ylSXxWzGoXoZbOsRMpyitcht8By2KHvMbf3tjwosZ/Mu/XYU6UuJ3VZnODIrak5ZrPiPyB6A==",[m
+       "dependencies": {[m
+         "append-field": "^1.0.0",[m
+         "busboy": "^1.6.0",[m
+         "concat-stream": "^2.0.0",[m
+[31m-        "mkdirp": "^0.5.6",[m
+[31m-        "object-assign": "^4.1.1",[m
+[31m-        "type-is": "^1.6.18",[m
+[31m-        "xtend": "^4.0.2"[m
+[32m+[m[32m        "type-is": "^1.6.18"[m
+       },[m
+       "engines": {[m
+         "node": ">= 10.16.0"[m
+[32m+[m[32m      },[m
+[32m+[m[32m      "funding": {[m
+[32m+[m[32m        "type": "opencollective",[m
+[32m+[m[32m        "url": "https://opencollective.com/express"[m
+       }[m
+     },[m
+     "node_modules/multer/node_modules/media-typer": {[m
+[36m@@ -815,6 +861,20 @@[m
+         "node": ">= 0.8"[m
+       }[m
+     },[m
+[32m+[m[32m    "node_modules/path-expression-matcher": {[m
+[32m+[m[32m      "version": "1.1.3",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/path-expression-matcher/-/path-expression-matcher-1.1.3.tgz",[m
+[32m+[m[32m      "integrity": "sha512-qdVgY8KXmVdJZRSS1JdEPOKPdTiEK/pi0RkcT2sw1RhXxohdujUlJFPuS1TSkevZ9vzd3ZlL7ULl1MHGTApKzQ==",[m
+[32m+[m[32m      "funding": [[m
+[32m+[m[32m        {[m
+[32m+[m[32m          "type": "github",[m
+[32m+[m[32m          "url": "https://github.com/sponsors/NaturalIntelligence"[m
+[32m+[m[32m        }[m
+[32m+[m[32m      ],[m
+[32m+[m[32m      "engines": {[m
+[32m+[m[32m        "node": ">=14.0.0"[m
+[32m+[m[32m      }[m
+[32m+[m[32m    },[m
+     "node_modules/path-to-regexp": {[m
+       "version": "8.3.0",[m
+       "resolved": "https://registry.npmjs.org/path-to-regexp/-/path-to-regexp-8.3.0.tgz",[m
+[36m@@ -1061,6 +1121,17 @@[m
+         "safe-buffer": "~5.2.0"[m
+       }[m
+     },[m
+[32m+[m[32m    "node_modules/strnum": {[m
+[32m+[m[32m      "version": "2.2.0",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/strnum/-/strnum-2.2.0.tgz",[m
+[32m+[m[32m      "integrity": "sha512-Y7Bj8XyJxnPAORMZj/xltsfo55uOiyHcU2tnAVzHUnSJR/KsEX+9RoDeXEnsXtl/CX4fAcrt64gZ13aGaWPeBg==",[m
+[32m+[m[32m      "funding": [[m
+[32m+[m[32m        {[m
+[32m+[m[32m          "type": "github",[m
+[32m+[m[32m          "url": "https://github.com/sponsors/NaturalIntelligence"[m
+[32m+[m[32m        }[m
+[32m+[m[32m      ][m
+[32m+[m[32m    },[m
+     "node_modules/toidentifier": {[m
+       "version": "1.0.1",[m
+       "resolved": "https://registry.npmjs.org/toidentifier/-/toidentifier-1.0.1.tgz",[m
+[36m@@ -1112,14 +1183,6 @@[m
+       "version": "1.0.2",[m
+       "resolved": "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz",[m
+       "integrity": "sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ=="[m
+[31m-    },[m
+[31m-    "node_modules/xtend": {[m
+[31m-      "version": "4.0.2",[m
+[31m-      "resolved": "https://registry.npmjs.org/xtend/-/xtend-4.0.2.tgz",[m
+[31m-      "integrity": "sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==",[m
+[31m-      "engines": {[m
+[31m-        "node": ">=0.4"[m
+[31m-      }[m
+     }[m
+   }[m
+ }[m
+[1mdiff --git a/erpnext-backend/package.json b/erpnext-backend/package.json[m
+[1mindex 06842ac..fed19d3 100644[m
+[1m--- a/erpnext-backend/package.json[m
+[1m+++ b/erpnext-backend/package.json[m
+[36m@@ -11,6 +11,7 @@[m
+   "author": "",[m
+   "license": "ISC",[m
+   "dependencies": {[m
+[32m+[m[32m    "amazon-sp-api": "^1.2.0",[m
+     "axios": "^1.13.2",[m
+     "cors": "^2.8.6",[m
+     "dotenv": "^17.2.3",[m
+[1mdiff --git a/erpnext-backend/routes/amazonRoutes.js b/erpnext-backend/routes/amazonRoutes.js[m
+[1mnew file mode 100644[m
+[1mindex 0000000..b85ed20[m
+[1m--- /dev/null[m
+[1m+++ b/erpnext-backend/routes/amazonRoutes.js[m
+[36m@@ -0,0 +1,147 @@[m
+[32m+[m[32mconst express = require('express');[m
+[32m+[m[32mconst router = express.Router();[m
+[32m+[m[32mconst SellingPartnerAPI = require('amazon-sp-api');[m
+[32m+[m
+[32m+[m[32mconst spClient = new SellingPartnerAPI({[m
+[32m+[m[32m    region: 'eu',[m[41m [m
+[32m+[m[32m    refresh_token: process.env.SPAPI_REFRESH_TOKEN,[m
+[32m+[m[32m    credentials: {[m
+[32m+[m[32m        SELLING_PARTNER_APP_CLIENT_ID: process.env.SPAPI_CLIENT_ID,[m
+[32m+[m[32m        SELLING_PARTNER_APP_CLIENT_SECRET: process.env.SPAPI_CLIENT_SECRET,[m
+[32m+[m[32m        AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,[m
+[32m+[m[32m        AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,[m
+[32m+[m[32m        AWS_SELLING_PARTNER_ROLE: process.env.AWS_ROLE_ARN[m
+[32m+[m[32m    },[m
+[32m+[m[32m    options: {[m
+[32m+[m[32m        use_sandbox: false // LIVE MODE[m
+[32m+[m[32m    }[m
+[32m+[m[32m});[m
+[32m+[m[32m// 1. Fetch Order Headers (1 Day Chunks for High Volume, Sorted Newest First)[m
+[32m+[m[32mrouter.get('/orders', async (req, res) => {[m
+[32m+[m[32m    try {[m
+[32m+[m[32m        // Offset is now in DAYS. 0 = Last 24 hours. 1 = Yesterday. 2 = The day before.[m
+[32m+[m[32m        const offset = parseInt(req.query.offset) || 0;[m[41m [m
+[32m+[m[41m        [m
+[32m+[m[32m        // 1. Calculate the END of our window[m
+[32m+[m[32m        const endDate = new Date();[m
+[32m+[m[32m        endDate.setDate(endDate.getDate() - offset);[m[41m [m
+[32m+[m[41m        [m
+[32m+[m[32m        // 2. Calculate the START of our window (Exactly 1 day/24 hours before the end)[m
+[32m+[m[32m        const startDate = new Date(endDate);[m
+[32m+[m[32m        startDate.setDate(startDate.getDate() - 1);[m[41m [m
+[32m+[m[41m        [m
+[32m+[m[32m        console.log(`\n⏳ Fetching LIVE Amazon Orders (Offset: ${offset} days)...`);[m
+[32m+[m[32m        console.log(`📅 Time Window: ${startDate.toLocaleString()}  --->  ${offset === 0 ? "RIGHT NOW" : endDate.toLocaleString()}`);[m
+[32m+[m
+[32m+[m[32m        const queryParams = {[m
+[32m+[m[32m            MarketplaceIds: ['A21TJRUUN4KGV'], // India[m
+[32m+[m[32m            CreatedAfter: startDate.toISOString()[m
+[32m+[m[32m        };[m
+[32m+[m
+[32m+[m[32m        if (offset > 0) {[m
+[32m+[m[32m            queryParams.CreatedBefore = endDate.toISOString();[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        let allOrders = [];[m
+[32m+[m[32m        let nextToken = null;[m
+[32m+[m[32m        let pageCount = 0;[m
+[32m+[m
+[32m+[m[32m        // Loop to grab the recent 300-500 orders for this 24-hour window[m
+[32m+[m[32m        do {[m
+[32m+[m[32m            pageCount++;[m
+[32m+[m[32m            if (nextToken) queryParams.NextToken = nextToken;[m
+[32m+[m
+[32m+[m[32m            const response = await spClient.callAPI({[m
+[32m+[m[32m                operation: 'getOrders',[m
+[32m+[m[32m                endpoint: 'orders',[m
+[32m+[m[32m                query: queryParams[m
+[32m+[m[32m            });[m
+[32m+[m
+[32m+[m[32m            const fetchedOrders = response?.payload?.Orders || response?.Orders || [];[m
+[32m+[m[32m            allOrders = allOrders.concat(fetchedOrders);[m
+[32m+[m[32m            nextToken = response?.payload?.NextToken || response?.NextToken || null;[m
+[32m+[m
+[32m+[m[32m            if (pageCount >= 10) break; // Safety cap (1,000 orders)[m
+[32m+[m[32m        } while (nextToken);[m
+[32m+[m
+[32m+[m[32m        // 3. FORCE SORT: Newest orders (The absolute most recent second) at the top![m
+[32m+[m[32m        allOrders.sort((a, b) => new Date(b.PurchaseDate) - new Date(a.PurchaseDate));[m
+[32m+[m
+[32m+[m[32m        console.log(`✅ Retrieved ${allOrders.length} orders. Sorted newest first.`);[m
+[32m+[m[41m        [m
+[32m+[m[32m        res.json({[m
+[32m+[m[32m            status: "Success",[m
+[32m+[m[32m            amazonData: { Orders: allOrders },[m
+[32m+[m[32m            nextOffset: offset + 1 // Pass the offset + 1 for the "Load More" button[m
+[32m+[m[32m        });[m
+[32m+[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m        console.error("❌ Amazon API Error:", error.message);[m
+[32m+[m[32m        res.status(500).json({ status: "Failed", error: error.message });[m
+[32m+[m[32m    }[m
+[32m+[m[32m});[m
+[32m+[m
+[32m+[m[32m// 2. Fetch Actual Items/SKUs for a specific order[m
+[32m+[m[32mrouter.get('/order-items/:orderId', async (req, res) => {[m
+[32m+[m[32m    try {[m
+[32m+[m[32m        const orderId = req.params.orderId;[m
+[32m+[m[32m        console.log(`⏳ Fetching SKUs for Order: ${orderId}...`);[m
+[32m+[m
+[32m+[m[32m        const response = await spClient.callAPI({[m
+[32m+[m[32m            operation: 'getOrderItems',[m
+[32m+[m[32m            endpoint: 'orders',[m
+[32m+[m[32m            path: { orderId: orderId }[m
+[32m+[m[32m        });[m
+[32m+[m
+[32m+[m[32m        res.json({[m
+[32m+[m[32m            status: "Success",[m
+[32m+[m[32m            orderId: orderId,[m
+[32m+[m[32m            items: response.payload || response[m[41m [m
+[32m+[m[32m        });[m
+[32m+[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m        console.error("❌ Amazon API Error:", error.message);[m
+[32m+[m[32m        res.status(500).json({ status: "Failed", error: error.message });[m
+[32m+[m[32m    }[m
+[32m+[m[32m});[m
+[32m+[m
+[32m+[m[32m// 3. ISOLATED TEST: Mock Buy Shipping & Generate PDF (100% SAFE)[m
+[32m+[m[32mrouter.post('/test-ship-order', async (req, res) => {[m
+[32m+[m[32m    try {[m
+[32m+[m[32m        console.log("🛡️ SAFE MODE: Simulating Amazon Shipping Label Purchase...");[m
+[32m+[m
+[32m+[m[32m        // Simulate the time it takes Amazon to process the request (1.5 seconds)[m
+[32m+[m[32m        await new Promise(resolve => setTimeout(resolve, 1500));[m
+[32m+[m
+[32m+[m[32m        // This is a microscopic, valid Base64 string for a blank PDF that says "Test"[m
+[32m+[m[32m        // It prevents your client's account from actually being charged![m
+[32m+[m[32m        const dummyBase64PDF = "JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXMKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSCjEzIDAgb2JqCiAgICA+PgogID4+CiAgL0NvbnRlbnRzIDUgMCBSCj4+CmVuZG9iagoKNCAwIG9iago8PAogIC9UeXBlIC9Gb250CiAgL1N1YnR5cGUgL1R5cGUxCiAgL0Jhc2VGb250IC9UaW1lcy1Sb21hbgoyNyAwIG9iago+PgplbmRvYmoKCjUgMCBvYmoKPDwgL0xlbmd0aCAzOCA+PgpzdHJlYW0KQlQKICAvRjEgMTggVGYKICA1MCAxMDAgVGQKICAoVEVTVCBMQUJFTCkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMDE0NyAwMDAwMCBuIAowMDAwMDAwMjcyIDAwMDAwIG4gCjAwMDAwMDAzNjAgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDQ5CiUlRU9GCg==";[m
+[32m+[m
+[32m+[m[32m        console.log("✅ SAFE MODE: Dummy Label Generated!");[m
+[32m+[m
+[32m+[m[32m        // We return the data in the EXACT structure Amazon will eventually use,[m[41m [m
+[32m+[m[32m        // so your frontend code won't have to change later![m
+[32m+[m[32m        res.json({[m
+[32m+[m[32m            status: "Success",[m
+[32m+[m[32m            message: "This is a safe test label. No money was charged.",[m
+[32m+[m[32m            shippingData: {[m
+[32m+[m[32m                payload: {[m
+[32m+[m[32m                    Shipment: {[m
+[32m+[m[32m                        Label: {[m
+[32m+[m[32m                            FileContents: {[m
+[32m+[m[32m                                Contents: dummyBase64PDF[m
+[32m+[m[32m                            }[m
+[32m+[m[32m                        }[m
+[32m+[m[32m                    }[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m        });[m
+[32m+[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m        console.error("❌ Test Shipping Error:", error.message);[m
+[32m+[m[32m        res.status(500).json({ status: "Failed", error: error.message });[m
+[32m+[m[32m    }[m
+[32m+[m[32m});[m
+[32m+[m
+[32m+[m
+[32m+[m[32mmodule.exports = router;[m
+\ No newline at end of file[m
+[1mdiff --git a/erpnext-backend/routes/flipkartRoutes.js b/erpnext-backend/routes/flipkartRoutes.js[m
+[1mnew file mode 100644[m
+[1mindex 0000000..6d7a4d9[m
+[1m--- /dev/null[m
+[1m+++ b/erpnext-backend/routes/flipkartRoutes.js[m
+[36m@@ -0,0 +1,92 @@[m
+[32m+[m[32mconst express = require('express');[m
+[32m+[m[32mconst router = express.Router();[m
+[32m+[m
+[32m+[m[32m// Helper Function: Always get a fresh token before calling Flipkart[m
+[32m+[m[32masync function getFlipkartToken() {[m
+[32m+[m[32m    const appId = process.env.FLIPKART_APP_ID;[m
+[32m+[m[32m    const appSecret = process.env.FLIPKART_APP_SECRET;[m
+[32m+[m
+[32m+[m[32m    // 1. Safety Check: Did the .env file load properly?[m
+[32m+[m[32m    if (!appId || !appSecret) {[m
+[32m+[m[32m        throw new Error("Missing Keys! Node.js cannot find FLIPKART_APP_ID in your .env file.");[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // 2. Encode the credentials[m
+[32m+[m[32m    const credentials = `${appId.trim()}:${appSecret.trim()}`; // .trim() removes accidental spaces![m
+[32m+[m[32m    const encodedCredentials = Buffer.from(credentials).toString('base64');[m
+[32m+[m[32m    const tokenUrl = 'https://api.flipkart.net/oauth-service/oauth/token?grant_type=client_credentials&scope=Seller_Api';[m
+[32m+[m
+[32m+[m[32m    const response = await fetch(tokenUrl, {[m
+[32m+[m[32m        method: 'GET',[m
+[32m+[m[32m        headers: { 'Authorization': `Basic ${encodedCredentials}` }[m
+[32m+[m[32m    });[m
+[32m+[m
+[32m+[m[32m    const data = await response.json();[m
+[32m+[m
+[32m+[m[32m    // 3. Print the EXACT error from Flipkart if they reject us[m
+[32m+[m[32m    if (!response.ok) {[m
+[32m+[m[32m        console.log("🛑 FLIPKART EXACT REJECTION MESSAGE:");[m
+[32m+[m[32m        console.dir(data, { depth: null, colors: true });[m
+[32m+[m[32m        throw new Error(data.error_description || "Flipkart rejected the keys");[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    return data.access_token;[m
+[32m+[m[32m}[m
+[32m+[m[32m// 1. Fetch Flipkart Orders (24-Hour Chunks)[m
+[32m+[m[32mrouter.get('/orders', async (req, res) => {[m
+[32m+[m[32m    try {[m
+[32m+[m[32m        const offset = parseInt(req.query.offset) || 0;[m
+[32m+[m[32m        const endDate = new Date();[m
+[32m+[m[32m        endDate.setDate(endDate.getDate() - offset);[m
+[32m+[m
+[32m+[m[32m        const startDate = new Date(endDate);[m
+[32m+[m[32m        startDate.setDate(startDate.getDate() - 1);[m
+[32m+[m
+[32m+[m[32m        console.log(`\n⏳ Fetching LIVE Flipkart Orders (Offset: ${offset} days)...`);[m
+[32m+[m
+[32m+[m[32m        // 1. Get fresh token[m
+[32m+[m[32m        const token = await getFlipkartToken();[m
+[32m+[m
+[32m+[m[32m        // 2. Flipkart uses a POST request to search for orders[m
+[32m+[m[32m        const searchUrl = 'https://api.flipkart.net/sellers/v3/orders/search';[m
+[32m+[m[32m        const requestBody = {[m
+[32m+[m[32m            filter: {[m
+[32m+[m[32m                orderDate: {[m
+[32m+[m[32m                    fromDate: startDate.toISOString(),[m
+[32m+[m[32m                    toDate: endDate.toISOString()[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m[32m        };[m
+[32m+[m
+[32m+[m[32m        const response = await fetch(searchUrl, {[m
+[32m+[m[32m            method: 'POST',[m
+[32m+[m[32m            headers: {[m
+[32m+[m[32m                'Authorization': `Bearer ${token}`,[m
+[32m+[m[32m                'Content-Type': 'application/json'[m
+[32m+[m[32m            },[m
+[32m+[m[32m            body: JSON.stringify(requestBody)[m
+[32m+[m[32m        });[m
+[32m+[m
+[32m+[m[32m        const data = await response.json();[m
+[32m+[m
+[32m+[m[32m        // Flipkart returns an array of "orderItems". We will let the React frontend group them.[m
+[32m+[m[32m        const fetchedItems = data.orderItems || [];[m
+[32m+[m
+[32m+[m[32m        // Sort newest first[m
+[32m+[m[32m        fetchedItems.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));[m
+[32m+[m
+[32m+[m[32m        console.log(`✅ Retrieved ${fetchedItems.length} Flipkart items.`);[m
+[32m+[m
+[32m+[m[32m        res.json({[m
+[32m+[m[32m            status: "Success",[m
+[32m+[m[32m            flipkartData: { Items: fetchedItems },[m
+[32m+[m[32m            nextOffset: offset + 1[m
+[32m+[m[32m        });[m
+[32m+[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m        console.error("❌ Flipkart API Error:", error.message);[m
+[32m+[m[32m        res.status(500).json({ status: "Failed", error: error.message });[m
+[32m+[m[32m    }[m
+[32m+[m[32m});[m
+[32m+[m
+[32m+[m[32mmodule.exports = router;[m
+\ No newline at end of file[m
+[1mdiff --git a/erpnext-backend/server.js b/erpnext-backend/server.js[m
+[1mindex 047acf6..23d6959 100644[m
+[1m--- a/erpnext-backend/server.js[m
+[1m+++ b/erpnext-backend/server.js[m
+[36m@@ -57,7 +57,7 @@[m [mconst upload = multer({[m
+ // If we deploy this and forget to add our API keys to the server, kill the server immediately before affect our webapp[m
+ if (!ERP_BASE_URL || !ERP_API_KEY || !ERP_API_SECRET) {[m
+   console.error("❌ CRITICAL ERROR: Missing ERPNext environment variables. Check your .env file!");[m
+[31m-  process.exit(1); [m
+[32m+[m[32m  process.exit(1);[m
+ }[m
+ [m
+ // *** This gies us access to erp and we do not have write the api keys for every api hit[m
+[36m@@ -88,8 +88,8 @@[m [mapp.get("/api/proxy-image", async (req, res) => {[m
+ [m
+   try {[m
+     // We remove the '/api' from baseURL because file paths are usually at the root[m
+[31m-    const baseUrl = process.env.ERP_BASE_URL; [m
+[31m-    [m
+[32m+[m[32m    const baseUrl = process.env.ERP_BASE_URL;[m
+[32m+[m
+     // Ensure we don't have double slashes[m
+     const cleanPath = path.startsWith("/") ? path : `/${path}`;[m
+     const fullUrl = `${baseUrl}${cleanPath}`;[m
+[36m@@ -392,7 +392,7 @@[m [mapp.post("/api/upload", upload.single("file"), async (req, res) => {[m
+       return res.status(400).json({ error: "doctype and docname are required" });[m
+     }[m
+ [m
+[31m-    [m
+[32m+[m
+     const form = new FormData();[m
+ [m
+     // ERPNext expects field name "file"[m
+[36m@@ -440,8 +440,8 @@[m [mapp.get("/api/reports/reorder", async (req, res) => {[m
+       params: {[m
+         fields: JSON.stringify(["name", "item_name", "item_group", "reorder_levels"]),[m
+         filters: JSON.stringify([[m
+[31m-           // Only items that are NOT disabled[m
+[31m-           ["disabled", "=", 0] [m
+[32m+[m[32m          // Only items that are NOT disabled[m
+[32m+[m[32m          ["disabled", "=", 0][m
+         ]),[m
+         limit_page_length: 5000 // Adjust limit as needed[m
+       }[m
+[36m@@ -459,17 +459,17 @@[m [mapp.get("/api/reports/reorder", async (req, res) => {[m
+ [m
+       // Find the rule for THIS warehouse[m
+       const rule = item.reorder_levels.find(r => r.warehouse === warehouse);[m
+[31m-      [m
+[32m+[m
+       // If rule exists and level > 0[m
+       if (rule && (rule.warehouse_reorder_level > 0 || rule.warehouse_reorder_qty > 0)) {[m
+[31m-         relevantItems.push({[m
+[31m-            item_code: item.name,[m
+[31m-            item_name: item.item_name,[m
+[31m-            item_group: item.item_group,[m
+[31m-            reorder_level: rule.warehouse_reorder_level,[m
+[31m-            reorder_qty: rule.warehouse_reorder_qty[m
+[31m-         });[m
+[31m-         itemCodes.push(item.name);[m
+[32m+[m[32m        relevantItems.push({[m
+[32m+[m[32m          item_code: item.name,[m
+[32m+[m[32m          item_name: item.item_name,[m
+[32m+[m[32m          item_group: item.item_group,[m
+[32m+[m[32m          reorder_level: rule.warehouse_reorder_level,[m
+[32m+[m[32m          reorder_qty: rule.warehouse_reorder_qty[m
+[32m

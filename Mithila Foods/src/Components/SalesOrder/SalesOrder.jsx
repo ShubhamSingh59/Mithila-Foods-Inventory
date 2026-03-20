@@ -1069,7 +1069,35 @@ export default function SalesOrder() {
         );
       }
 
-      setBulkLines(lines);
+      const wh = getWarehouseForBrand(activeOrg);
+
+      const enrichedLines = await runWithLimit(lines, 4, async (l) => {
+        // 1. Figure out which ERPNext item this is
+        let item_code = resolveItemCodeForCustomer({
+          customerName: customer,
+          sku: l.sku,
+          asin: l.asin,
+        });
+
+        if (!item_code && l.sku && (items || []).some((it) => it.name === l.sku)) {
+          item_code = l.sku;
+        }
+
+        // 2. Ask ERPNext how much we have in the warehouse
+        let available_qty = 0;
+        if (item_code) {
+          try {
+            const bin = await getBinForItemWarehouse(item_code, wh);
+            available_qty = Number(bin?.actual_qty) || 0;
+          } catch (e) {
+            // Ignore errors, assume 0
+          }
+        }
+        return { ...l, item_code, available_qty, warehouse: wh };
+      });
+
+      setBulkLines(enrichedLines);
+      //setBulkLines(lines);
     } catch (err) {
       console.error(err);
       setBulkParseError(err.message || "Failed to parse file");
@@ -1535,6 +1563,40 @@ export default function SalesOrder() {
                   ) : null}
                 </div>
               </div>
+
+              {bulkLines.length > 0 && bulkResults.length === 0 && (
+                <div className="table-container" style={{ marginTop: 14 }}>
+                  <div style={{ padding: "12px 16px", fontWeight: "bold", borderBottom: "1px solid var(--border)", background: "#f8fafc", color: "#0f172a" }}>
+                    Upload Preview (Please verify stock before creating)
+                  </div>
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Invoice ID</th>
+                        <th>Resolved Item</th>
+                        <th>Warehouse</th>
+                        <th>Available Qty</th>
+                        <th>Order Qty</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bulkLines.map((r, idx) => (
+                        <tr key={`preview-${r.invoice_id}-${idx}`}>
+                          <td>{r.invoice_id}</td>
+                          <td style={{ fontWeight: 500, color: r.item_code ? "inherit" : "#dc2626" }}>
+                            {r.item_code || `Unresolved (SKU: ${r.sku || "-"})`}
+                          </td>
+                          <td className="text-muted">{r.warehouse}</td>
+                          <td style={{ fontWeight: "bold", color: r.available_qty < r.qty ? "#dc2626" : "#16a34a" }}>
+                            {r.available_qty}
+                          </td>
+                          <td style={{ fontWeight: "bold", color: "#2563eb" }}>{r.qty}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               {bulkResults.length > 0 && (
                 <div className="table-container" style={{ marginTop: 14 }}>

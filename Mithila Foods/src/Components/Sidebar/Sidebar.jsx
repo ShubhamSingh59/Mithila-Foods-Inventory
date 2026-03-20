@@ -8,7 +8,7 @@ import { // These are all the logos we are using in the sidebar
   BarChart2, Package, Layers,
   ShoppingCart, Truck, Briefcase,
   ClipboardList, Activity,
-  Users, TrendingUp
+  Users, TrendingUp, ShoppingBag
 } from "lucide-react";
 
 export default function Sidebar({ isOpen, toggleSidebar }) {
@@ -69,6 +69,17 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
           <NavItem to="/sales/return" label="Sales Return" icon={Layers} />
         </div>
 
+        <div className="app-nav-group">
+          <div className="app-nav-group-label">E-Commerce</div>
+
+          {/* Amazon is now split into two distinct actions */}
+          <NavItem to="/ecommerce/amazon/dashboard" label="Amazon Orders" icon={ShoppingBag} />
+          <NavItem to="/ecommerce/amazon/ship" label="Amazon Shipping" icon={Truck} />
+          <NavItem to="/ecommerce/amazon/payout" label="Amazon Payouts" icon={Truck} />
+          <NavItem to="/ecommerce/amazon/fbalocations" label="FBA locations" icon={Truck} />
+          <NavItem to="/ecommerce/flipkart" label="Flipkart Tracker" icon={ShoppingBag} />
+          <NavItem to="/ecommerce/amazon/fbainventory" label="FBA" icon={ShoppingBag} />
+        </div>
         <div className="app-nav-group">
           <div className="app-nav-group-label">Manufacturing & Adjustments</div>
           <NavItem to="/mfg/transfer" label="Packing & Transfer" icon={ClipboardList} />

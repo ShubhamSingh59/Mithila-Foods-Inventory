@@ -57,7 +57,7 @@ const upload = multer({
 // If we deploy this and forget to add our API keys to the server, kill the server immediately before affect our webapp
 if (!ERP_BASE_URL || !ERP_API_KEY || !ERP_API_SECRET) {
   console.error("❌ CRITICAL ERROR: Missing ERPNext environment variables. Check your .env file!");
-  process.exit(1); 
+  process.exit(1);
 }
 
 // *** This gies us access to erp and we do not have write the api keys for every api hit
@@ -88,8 +88,8 @@ app.get("/api/proxy-image", async (req, res) => {
 
   try {
     // We remove the '/api' from baseURL because file paths are usually at the root
-    const baseUrl = process.env.ERP_BASE_URL; 
-    
+    const baseUrl = process.env.ERP_BASE_URL;
+
     // Ensure we don't have double slashes
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
     const fullUrl = `${baseUrl}${cleanPath}`;
@@ -392,7 +392,7 @@ app.post("/api/upload", upload.single("file"), async (req, res) => {
       return res.status(400).json({ error: "doctype and docname are required" });
     }
 
-    
+
     const form = new FormData();
 
     // ERPNext expects field name "file"
@@ -440,8 +440,8 @@ app.get("/api/reports/reorder", async (req, res) => {
       params: {
         fields: JSON.stringify(["name", "item_name", "item_group", "reorder_levels"]),
         filters: JSON.stringify([
-           // Only items that are NOT disabled
-           ["disabled", "=", 0] 
+          // Only items that are NOT disabled
+          ["disabled", "=", 0]
         ]),
         limit_page_length: 5000 // Adjust limit as needed
       }
@@ -459,17 +459,17 @@ app.get("/api/reports/reorder", async (req, res) => {
 
       // Find the rule for THIS warehouse
       const rule = item.reorder_levels.find(r => r.warehouse === warehouse);
-      
+
       // If rule exists and level > 0
       if (rule && (rule.warehouse_reorder_level > 0 || rule.warehouse_reorder_qty > 0)) {
-         relevantItems.push({
-            item_code: item.name,
-            item_name: item.item_name,
-            item_group: item.item_group,
-            reorder_level: rule.warehouse_reorder_level,
-            reorder_qty: rule.warehouse_reorder_qty
-         });
-         itemCodes.push(item.name);
+        relevantItems.push({
+          item_code: item.name,
+          item_name: item.item_name,
+          item_group: item.item_group,
+          reorder_level: rule.warehouse_reorder_level,
+          reorder_qty: rule.warehouse_reorder_qty
+        });
+        itemCodes.push(item.name);
       }
     }
 
@@ -494,28 +494,33 @@ app.get("/api/reports/reorder", async (req, res) => {
 
     // 4. Merge Data
     const finalReport = relevantItems.map(row => {
-       const current = binMap[row.item_code] || 0;
-       return {
-         ...row,
-         warehouse: warehouse,
-         current_qty: current,
-         difference: current - row.reorder_level
-       };
+      const current = binMap[row.item_code] || 0;
+      return {
+        ...row,
+        warehouse: warehouse,
+        current_qty: current,
+        difference: current - row.reorder_level
+      };
     });
 
     res.json(finalReport);
 
   } catch (err) {
     console.error("Reorder Report Error:", err.response?.data || err.message);
-    res.status(500).json({ 
-        error: "Failed to generate report",
-        details: err.response?.data || err.message 
+    res.status(500).json({
+      error: "Failed to generate report",
+      details: err.response?.data || err.message
     });
   }
 });
 
+//// 2. Import your new modular routes
+//const amazonRoutes = require('./routes/amazonRoutes');
+//const flipkartRoutes = require('./routes/flipkartRoutes'); // You will uncomment this later!
 
-
+//// 3. Mount the routes to specific API paths
+//app.use('/api/amazon', amazonRoutes);
+//app.use('/api/flipkart', flipkartRoutes);
 // ============================================================================
 // 6) START SERVER
 // ============================================================================
