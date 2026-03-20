@@ -699,8 +699,10 @@ function OpeningStockEntry() {
 
       raw.forEach((r, idx) => {
         const rowNo = idx + 2; // row 1 is header in CSV
-
-        const item_code = String(pickFirstSmart(r, BULK_COL.itemCode) || "").trim();
+        let item_code = String(pickFirstSmart(r, BULK_COL.itemCode) || "")
+          .trim()
+          .replace(/[\u2013\u2014\uFFFD]/g, "-");
+        //const item_code = String(pickFirstSmart(r, BULK_COL.itemCode) || "").trim();
         const qtyRaw = pickFirstSmart(r, BULK_COL.qty);
         const whRaw = String(pickFirstSmart(r, BULK_COL.warehouse) || "").trim();
         const rateRaw = pickFirstSmart(r, BULK_COL.rate);
@@ -715,8 +717,14 @@ function OpeningStockEntry() {
           errs.push(`Row ${rowNo}: missing item_code`);
           return;
         }
-
-        const item = itemByCode.get(item_code);
+        let item = itemByCode.get(item_code);
+        if (!item) {
+          item = items.find((it) => it.name.toLowerCase() === item_code.toLowerCase());
+          if (item) {
+            item_code = item.name; // Overwrite with the exact case from ERPNext!
+          }
+        }
+        //const item = itemByCode.get(item_code);
         if (!item) {
           errs.push(
             `Row ${rowNo}: invalid item_code (not found in Item master): ${item_code}`
