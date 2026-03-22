@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { BACKEND_URL } from '../../api/core';
+import './AmazonBulkShipment.css'; 
 
-const AmazonBulkShipment = ({ selectedOrders, onBack,  onSchedule}) => {
-    const [bulkData, setBulkData] = useState([]); // This will hold [order + items + inputs]
+const AmazonBulkShipment = ({ selectedOrders, onBack, onSchedule }) => {
+    const [bulkData, setBulkData] = useState([]); 
     const [loading, setLoading] = useState(true);
 
-    // 1. Fetch items for all selected orders as soon as the page loads
     useEffect(() => {
         const fetchAllItems = async () => {
             setLoading(true);
@@ -19,7 +19,6 @@ const AmazonBulkShipment = ({ selectedOrders, onBack,  onSchedule}) => {
                     enrichedOrders.push({
                         ...order,
                         items: data.items || [],
-                        // DEFAULT INPUTS for the warehouse worker
                         weight: 500,
                         length: 15,
                         width: 10,
@@ -33,7 +32,6 @@ const AmazonBulkShipment = ({ selectedOrders, onBack,  onSchedule}) => {
         fetchAllItems();
     }, [selectedOrders]);
 
-    // Update specific row input
     const updateRow = (orderId, field, value) => {
         setBulkData(prev => prev.map(row =>
             row.AmazonOrderId === orderId ? { ...row, [field]: value } : row
@@ -43,76 +41,103 @@ const AmazonBulkShipment = ({ selectedOrders, onBack,  onSchedule}) => {
     if (loading) return <div>⏳ Fetching order item details for bulk processing...</div>;
 
     return (
-        <div>
-            <button onClick={onBack}>← Back to List</button>
+        <div className="bulk-shipment-container">
+            <button className="btn-back" onClick={onBack}>← Back to List</button>
+            
             <h2>Schedule pick-ups for {bulkData.length} orders</h2>
 
-            <table border="1" style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
-                <thead style={{ backgroundColor: '#f4f4f4' }}>
-                    <tr>
-                        <th align="left" style={{ width: '40%' }}>Order details</th>
-                        <th align="left">Package Weight</th>
-                        <th align="left">Package Dimensions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {bulkData.map((order) => (
-                        <tr key={order.AmazonOrderId}>
-                            {/* COLUMN 1: ORDER & SKU DETAILS */}
-                            <td valign="top">
-                                <div style={{ marginBottom: '5px', color: '#0066c0' }}>{order.AmazonOrderId}</div>
-                                {order.items.map(item => (
-                                    <div key={item.OrderItemId} style={{ fontSize: '0.85rem', marginBottom: '10px' }}>
-                                        <strong>{item.Title}</strong> <br />
-                                        SKU: {item.SellerSKU} | Qty: {item.QuantityOrdered}
-                                    </div>
-                                ))}
-                            </td>
-
-                            {/* COLUMN 2: WEIGHT INPUT */}
-                            <td valign="top">
-                                <input
-                                    type="number"
-                                    value={order.weight}
-                                    onChange={(e) => updateRow(order.AmazonOrderId, 'weight', e.target.value)}
-                                    style={{ width: '80px' }}
-                                /> g
-                            </td>
-
-                            {/* COLUMN 3: DIMENSION INPUTS */}
-                            <td valign="top">
-                                <select onChange={(e) => {
-                                    // Simulating the "Package Settings" logic in the screenshot
-                                    if (e.target.value === 'small') {
-                                        updateRow(order.AmazonOrderId, 'length', 15);
-                                        updateRow(order.AmazonOrderId, 'width', 10);
-                                        updateRow(order.AmazonOrderId, 'height', 5);
-                                    }
-                                }}>
-                                    <option value="custom">Custom Dimensions</option>
-                                    <option value="small">Default (15x10x5 cm)</option>
-                                </select>
-                                <div style={{ marginTop: '10px' }}>
-                                    <input type="number" value={order.length} onChange={(e) => updateRow(order.AmazonOrderId, 'length', e.target.value)} style={{ width: '40px' }} /> x
-                                    <input type="number" value={order.width} onChange={(e) => updateRow(order.AmazonOrderId, 'width', e.target.value)} style={{ width: '40px' }} /> x
-                                    <input type="number" value={order.height} onChange={(e) => updateRow(order.AmazonOrderId, 'height', e.target.value)} style={{ width: '40px' }} /> cm
-                                </div>
-                            </td>
+            <div className="bulk-table-wrapper">
+                <table className="bulk-table">
+                    <thead>
+                        <tr>
+                            <th className="order-details-col">Order details</th>
+                            <th>Package Weight</th>
+                            <th>Package Dimensions</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {bulkData.map((order) => (
+                            <tr key={order.AmazonOrderId}>
+                                {/* COLUMN 1: ORDER & SKU DETAILS */}
+                                <td>
+                                    <div className="bulk-order-id">{order.AmazonOrderId}</div>
+                                    {order.items.map(item => (
+                                        <div key={item.OrderItemId} className="bulk-item-row">
+                                            <span className="bulk-item-title">{item.Title}</span> <br />
+                                            SKU: {item.SellerSKU} | Qty: {item.QuantityOrdered}
+                                        </div>
+                                    ))}
+                                </td>
 
-            <div style={{ marginTop: '30px', borderTop: '1px solid #ccc', paddingTop: '20px' }}>
-                <p style={{ fontSize: '0.8rem' }}>
+                                {/* COLUMN 2: WEIGHT INPUT - UPGRADED UI */}
+                                <td>
+                                    <div className="weight-input-group">
+                                        <input
+                                            type="number"
+                                            className="bulk-input-weight"
+                                            value={order.weight}
+                                            onChange={(e) => updateRow(order.AmazonOrderId, 'weight', e.target.value)}
+                                        /> 
+                                        <span className="weight-unit">g</span>
+                                    </div>
+                                </td>
+
+                                {/* COLUMN 3: DIMENSION INPUTS - UPGRADED UI */}
+                                <td>
+                                    <select 
+                                        className="bulk-select"
+                                        onChange={(e) => {
+                                            if (e.target.value === 'small') {
+                                                updateRow(order.AmazonOrderId, 'length', 15);
+                                                updateRow(order.AmazonOrderId, 'width', 10);
+                                                updateRow(order.AmazonOrderId, 'height', 5);
+                                            }
+                                        }}
+                                    >
+                                        <option value="custom">Custom Dimensions</option>
+                                        <option value="small">Default (15x10x5 cm)</option>
+                                    </select>
+                                    
+                                    <div className="dim-input-group">
+                                        <input 
+                                            type="number" 
+                                            className="bulk-input-dim"
+                                            placeholder="L"
+                                            value={order.length} 
+                                            onChange={(e) => updateRow(order.AmazonOrderId, 'length', e.target.value)} 
+                                        /> 
+                                        <span className="dim-separator">×</span>
+                                        <input 
+                                            type="number" 
+                                            className="bulk-input-dim"
+                                            placeholder="W"
+                                            value={order.width} 
+                                            onChange={(e) => updateRow(order.AmazonOrderId, 'width', e.target.value)} 
+                                        /> 
+                                        <span className="dim-separator">×</span>
+                                        <input 
+                                            type="number" 
+                                            className="bulk-input-dim"
+                                            placeholder="H"
+                                            value={order.height} 
+                                            onChange={(e) => updateRow(order.AmazonOrderId, 'height', e.target.value)} 
+                                        />
+                                        <span className="dim-unit">cm</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="bulk-footer">
+                <p className="bulk-warning-text">
                     Please schedule your orders by the cut-off time on the Estimated Ship Date (ESD).
                 </p>
-                {/* This button will trigger the logic to loop through all bulkData rows 
-                    and call /shipping-quotes and /create-shipment for each. 
-                */}
                 <button
-                    style={{ backgroundColor: '#ffd814', border: '1px solid #fcd200', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer' }}
-                    onClick={() => onSchedule(bulkData)} // 💡 Pass the configured bulkData up!
+                    className="btn-schedule"
+                    onClick={() => onSchedule(bulkData)} 
                 >
                     Schedule Orders
                 </button>

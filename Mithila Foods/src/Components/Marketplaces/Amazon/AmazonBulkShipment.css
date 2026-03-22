@@ -1,0 +1,227 @@
+/* AmazonBulkShipment.css */
+
+.bulk-shipment-container {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Back Button */
+.btn-back {
+    background: none;
+    border: none;
+    color: #2563eb;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 20px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s ease;
+}
+
+.btn-back:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+/* Table Enhancements */
+.bulk-table-wrapper {
+    overflow-x: auto;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    margin-top: 20px;
+}
+
+.bulk-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.bulk-table th, 
+.bulk-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+}
+
+.bulk-table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+}
+
+.bulk-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.bulk-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.bulk-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Cell Specific Styles */
+.order-details-col {
+    width: 40%;
+}
+
+.bulk-order-id {
+    margin-bottom: 8px;
+    color: #0066c0;
+    font-weight: 600;
+}
+
+.bulk-item-row {
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+    color: #4b5563;
+}
+
+.bulk-item-title {
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Form Inputs - UPGRADED UI */
+.bulk-select {
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    width: 100%;
+    max-width: 220px;
+    background-color: #f9fafb;
+    color: #374151;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.bulk-select:focus {
+    border-color: #2563eb;
+    background-color: #ffffff;
+}
+
+/* Unified Weight Input Box */
+.weight-input-group {
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 4px 12px;
+    width: max-content;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.weight-input-group:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.bulk-input-weight {
+    width: 60px;
+    border: none;
+    outline: none;
+    text-align: right;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #111827;
+    -moz-appearance: textfield; 
+}
+
+/* Unified Dimensions Box */
+.dim-input-group {
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 4px 8px;
+    width: max-content;
+    margin-top: 8px;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.dim-input-group:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.bulk-input-dim {
+    width: 40px;
+    border: none;
+    outline: none;
+    background: transparent;
+    text-align: center;
+    font-size: 0.95rem;
+    color: #111827;
+    font-weight: 500;
+    padding: 4px 2px;
+    border-radius: 4px;
+    /*-moz-appearance: textfield; */
+}
+
+.bulk-input-dim:focus {
+    background-color: #f3f4f6;
+}
+
+/* Hide spin buttons in Chrome/Safari */
+.bulk-input-weight::-webkit-outer-spin-button,
+.bulk-input-weight::-webkit-inner-spin-button,
+.bulk-input-dim::-webkit-outer-spin-button,
+.bulk-input-dim::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Text separators & Units */
+.dim-separator {
+    color: #9ca3af;
+    margin: 0 4px;
+    font-size: 0.9rem;
+}
+
+.dim-unit, .weight-unit {
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-left: 8px;
+}
+
+.dim-unit {
+    padding-left: 8px;
+    border-left: 1px solid #e5e7eb;
+}
+
+/* Footer Section */
+.bulk-footer {
+    margin-top: 30px;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 20px;
+}
+
+.bulk-warning-text {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 15px;
+}
+
+/* Yellow Amazon-style primary button */
+.btn-schedule {
+    background-color: #ffd814;
+    border: 1px solid #fcd200;
+    padding: 10px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #111827;
+    transition: background-color 0.2s ease;
+}
+
+.btn-schedule:hover {
+    background-color: #f7ca00;
+}

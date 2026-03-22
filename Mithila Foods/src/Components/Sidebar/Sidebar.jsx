@@ -72,13 +72,8 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
         <div className="app-nav-group">
           <div className="app-nav-group-label">E-Commerce</div>
 
-          {/* Amazon is now split into two distinct actions */}
-          <NavItem to="/ecommerce/amazon/dashboard" label="Amazon Orders" icon={ShoppingBag} />
-          <NavItem to="/ecommerce/amazon/ship" label="Amazon Shipping" icon={Truck} />
-          <NavItem to="/ecommerce/amazon/payout" label="Amazon Payouts" icon={Truck} />
-          <NavItem to="/ecommerce/amazon/fbalocations" label="FBA locations" icon={Truck} />
+          <NavItem to="/ecommerce/amazon/dashboard" label="Amazon Central" icon={ShoppingBag} />
           <NavItem to="/ecommerce/flipkart" label="Flipkart Tracker" icon={ShoppingBag} />
-          <NavItem to="/ecommerce/amazon/fbainventory" label="FBA" icon={ShoppingBag} />
         </div>
         <div className="app-nav-group">
           <div className="app-nav-group-label">Manufacturing & Adjustments</div>

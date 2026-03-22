@@ -514,13 +514,13 @@ app.get("/api/reports/reorder", async (req, res) => {
   }
 });
 
-//// 2. Import your new modular routes
-//const amazonRoutes = require('./routes/amazonRoutes');
-//const flipkartRoutes = require('./routes/flipkartRoutes'); // You will uncomment this later!
+// 2. Import your new modular routes
+const amazonRoutes = require('./routes/amazonRoutes');
+const flipkartRoutes = require('./routes/flipkartRoutes'); // You will uncomment this later!
 
-//// 3. Mount the routes to specific API paths
-//app.use('/api/amazon', amazonRoutes);
-//app.use('/api/flipkart', flipkartRoutes);
+// 3. Mount the routes to specific API paths
+app.use('/api/amazon', amazonRoutes);
+app.use('/api/flipkart', flipkartRoutes);
 // ============================================================================
 // 6) START SERVER
 // ============================================================================

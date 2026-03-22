@@ -18,6 +18,7 @@ import SalesOrderView from "./views/SalesOrderView";
 import SupplierTabView from "./views/SupplierListView";
 import PurchaseTrackerView from "./views/PurchaseTrackerView";
 import SupplierIntelligenceView from "./views/SupplierIntelligenceView";
+import AmazonTabsView from "./views/AmazonTabsView";
 
 
 // CSS
@@ -158,56 +159,9 @@ export default function App() {
               </KeepAlivePage>
 
               {/* 6. E-COMMERCE VIEWS */}
-              <KeepAlivePage triggerPath="/ecommerce/amazon/dashboard">
+             <KeepAlivePage triggerPath="/ecommerce/amazon">
                 <div className="app-panel">
-                  <AmazonOrders />
-                  <AmazonShippingTester />
-                </div>
-              </KeepAlivePage>
-
-              <KeepAlivePage triggerPath="/ecommerce/amazon/ship">
-                <div className="app-panel">
-                  {shipView === 'list' && (
-                    <AmazonShipmentList
-                      onProceedToBulk={(orders) => {
-                        setSelectedOrders(orders);
-                        setShipView('bulk');
-                      }}
-                    />
-                  )}
-
-                  {shipView === 'bulk' && (
-                    <AmazonBulkShipment
-                      selectedOrders={selectedOrders}
-                      onBack={() => setShipView('list')}
-                      onSchedule={(dataWithDimensions) => {
-                        setConfiguredBulkData(dataWithDimensions);
-                        setShipView('processing'); // Move to the new screen!
-                      }}
-                    />
-                  )}
-
-                  {shipView === 'processing' && (
-                    <AmazonBulkProcessing
-                      ordersToProcess={configuredBulkData}
-                      onDone={() => setShipView('list')} // Sends them back to the start when finished
-                    />
-                  )}
-                </div>
-              </KeepAlivePage>
-              <KeepAlivePage triggerPath="/ecommerce/amazon/fbainventory">
-                <div className="app-panel">
-                  <FbaInventory />
-                </div>
-              </KeepAlivePage>
-              <KeepAlivePage triggerPath="/ecommerce/amazon/payout">
-                <div className="app-panel">
-                  <AmazonPayoutWidget />
-                </div>
-              </KeepAlivePage>
-              <KeepAlivePage triggerPath="/ecommerce/amazon/fbalocations">
-                <div className="app-panel">
-                  <FbaLocationStock/>
+                  <AmazonTabsView />
                 </div>
               </KeepAlivePage>
               <KeepAlivePage triggerPath="/ecommerce/flipkart">

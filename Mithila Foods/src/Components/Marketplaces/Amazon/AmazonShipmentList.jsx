@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BACKEND_URL } from '../../api/core';
+import './AmazonShipmentList.css'; 
 
 const AmazonShipmentList = ({ onProceedToBulk }) => {
     const [unshippedOrders, setUnshippedOrders] = useState([]);
@@ -95,77 +96,71 @@ const AmazonShipmentList = ({ onProceedToBulk }) => {
     const isAllSelected = unshippedOrders.length > 0 && selectedOrderIds.length === unshippedOrders.length;
 
     return (
-        <div>
+        <div className="dispatch-queue-container">
             <h2>Amazon Dispatch Queue</h2>
             
-            <div style={{ marginBottom: '15px' }}>
+            <div className="dispatch-header">
                 <button 
+                    className="btn-prepare"
                     disabled={selectedOrderIds.length === 0}
                     onClick={handleBulkPrepare}
-                    style={{ 
-                        padding: '10px 20px', 
-                        backgroundColor: selectedOrderIds.length > 0 ? '#2563eb' : '#e5e7eb',
-                        color: selectedOrderIds.length > 0 ? 'white' : '#9ca3af',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: selectedOrderIds.length > 0 ? 'pointer' : 'not-allowed',
-                        fontWeight: 'bold'
-                    }}
                 >
                     🚚 Prepare {selectedOrderIds.length} Selected Orders
                 </button>
             </div>
 
-            <table border="1" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                <thead>
-                    <tr style={{ backgroundColor: '#f9fafb' }}>
-                        <th style={{ padding: '12px' }}>
-                            <input type="checkbox" onChange={handleSelectAll} checked={isAllSelected} />
-                        </th>
-                        <th align="left" style={{ padding: '12px' }}>Order ID</th>
-                        <th align="left" style={{ padding: '12px' }}>Date</th>
-                        <th align="left" style={{ padding: '12px' }}>Time</th>
-                        <th align="left" style={{ padding: '12px' }}>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {unshippedOrders.map(order => {
-                        const purchaseDate = new Date(order.PurchaseDate);
-                        return (
-                            <tr key={order.AmazonOrderId}>
-                                <td align="center" style={{ padding: '10px' }}>
-                                    <input 
-                                        type="checkbox" 
-                                        checked={selectedOrderIds.includes(order.AmazonOrderId)}
-                                        onChange={() => handleToggleSelect(order.AmazonOrderId)}
-                                    />
-                                </td>
-                                <td style={{ padding: '10px' }}><strong>{order.AmazonOrderId}</strong></td>
-                                <td style={{ padding: '10px' }}>{purchaseDate.toLocaleDateString()}</td>
-                                <td style={{ padding: '10px', color: '#4b5563' }}>
-                                    {purchaseDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                                </td>
-                                <td style={{ padding: '10px', fontWeight: 'bold' }}>
-                                    {order.OrderTotal?.Amount} {order.OrderTotal?.CurrencyCode}
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
+            <div className="dispatch-table-wrapper">
+                <table className="dispatch-table">
+                    <thead>
+                        <tr>
+                            <th className="center-cell">
+                                <input type="checkbox" onChange={handleSelectAll} checked={isAllSelected} />
+                            </th>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {unshippedOrders.map(order => {
+                            const purchaseDate = new Date(order.PurchaseDate);
+                            return (
+                                <tr key={order.AmazonOrderId}>
+                                    <td className="center-cell">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedOrderIds.includes(order.AmazonOrderId)}
+                                            onChange={() => handleToggleSelect(order.AmazonOrderId)}
+                                        />
+                                    </td>
+                                    <td><strong>{order.AmazonOrderId}</strong></td>
+                                    <td>{purchaseDate.toLocaleDateString()}</td>
+                                    <td className="time-cell">
+                                        {purchaseDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                    </td>
+                                    <td className="total-cell">
+                                        {order.OrderTotal?.Amount} {order.OrderTotal?.CurrencyCode}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
 
-            {/* 💡 THE NEW LOAD MORE BUTTON FOR THE SHIPPING LIST */}
-            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            {/* THE NEW LOAD MORE BUTTON FOR THE SHIPPING LIST */}
+            <div className="load-more-wrapper">
                 <button 
+                    className="btn-load-more"
                     onClick={fetchMoreUnshipped} 
                     disabled={loadingMore}
-                    style={{ padding: '8px 16px', cursor: 'pointer' }}
                 >
                     {loadingMore 
                         ? "⏳ Scanning Amazon..." 
                         : amazonNextToken 
                             ? "Scan Next 100 Orders ↓" 
-                            : "Scan Previous Day ↓"
+                            : "Scan Previous Oerders ↓"
                     }
                 </button>
             </div>
